@@ -1,0 +1,8 @@
+[package]
+name = "piano-midi"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+piano-domain = { path = "../piano-domain" }
+midir = "0.9"

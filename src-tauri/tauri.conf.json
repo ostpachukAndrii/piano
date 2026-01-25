@@ -1,0 +1,37 @@
+{
+    "productName": "Piano Lesson App",
+    "version": "0.1.0",
+    "identifier": "com.example.pianolesson",
+    "build": {
+        "beforeBuildCommand": "",
+        "beforeDevCommand": "",
+        "devUrl": "http://localhost:3000",
+        "frontendDist": "../src-leptos/dist"
+    },
+    "app": {
+        "windows": [
+            {
+                "title": "Piano Lesson App",
+                "width": 1200,
+                "height": 800,
+                "minWidth": 800,
+                "minHeight": 600,
+                "resizable": true,
+                "fullscreen": false
+            }
+        ],
+        "security": {
+            "csp": null
+        }
+    },
+    "bundle": {
+        "active": true,
+        "targets": [
+            "msi",
+            "nsis"
+        ],
+        "msiInstallerAssets": null,
+        "nsiInstallerAssets": null,
+        "nsiInstallerLanguages": null
+    }
+}

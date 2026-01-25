@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cargo build:*)",
+      "Bash(cargo check:*)",
+      "Bash(cargo test:*)",
+      "Bash(cargo --version:*)",
+      "Bash(npm --version:*)",
+      "Bash(echo:*)",
+      "Bash(where npm:*)",
+      "Bash(powershell.exe -Command \"[Environment]::GetEnvironmentVariable\\(''Path'', ''User''\\)\")",
+      "Bash(nodist + latest)",
+      "Bash(powershell.exe -Command \"$oldPath = [Environment]::GetEnvironmentVariable\\(''Path'', ''User''\\); $newPath = $oldPath + '';C:\\\\Users\\\\Andrii\\\\.cargo\\\\bin''; [Environment]::SetEnvironmentVariable\\(''Path'', $newPath, ''User''\\); Write-Host ''Cargo added to user PATH successfully''\")",
+      "Bash(powershell.exe -Command \"$oldPath = [Environment]::GetEnvironmentVariable\\(''Path'', ''User''\\); $cargoPath = ''C:\\\\Users\\\\Andrii\\\\.cargo\\\\bin''; if \\($oldPath -notlike \"\"*$cargoPath*\"\"\\) { $newPath = $oldPath + '';'' + $cargoPath; [Environment]::SetEnvironmentVariable\\(''Path'', $newPath, ''User''\\); Write-Host ''Cargo added to PATH'' } else { Write-Host ''Cargo already in PATH'' }\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"C:/Users/Andrii/AppData/Local/Temp/add_cargo_to_path.ps1\")",
+      "Bash(/c/Users/Andrii/.cargo/bin/cargo.exe --version)",
+      "Bash(cargo run:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm start)",
+      "Bash(python -m json.tool:*)",
+      "Bash(grep:*)",
+      "Bash(Get-Content api_server.log -Wait -Tail 20)"
+    ]
+  }
+}

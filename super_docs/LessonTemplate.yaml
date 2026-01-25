@@ -1,0 +1,130 @@
+name: "Two Hand Chords"
+description: "Practice playing C Major chords with alternating hands"
+difficulty: 2 # 1=Easy, 5=Hard
+tempo: 100
+time_signature: "4/4"
+key_signature: "C major"
+
+# Global rendering settings
+layout:
+  staves: 2  # 0: Treble (Top), 1: Bass (Bottom)
+  clefs:
+    0: "treble"
+    1: "bass"
+
+measures:
+  # ---------------------------------------------------------
+  # Measure 1: Left Hand (Bass Clef) - C Major Triad
+  # ---------------------------------------------------------
+  - number: 1
+    notes:
+      # Note 1: C3 (Root)
+      - pitch: 48
+        spelling: "C3" # Crucial for accidental logic (e.g., C# vs Db)
+        duration: 2.0  # Mathematical duration (2 beats)
+        type: "half"   # Visual shape (half note)
+        staff: 1       # 1 = Bass Clef
+        fingering: 5   # Pinky
+        beam: "none"
+        articulation: "none"
+
+      # Note 2: E3 (Third)
+      - pitch: 52
+        spelling: "E3"
+        duration: 2.0
+        type: "half"
+        staff: 1
+        fingering: 3   # Middle
+        beam: "none"
+
+      # Note 3: G3 (Fifth)
+      - pitch: 55
+        spelling: "G3"
+        duration: 2.0
+        type: "half"
+        staff: 1
+        fingering: 1   # Thumb
+        beam: "none"
+
+  # ---------------------------------------------------------
+  # Measure 2: Right Hand (Treble Clef) - C Major Triad
+  # ---------------------------------------------------------
+  - number: 2
+    notes:
+      # Note 1: C4 (Middle C)
+      - pitch: 60
+        spelling: "C4"
+        duration: 2.0
+        type: "half"
+        staff: 0       # 0 = Treble Clef
+        fingering: 1   # Thumb
+        beam: "none"
+      
+      # Note 2: E4
+      - pitch: 64
+        spelling: "E4"
+        duration: 2.0
+        type: "half"
+        staff: 0
+        fingering: 3   # Middle
+        beam: "none"
+
+      # Note 3: G4
+      - pitch: 67
+        spelling: "G4"
+        duration: 2.0
+        type: "half"
+        staff: 0
+        fingering: 5   # Pinky
+        beam: "none"
+
+  # ---------------------------------------------------------
+  # Measure 3: Simple Melody with Beaming (Eighth Notes)
+  # ---------------------------------------------------------
+  - number: 3
+    notes:
+      # C4 (Start Beam)
+      - pitch: 60
+        spelling: "C4"
+        duration: 0.5
+        type: "eighth"
+        staff: 0
+        beam: "begin"
+        fingering: 1
+      
+      # D4 (Continue Beam)
+      - pitch: 62
+        spelling: "D4"
+        duration: 0.5
+        type: "eighth"
+        staff: 0
+        beam: "continue"
+        fingering: 2
+
+      # E4 (Continue Beam)
+      - pitch: 64
+        spelling: "E4"
+        duration: 0.5
+        type: "eighth"
+        staff: 0
+        beam: "continue"
+        fingering: 3
+
+      # F4 (End Beam)
+      - pitch: 65
+        spelling: "F4"
+        duration: 0.5
+        type: "eighth"
+        staff: 0
+        beam: "end"
+        fingering: 4
+      
+      # G4 (Quarter Note - No Beam)
+      - pitch: 67
+        spelling: "G4"
+        duration: 1.0
+        type: "quarter"
+        staff: 0
+        beam: "none"
+        fingering: 5
+        articulation: "staccato" # Staccato dot above

@@ -1,0 +1,45 @@
+title: "Simple Chords"
+description: "Learn basic chord progressions - C major, F major, G major"
+settings:
+  tempo: 100
+  time_signature: "4/4"
+  key_signature: "C major"
+
+measures:
+  # Measure 1: C major chord
+  - notes:
+      - midi: [60, 64, 67]
+        duration: 2.0
+        chord: "C Major"
+
+  # Measure 2: F major chord
+  - notes:
+      - midi: [65, 69, 72]
+        duration: 2.0
+        chord: "F Major"
+
+  # Measure 3: G major chord
+  - notes:
+      - midi: [67, 71, 74]
+        duration: 2.0
+        chord: "G Major"
+
+  # Measure 4: Back to C major
+  - notes:
+      - midi: [60, 64, 67]
+        duration: 2.0
+        chord: "C Major"
+
+  # Measure 5: C Major chord with C note
+  - notes:
+      - midi: 60
+        duration: 0.5
+      - midi: [60, 64, 67]
+        duration: 1.0
+        chord: "C Major"
+
+  # Measure 6: A minor chord
+  - notes:
+      - midi: [69, 72, 76]
+        duration: 2.0
+        chord: "A Minor"

@@ -1,0 +1,27 @@
+[package]
+name = "piano-app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+piano-domain = { path = "../piano-domain" }
+piano-lessons = { path = "../piano-lessons" }
+piano-midi = { path = "../piano-midi" }
+
+tokio = { version = "1", features = ["full"] }
+actix-web = "4"
+actix-web-actors = "4"
+actix-cors = "0.7"
+actix-rt = "2"
+actix = "0.13"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+log = "0.4"
+env_logger = "0.11"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+[[bin]]
+name = "piano-api"
+path = "src/bin/api_server.rs"

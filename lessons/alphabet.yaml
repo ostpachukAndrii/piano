@@ -1,0 +1,74 @@
+title: "Alphabet Song"
+description: "Learn the alphabet using the Twinkle Twinkle melody"
+settings:
+  tempo: 100
+  time_signature: "4/4"
+  key_signature: "C major"
+
+measures:
+  - notes:
+      - midi: 60  # A
+        duration: 0.5
+      - midi: 60  # B
+        duration: 0.5
+      - midi: 67  # C
+        duration: 1.0
+      
+  - notes:
+      - midi: 69  # D
+        duration: 0.5
+      - midi: 67  # E
+        duration: 0.5
+      - midi: 65  # F
+        duration: 0.5
+      - midi: 64  # G
+        duration: 0.5
+      
+  - notes:
+      - midi: 62  # H
+        duration: 1.0
+      - midi: 60  # I
+        duration: 1.0
+      
+  - notes:
+      - midi: 62  # J
+        duration: 0.5
+      - midi: 64  # K
+        duration: 0.5
+      - midi: 65  # L
+        duration: 0.5
+      - midi: 67  # M
+        duration: 0.5
+      
+  - notes:
+      - midi: 67  # N
+        duration: 0.5
+      - midi: 67  # O
+        duration: 0.5
+      - midi: 64  # P
+        duration: 1.0
+      
+  - notes:
+      - midi: 65  # Q
+        duration: 0.5
+      - midi: 67  # R
+        duration: 0.5
+      - midi: 69  # S
+        duration: 0.5
+      - midi: 69  # T
+        duration: 0.5
+      
+  - notes:
+      - midi: 69  # U
+        duration: 0.5
+      - midi: 67  # V
+        duration: 0.5
+      - midi: 65  # W
+        duration: 0.5
+      - midi: 67  # X
+        duration: 0.5
+      
+  - notes:
+      - midi: 65  # Y
+        duration: 1.0
+      - midi: 64  # Z

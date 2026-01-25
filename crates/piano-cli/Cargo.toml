@@ -1,0 +1,16 @@
+[package]
+name = "piano-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "piano"
+path = "src/main.rs"
+
+[dependencies]
+piano-domain = { path = "../piano-domain" }
+piano-lessons = { path = "../piano-lessons" }
+piano-app = { path = "../piano-app" }
+piano-midi = { path = "../piano-midi" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

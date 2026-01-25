@@ -1,0 +1,46 @@
+[package]
+name = "piano-leptos-frontend"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "piano-leptos-frontend"
+path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+# Leptos framework
+leptos = { version = "0.6", features = ["csr"] }
+leptos_meta = "0.6"
+leptos_router = "0.6"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# WASM
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = [
+    "Window",
+    "Document",
+    "Navigator",
+    "HtmlElement",
+    "SvgElement",
+    "CanvasRenderingContext2d",
+    # Web MIDI API
+    "MidiAccess",
+    "MidiInput",
+    "MidiInputMap",
+    "MidiMessageEvent",
+    "MidiPort",
+] }
+console_error_panic_hook = "0.1"
+
+# Logging
+console_log = "1.0"
+log = "0.4"
+wasm-logger = "0.2"

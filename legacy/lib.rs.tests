@@ -1,0 +1,113 @@
+/// Tests for MIDI event parsing and handling
+#[cfg(test)]
+mod tests {
+    use roland_piano_reader::midi::MidiEvent;
+    use roland_piano_reader::utils::midi_note_to_name;
+
+    #[test]
+    fn test_midi_note_to_name_middle_c() {
+        let name = midi_note_to_name(60);
+        assert_eq!(name, "C4");
+    }
+
+    #[test]
+    fn test_midi_note_to_name_a4() {
+        let name = midi_note_to_name(69);
+        assert_eq!(name, "A4");
+    }
+
+    #[test]
+    fn test_midi_note_to_name_c_sharp() {
+        let name = midi_note_to_name(61);
+        assert_eq!(name, "C#4");
+    }
+
+    #[test]
+    fn test_midi_note_to_name_low_c() {
+        let name = midi_note_to_name(12);
+        assert_eq!(name, "C1");
+    }
+
+    #[test]
+    fn test_midi_note_to_name_high_c() {
+        let name = midi_note_to_name(108);
+        assert_eq!(name, "C8");
+    }
+
+    #[test]
+    fn test_midi_event_note_on_creation() {
+        let event = MidiEvent::NoteOn {
+            note: 60,
+            velocity: 64,
+        };
+        match event {
+            MidiEvent::NoteOn { note, velocity } => {
+                assert_eq!(note, 60);
+                assert_eq!(velocity, 64);
+            }
+            _ => panic!("Expected NoteOn event"),
+        }
+    }
+
+    #[test]
+    fn test_midi_event_note_off_creation() {
+        let event = MidiEvent::NoteOff { note: 60 };
+        match event {
+            MidiEvent::NoteOff { note } => {
+                assert_eq!(note, 60);
+            }
+            _ => panic!("Expected NoteOff event"),
+        }
+    }
+
+    #[test]
+    fn test_midi_event_control_change() {
+        let event = MidiEvent::ControlChange {
+            controller: 64,
+            value: 127,
+        };
+        match event {
+            MidiEvent::ControlChange { controller, value } => {
+                assert_eq!(controller, 64); // Sustain pedal
+                assert_eq!(value, 127);
+            }
+            _ => panic!("Expected ControlChange event"),
+        }
+    }
+
+    #[test]
+    fn test_midi_event_pitch_bend() {
+        let event = MidiEvent::PitchBend { value: 0 };
+        match event {
+            MidiEvent::PitchBend { value } => {
+                assert_eq!(value, 0); // Center position
+            }
+            _ => panic!("Expected PitchBend event"),
+        }
+    }
+
+    #[test]
+    fn test_midi_event_clone() {
+        let event1 = MidiEvent::NoteOn {
+            note: 60,
+            velocity: 64,
+        };
+        let event2 = event1.clone();
+        match (event1, event2) {
+            (
+                MidiEvent::NoteOn {
+                    note: n1,
+                    velocity: v1,
+                },
+                MidiEvent::NoteOn {
+                    note: n2,
+                    velocity: v2,
+                },
+            ) => {
+                assert_eq!(n1, n2);
+                assert_eq!(v1, v2);
+            }
+            _ => panic!("Events should be identical"),
+        }
+    }
+}

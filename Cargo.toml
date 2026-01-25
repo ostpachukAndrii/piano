@@ -1,0 +1,32 @@
+[workspace]
+members = [
+    "src-tauri",
+    "src-leptos",
+    "crates/piano-domain",
+    "crates/piano-lessons",
+    "crates/piano-midi",
+    "crates/piano-app",
+    "crates/piano-cli",
+]
+resolver = "2"
+
+[workspace.lints.rust]
+unsafe_code = "warn"
+
+[workspace.lints.clippy]
+all = "warn"
+
+[package]
+name = "roland_piano_reader"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "roland"
+path = "legacy/main.rs"
+
+[dependencies]
+# Legacy MIDI reader dependency
+midir = "0.9"
+# New architecture dependencies
+piano-cli = { path = "crates/piano-cli" }

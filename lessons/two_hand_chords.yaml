@@ -1,0 +1,61 @@
+
+title: "Two Hand Chords"
+description: "Practice playing chords with left and right hands separately"
+settings:
+  tempo: 100
+  time_signature: "4/4"
+  key_signature: "C major"
+
+measures:
+  # Measure 1: Left hand C Major chord (lower octave)
+  - notes:
+      - midi: [48, 52, 55]  # C3-E3-G3
+        chord: "C Major"
+        hand: "left"
+        duration: 2.0
+
+  # Measure 2: Right hand C Major chord (middle octave)
+  - notes:
+      - midi: [60, 64, 67]  # C4-E4-G4
+        chord: "C Major"
+        hand: "right"
+        duration: 2.0
+
+  # Measure 3: Left hand F Major chord
+  - notes:
+      - midi: [41, 45, 48]  # F2-A2-C3
+        chord: "F Major"
+        hand: "left"
+        duration: 2.0
+
+  # Measure 4: Right hand F Major chord
+  - notes:
+      - midi: [53, 57, 60]  # F3-A3-C4
+        chord: "F Major"
+        hand: "right"
+        duration: 2.0
+
+  # Measure 5: Left hand G Major chord
+  - notes:
+      - midi: [43, 47, 50]  # G2-B2-D3
+        chord: "G Major"
+        hand: "left"
+        duration: 2.0
+
+  # Measure 6: Right hand G Major chord
+  - notes:
+      - midi: [55, 59, 62]  # G3-B3-D4
+        chord: "G Major"
+        hand: "right"
+        duration: 2.0
+
+  # Measure 7: Both hands C Major chord
+  - notes:
+      - midi: [48, 52, 55]  # Left hand C3
+        chord: "C Major (left)"
+        hand: "left"
+        duration: 2.0
+      - midi: [60, 64, 67]  # Right hand C4
+        chord: "C Major (right)"
+        hand: "right"
+        duration: 2.0
