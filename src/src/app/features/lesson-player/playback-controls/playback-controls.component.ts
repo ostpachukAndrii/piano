@@ -89,6 +89,14 @@ import { MatSliderModule } from '@angular/material/slider';
                     Wait
                 </mat-button-toggle>
             </mat-button-toggle-group>
+
+            <button mat-icon-button
+                    (click)="onFullscreenToggle()"
+                    class="fullscreen-btn"
+                    [class.active]="isFullscreen"
+                    aria-label="Fullscreen">
+                <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+            </button>
         </div>
     `,
     styles: [`
@@ -233,6 +241,19 @@ import { MatSliderModule } from '@angular/material/slider';
         mat-button-toggle-group {
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
+
+        .fullscreen-btn {
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.2s ease;
+
+            &:hover {
+                color: #8B5CF6;
+            }
+
+            &.active {
+                color: #8B5CF6;
+            }
+        }
     `]
 })
 export class PlaybackControlsComponent {
@@ -243,6 +264,7 @@ export class PlaybackControlsComponent {
     @Input() tempoPercent = 100;
     @Input() playMode: 'flow' | 'wait' = 'wait';
     @Input() computerSoundEnabled = true;
+    @Input() isFullscreen = false;
 
     // Outputs
     @Output() playToggle = new EventEmitter<void>();
@@ -251,6 +273,7 @@ export class PlaybackControlsComponent {
     @Output() restart = new EventEmitter<void>();
     @Output() tempoChange = new EventEmitter<number>();
     @Output() modeChange = new EventEmitter<'flow' | 'wait'>();
+    @Output() fullscreenToggle = new EventEmitter<void>();
 
     /**
      * Handle restart button click
@@ -292,5 +315,12 @@ export class PlaybackControlsComponent {
      */
     onModeToggleChange(mode: 'flow' | 'wait'): void {
         this.modeChange.emit(mode);
+    }
+
+    /**
+     * Handle fullscreen toggle button click
+     */
+    onFullscreenToggle(): void {
+        this.fullscreenToggle.emit();
     }
 }

@@ -1344,7 +1344,11 @@ export class LessonPlayerComponent implements OnInit, OnDestroy {
                 extendedStats: extendedStats
             },
             disableClose: true,
-            width: '500px'
+            width: '500px',
+            // Ensure dialog appears above fullscreen content
+            panelClass: 'completion-dialog-fullscreen',
+            hasBackdrop: true,
+            backdropClass: 'completion-dialog-backdrop'
         });
 
         console.log('[LessonPlayer] Dialog opened, ref:', dialogRef);

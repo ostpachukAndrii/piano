@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import {
     AfterViewInit,
     Component,
+    ElementRef,
     EventEmitter,
     Input,
     OnChanges,
@@ -59,12 +60,14 @@ import { VirtualKeyboardComponent } from './virtual-keyboard/virtual-keyboard.co
                 [tempoPercent]="tempoPercent()"
                 [playMode]="playMode()"
                 [computerSoundEnabled]="computerSoundEnabled()"
+                [isFullscreen]="isFullscreen()"
                 (playToggle)="onPause()"
                 (autoPlayToggle)="onAutoPlayToggle()"
                 (computerSoundToggle)="onComputerSoundToggle()"
                 (restart)="onRestart()"
                 (tempoChange)="onTempoChange($event)"
-                (modeChange)="onModeChange($event)">
+                (modeChange)="onModeChange($event)"
+                (fullscreenToggle)="onFullscreenToggle()">
             </app-playback-controls>
         </div>
 
@@ -150,6 +153,7 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     private midiService = inject(MidiService);
     private evaluationService = inject(EvaluationService);
     private pianoService = inject(PianoSoundService);
+    private elementRef = inject(ElementRef);
 
     private animationId: number | null = null;
     private lastFrameTime = 0;
@@ -167,6 +171,7 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     progressPercent = signal(0);
     currentBeat = signal(0);
     computerSoundEnabled = signal(true); // Computer sound playback on correct notes
+    isFullscreen = signal(false);
 
     // Scrolling notes state - using signal for change detection
     private _scrollingNotes = signal<ScrollingNote[]>([]);
@@ -255,6 +260,13 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     // Computed: active notes as array for child
     activeNotesArray = computed(() => Array.from(this.midiService.activeNotes()));
 
+    /**
+     * Handle fullscreen change events (e.g., when user presses ESC)
+     */
+    private handleFullscreenChange = () => {
+        this.isFullscreen.set(!!document.fullscreenElement);
+    };
+
     constructor() {
         // React to MIDI input
         effect(() => {
@@ -269,8 +281,12 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         if (this.lesson) {
             console.log('[ScrollingPlayer] Initializing notes...');
             this.initializeNotes();
+            this.updateKeyboardRange();
             console.log('[ScrollingPlayer] Notes initialized:', this.scrollingNotes.length);
         }
+
+        // Listen for fullscreen changes (e.g., when user presses ESC)
+        document.addEventListener('fullscreenchange', this.handleFullscreenChange);
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -284,6 +300,16 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     ngOnDestroy() {
         console.log('[ScrollingPlayer] ngOnDestroy');
         this.stop();
+
+        // Clean up fullscreen event listener
+        document.removeEventListener('fullscreenchange', this.handleFullscreenChange);
+
+        // Exit fullscreen if currently in fullscreen mode
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(err => {
+                console.error('[ScrollingPlayer] Error exiting fullscreen on destroy:', err);
+            });
+        }
     }
 
     private initializeNotes() {
@@ -348,16 +374,26 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         let maxMidi = 0;
 
         for (const note of this.scrollingNotes) {
+            // Skip rests (they have no MIDI values)
+            if (note.isRest) continue;
+
             for (const midi of note.midi) {
                 minMidi = Math.min(minMidi, midi);
                 maxMidi = Math.max(maxMidi, midi);
             }
         }
 
+        // If no notes found (only rests), use default range
+        if (minMidi > maxMidi) {
+            this.keyboardRange.set({ min: 48, max: 72 }); // Default 2 octaves around middle C
+            return;
+        }
+
         // Add some padding and snap to octave boundaries
         minMidi = Math.max(21, Math.floor((minMidi - 5) / 12) * 12);
         maxMidi = Math.min(108, Math.ceil((maxMidi + 5) / 12) * 12);
 
+        console.log('[ScrollingPlayer] Keyboard range updated:', { min: minMidi, max: maxMidi });
         this.keyboardRange.set({ min: minMidi, max: maxMidi });
     }
 
@@ -503,6 +539,28 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     }
 
     /**
+     * Toggle fullscreen mode
+     * Enters/exits fullscreen mode for the scrolling player
+     */
+    async onFullscreenToggle() {
+        try {
+            const element = this.elementRef.nativeElement as HTMLElement;
+
+            if (!document.fullscreenElement) {
+                // Enter fullscreen
+                await element.requestFullscreen();
+                this.isFullscreen.set(true);
+            } else {
+                // Exit fullscreen
+                await document.exitFullscreen();
+                this.isFullscreen.set(false);
+            }
+        } catch (error) {
+            console.error('[ScrollingPlayer] Fullscreen error:', error);
+        }
+    }
+
+    /**
      * Start auto-play mode
      * Always restarts from the beginning with a clean state
      */
@@ -512,6 +570,8 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         this.restart();
         // Now enable auto-play mode
         this.isAutoPlaying.set(true);
+        // Enable computer sound for auto-play (so user can hear the playback)
+        this.computerSoundEnabled.set(true);
         // Auto-play uses flow mode behavior with lead-in bars
         this.playMode.set('flow');
         this.start();
@@ -588,13 +648,9 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
                     // Progress: 0% until beat 0, then normal progress
                     const progress = newBeat <= 0 ? 0 : (newBeat / this._totalBeats) * 100;
                     this.progressPercent.set(progress);
-                    // Show hints for the NEXT note (after the active one)
-                    const hintNote = this.getNextNoteForHints();
-                    if (hintNote) {
-                        this.updateHints(hintNote);
-                    } else {
-                        this.clearHints();
-                    }
+                    // Show hints for the ACTIVE note (the one the user needs to play now)
+                    // In Wait Mode, the active note is what the user should be playing
+                    this.updateHints(nextNote);
 
                     // Keep the loop running but don't advance further
                     this.animationId = requestAnimationFrame(() => this.gameLoop());
@@ -616,12 +672,24 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         // Remove events that have scrolled off the left edge of the screen
         this.cleanupOffscreenWrongNotes();
 
-        // Update keyboard hints (show NEXT note to prepare player)
-        const hintNote = this.getNextNoteForHints();
-        if (hintNote) {
-            this.updateHints(hintNote);
+        // Update keyboard hints
+        // In Wait Mode: show the active note (what to play now)
+        // In Flow Mode: show the next upcoming note (what's coming)
+        if (this.playMode() === 'wait') {
+            const activeNote = this.getActiveNote();
+            if (activeNote && !activeNote.isRest) {
+                this.updateHints(activeNote);
+            } else {
+                this.clearHints();
+            }
         } else {
-            this.clearHints();
+            // Flow mode: show next note to prepare
+            const hintNote = this.getNextNoteForHints();
+            if (hintNote) {
+                this.updateHints(hintNote);
+            } else {
+                this.clearHints();
+            }
         }
 
         // Track when all notes become complete (for completion buffer timing)
@@ -1192,6 +1260,7 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     // === Keyboard Hint Management ===
 
     private updateHints(note: ScrollingNote) {
+        console.log('[ScrollingPlayer] updateHints - MIDI values:', note.midi, 'isRest:', note.isRest);
         this.hintNotes.set([...note.midi]);
     }
 

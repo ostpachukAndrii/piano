@@ -49,6 +49,7 @@ import { KeyboardRange, KeyState, VisibleKey } from '../models/scrolling-note.mo
             height: 100%;
             overflow-x: auto;
             overflow-y: hidden;
+            padding: 8px 0;
         }
 
         .piano-keys {
@@ -59,106 +60,174 @@ import { KeyboardRange, KeyState, VisibleKey } from '../models/scrolling-note.mo
 
         .piano-key {
             position: absolute;
-            bottom: 0;
-            border-radius: 0 0 4px 4px;
-            transition: background 0.1s, transform 0.05s;
+            top: 0;
+            border-radius: 4px 4px 0 0;
+            transition: background 0.1s, transform 0.05s, box-shadow 0.2s;
             display: flex;
-            align-items: flex-end;
+            align-items: flex-start;
             justify-content: center;
-            padding-bottom: 8px;
+            padding-top: 10px;
+            pointer-events: none;
+            user-select: none;
 
             &.white {
                 height: 100%;
-                background: linear-gradient(180deg, #f5f5f5 0%, #e0e0e0 100%);
+                background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 85%, #d0d0d0 100%);
                 border: 1px solid #999;
+                border-bottom: 3px solid #777;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2),
+                           inset 0 -2px 4px rgba(0, 0, 0, 0.1);
                 z-index: 1;
             }
 
             &.black {
                 height: 65%;
-                background: linear-gradient(180deg, #333 0%, #111 100%);
+                background: linear-gradient(to bottom, #3a3a3a 0%, #1a1a1a 85%, #000000 100%);
                 border: 1px solid #000;
+                border-bottom: 2px solid #000;
+                box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5),
+                           inset 0 -1px 2px rgba(0, 0, 0, 0.3);
                 z-index: 2;
             }
 
             &.hint {
                 &.white {
-                    background: linear-gradient(180deg, #bbdefb 0%, #90caf9 100%);
+                    background: linear-gradient(to bottom, #e3f2fd 0%, #90caf9 85%, #64b5f6 100%);
+                    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.5),
+                               inset 0 -2px 4px rgba(33, 150, 243, 0.3),
+                               0 0 20px rgba(33, 150, 243, 0.4);
                 }
                 &.black {
-                    background: linear-gradient(180deg, #1565c0 0%, #0d47a1 100%);
+                    background: linear-gradient(to bottom, #1976d2 0%, #0d47a1 85%, #01579b 100%);
+                    box-shadow: 0 3px 10px rgba(33, 150, 243, 0.7),
+                               inset 0 -1px 2px rgba(33, 150, 243, 0.5),
+                               0 0 20px rgba(33, 150, 243, 0.5);
                 }
 
                 &::before {
                     content: '';
                     position: absolute;
-                    top: 10px;
-                    width: 12px;
-                    height: 12px;
-                    background: #3B82F6;
+                    top: 15px;
+                    width: 14px;
+                    height: 14px;
+                    background: radial-gradient(circle, #2196F3 0%, #1976D2 100%);
+                    border: 2px solid #fff;
                     border-radius: 50%;
-                    animation: pulse 0.8s infinite;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3),
+                               0 0 15px rgba(33, 150, 243, 0.8);
+                    animation: pulse 1s ease-in-out infinite;
+                    z-index: 10;
                 }
             }
 
             &.active {
                 &.white {
-                    background: linear-gradient(180deg, #e0e0e0 0%, #bdbdbd 100%);
-                    transform: translateY(2px);
+                    background: linear-gradient(to bottom, #e0e0e0 0%, #bdbdbd 85%, #9e9e9e 100%);
+                    transform: translateY(3px);
+                    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2),
+                               inset 0 1px 3px rgba(0, 0, 0, 0.2);
                 }
                 &.black {
-                    background: linear-gradient(180deg, #222 0%, #000 100%);
+                    background: linear-gradient(to bottom, #2a2a2a 0%, #0a0a0a 85%, #000000 100%);
                     transform: translateY(2px);
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5),
+                               inset 0 1px 2px rgba(0, 0, 0, 0.4);
                 }
             }
 
             &.correct {
                 &.white {
-                    background: linear-gradient(180deg, #a5d6a7 0%, #66bb6a 100%) !important;
+                    background: linear-gradient(to bottom, #c8e6c9 0%, #66bb6a 85%, #43a047 100%) !important;
+                    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.6),
+                               0 0 20px rgba(76, 175, 80, 0.5) !important;
+                    animation: correctFlash 0.5s ease-out;
                 }
                 &.black {
-                    background: linear-gradient(180deg, #2e7d32 0%, #1b5e20 100%) !important;
+                    background: linear-gradient(to bottom, #388e3c 0%, #1b5e20 85%, #0d3d13 100%) !important;
+                    box-shadow: 0 3px 10px rgba(76, 175, 80, 0.7),
+                               0 0 20px rgba(76, 175, 80, 0.6) !important;
+                    animation: correctFlash 0.5s ease-out;
                 }
             }
 
             &.wrong {
                 &.white {
-                    background: linear-gradient(180deg, #ef9a9a 0%, #ef5350 100%) !important;
+                    background: linear-gradient(to bottom, #ffcdd2 0%, #ef5350 85%, #e53935 100%) !important;
+                    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.6),
+                               0 0 20px rgba(244, 67, 54, 0.5) !important;
+                    animation: shake 0.3s ease-in-out;
                 }
                 &.black {
-                    background: linear-gradient(180deg, #c62828 0%, #b71c1c 100%) !important;
+                    background: linear-gradient(to bottom, #d32f2f 0%, #b71c1c 85%, #8b0000 100%) !important;
+                    box-shadow: 0 3px 10px rgba(244, 67, 54, 0.7),
+                               0 0 20px rgba(244, 67, 54, 0.6) !important;
+                    animation: shake 0.3s ease-in-out;
                 }
             }
 
             &.tonic {
                 &.white {
-                    border: 2px solid #8B5CF6;
-                    box-shadow: inset 0 -8px 12px rgba(139, 92, 246, 0.2);
+                    border-top: 3px solid #8B5CF6;
+                    box-shadow: inset 0 3px 12px rgba(139, 92, 246, 0.2),
+                               0 2px 4px rgba(0, 0, 0, 0.2);
                 }
                 &.black {
-                    border: 2px solid #8B5CF6;
+                    border-top: 3px solid #8B5CF6;
+                    box-shadow: inset 0 2px 8px rgba(139, 92, 246, 0.3),
+                               0 3px 6px rgba(0, 0, 0, 0.5);
                 }
             }
 
             .key-label {
                 font-size: 0.7rem;
                 color: #666;
-                font-weight: 500;
+                font-weight: 600;
+                text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+                pointer-events: none;
             }
 
             .tonic-dot {
                 position: absolute;
-                top: 12px;
-                width: 8px;
-                height: 8px;
+                top: 18px;
+                width: 6px;
+                height: 6px;
                 background: #8B5CF6;
                 border-radius: 50%;
+                box-shadow: 0 1px 3px rgba(139, 92, 246, 0.5);
+                pointer-events: none;
             }
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(1.3);
+            }
+        }
+
+        @keyframes correctFlash {
+            0% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            50% {
+                transform: scale(1.05);
+                filter: brightness(1.3);
+            }
+            100% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
         }
     `]
 })

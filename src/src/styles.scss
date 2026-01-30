@@ -2,3 +2,12 @@
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+/* Ensure completion dialog appears above fullscreen content */
+.completion-dialog-backdrop {
+    z-index: 2147483646 !important; /* Maximum safe z-index */
+}
+
+.completion-dialog-fullscreen {
+    z-index: 2147483647 !important; /* Above backdrop */
+}

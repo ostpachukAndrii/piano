@@ -1,0 +1,43 @@
+title: "Keyboard Hint Test"
+description: "Test that keyboard hints work correctly for sharps and flats"
+settings:
+  tempo: 60
+  time_signature: "4/4"
+  key_signature: "C major"
+
+measures:
+  # Measure 1: C# (MIDI 61) - Black key between C and D
+  - notes:
+      - midi: 61  # C# - should highlight black key
+        duration: 4.0
+        hand: "right"
+
+  # Measure 2: D# (MIDI 63) - Black key between D and E
+  - notes:
+      - midi: 63  # D# - should highlight black key
+        duration: 4.0
+        hand: "right"
+
+  # Measure 3: F# (MIDI 66) - Black key between F and G
+  - notes:
+      - midi: 66  # F# - should highlight black key
+        duration: 4.0
+        hand: "right"
+
+  # Measure 4: G# (MIDI 68) - Black key between G and A
+  - notes:
+      - midi: 68  # G# - should highlight black key
+        duration: 4.0
+        hand: "right"
+
+  # Measure 5: A# (MIDI 70) - Black key between A and B
+  - notes:
+      - midi: 70  # A# - should highlight black key
+        duration: 4.0
+        hand: "right"
+
+  # Measure 6: All sharps as chord - should highlight all 5 black keys
+  - notes:
+      - midi: [61, 63, 66, 68, 70]  # All black keys
+        duration: 4.0
+        hand: "right"
