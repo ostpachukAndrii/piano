@@ -1,0 +1,65 @@
+title: "Play Right Hand - Melody Practice"
+description: "Play a melody with proper timing. Follow the tempo."
+mode: play_right_hand_timing
+settings:
+  tempo: 100
+  time_signature: "4/4"
+  key_signature: "C major"
+
+measures:
+  # Measure 1: Simple melody
+  - notes:
+      - midi: 60  # C4
+        duration: 1.0
+        hand: right
+      - midi: 62  # D4
+        duration: 1.0
+        hand: right
+      - midi: 64  # E4
+        duration: 1.0
+        hand: right
+      - midi: 65  # F4
+        duration: 1.0
+        hand: right
+
+  # Measure 2: Continue with quarter notes
+  - notes:
+      - midi: 67  # G4
+        duration: 2.0
+        hand: right
+      - midi: 65  # F4
+        duration: 1.0
+        hand: right
+      - midi: 64  # E4
+        duration: 1.0
+        hand: right
+
+  # Measure 3: Mix of rhythms
+  - notes:
+      - midi: 64  # E4
+        duration: 0.5
+        hand: right
+      - midi: 65  # F4
+        duration: 0.5
+        hand: right
+      - midi: 67  # G4
+        duration: 1.0
+        hand: right
+      - midi: 72  # C5
+        duration: 2.0
+        hand: right
+
+  # Measure 4: Resolution
+  - notes:
+      - midi: 71  # B4
+        duration: 1.0
+        hand: right
+      - midi: 69  # A4
+        duration: 1.0
+        hand: right
+      - midi: 67  # G4
+        duration: 1.0
+        hand: right
+      - midi: 60  # C4
+        duration: 1.0
+        hand: right

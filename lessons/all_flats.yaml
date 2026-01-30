@@ -1,0 +1,133 @@
+title: "All Flat Notes (♭)"
+description: "Practice all five black keys using flat notation: D♭, E♭, G♭, A♭, B♭"
+settings:
+  tempo: 80
+  time_signature: "4/4"
+  key_signature: "F major"  # 1 flat: B♭ (flat key, so all black keys prefer ♭)
+
+measures:
+  # Measure 1: C and D♭ (ascending)
+  - notes:
+      - midi: 60  # C (Middle C)
+        duration: 2.0
+        hand: "right"
+      - midi: 61  # D♭ (Black key - shown with ♭ symbol)
+        duration: 2.0
+        hand: "right"
+
+  # Measure 2: D♭ and D (descending)
+  - notes:
+      - midi: 61  # D♭ (Black key - shown with ♭ symbol)
+        duration: 1.0
+        hand: "right"
+      - midi: 60  # C (down)
+        duration: 1.0
+        hand: "right"
+      - midi: 61  # D♭ (back up)
+        duration: 1.0
+        hand: "right"
+      - midi: 62  # D
+        duration: 1.0
+        hand: "right"
+
+  # Measure 3: E♭ and D (descending)
+  - notes:
+      - midi: 63  # E♭ (Black key - shown with ♭ symbol)
+        duration: 1.0
+        hand: "right"
+      - midi: 62  # D (down)
+        duration: 1.0
+        hand: "right"
+      - midi: 63  # E♭ (back up)
+        duration: 1.0
+        hand: "right"
+      - midi: 64  # E
+        duration: 1.0
+        hand: "right"
+
+  # Measure 4: E and F (no black key between)
+  - notes:
+      - midi: 64  # E
+        duration: 2.0
+        hand: "right"
+      - midi: 65  # F
+        duration: 2.0
+        hand: "right"
+
+  # Measure 5: G♭ and F (descending)
+  - notes:
+      - midi: 66  # G♭ (Black key - shown with ♭ symbol)
+        duration: 1.0
+        hand: "right"
+      - midi: 65  # F (down)
+        duration: 1.0
+        hand: "right"
+      - midi: 66  # G♭ (back up)
+        duration: 1.0
+        hand: "right"
+      - midi: 67  # G
+        duration: 1.0
+        hand: "right"
+
+  # Measure 6: A♭ and G (descending)
+  - notes:
+      - midi: 68  # A♭ (Black key - shown with ♭ symbol)
+        duration: 1.0
+        hand: "right"
+      - midi: 67  # G (down)
+        duration: 1.0
+        hand: "right"
+      - midi: 68  # A♭ (back up)
+        duration: 1.0
+        hand: "right"
+      - midi: 69  # A
+        duration: 1.0
+        hand: "right"
+
+  # Measure 7: B♭ and A (descending - KEY SIGNATURE NOTE)
+  - notes:
+      - midi: 70  # B♭ (Black key - IN KEY SIGNATURE for F major)
+        duration: 1.0
+        hand: "right"
+      - midi: 69  # A (down)
+        duration: 1.0
+        hand: "right"
+      - midi: 70  # B♭ (back up)
+        duration: 1.0
+        hand: "right"
+      - midi: 71  # B
+        duration: 1.0
+        hand: "right"
+
+  # Measure 8: All flats in sequence (8th notes beamed)
+  - notes:
+      - midi: 61  # D♭
+        duration: 0.5
+        hand: "right"
+      - midi: 63  # E♭
+        duration: 0.5
+        hand: "right"
+      - midi: 66  # G♭
+        duration: 0.5
+        hand: "right"
+      - midi: 68  # A♭
+        duration: 0.5
+        hand: "right"
+      - midi: 70  # B♭
+        duration: 0.5
+        hand: "right"
+      - midi: 68  # A♭ (back down)
+        duration: 0.5
+        hand: "right"
+      - midi: 66  # G♭
+        duration: 0.5
+        hand: "right"
+      - midi: 63  # E♭
+        duration: 0.5
+        hand: "right"
+
+  # Measure 9: All flats as chord (whole note)
+  - notes:
+      - midi: [61, 63, 66, 68, 70]  # All 5 black keys as chord
+        duration: 4.0
+        hand: "right"

@@ -1,0 +1,315 @@
+title: "Perfect (Ed Sheeran)"
+description: "Beautiful romantic ballad in Ab major. Right hand melody only."
+settings:
+  tempo: 65
+  time_signature: "6/8"
+  key_signature: "Ab major"
+
+measures:
+  # "I found a love for me"
+  # Re# Fa Sol# Sol# ^Do-Sib-Sol# ^Do
+  - notes:
+      - midi: 63  # D#4/Eb4
+        duration: 0.5
+        hand: right
+      - midi: 65  # F4
+        duration: 0.5
+        hand: right
+      - midi: 68  # G#4/Ab4
+        duration: 0.5
+        hand: right
+      - midi: 68  # G#4/Ab4
+        duration: 0.5
+        hand: right
+      - midi: 72  # C5
+        duration: 0.33
+        hand: right
+      - midi: 70  # Bb4
+        duration: 0.33
+        hand: right
+      - midi: 68  # G#4
+        duration: 0.34
+        hand: right
+
+  - notes:
+      - midi: 72  # C5
+        duration: 2.0
+        hand: right
+
+  # "Darling, just dive right in"
+  # Sib-^Do ^Do ^Do-Sib Sol# Sol#
+  - notes:
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+      - midi: 72  # C5
+        duration: 0.5
+        hand: right
+      - midi: 72  # C5
+        duration: 0.5
+        hand: right
+      - midi: 72  # C5
+        duration: 0.5
+        hand: right
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+      - midi: 68  # G#4
+        duration: 0.5
+        hand: right
+
+  - notes:
+      - midi: 68  # G#4
+        duration: 2.0
+        hand: right
+
+  # "Follow my lead"
+  # Sol#-Sib ^Do Sib
+  - notes:
+      - midi: 68  # G#4
+        duration: 0.5
+        hand: right
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+      - midi: 72  # C5
+        duration: 1.0
+        hand: right
+      - midi: 70  # Bb4
+        duration: 1.0
+        hand: right
+
+  # "I found a girl"
+  # ^Do Sib Sol# ^Do-Sib-Sol#
+  - notes:
+      - midi: 72  # C5
+        duration: 0.5
+        hand: right
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+      - midi: 68  # G#4
+        duration: 0.5
+        hand: right
+      - midi: 72  # C5
+        duration: 0.5
+        hand: right
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+      - midi: 68  # G#4
+        duration: 0.5
+        hand: right
+
+  # "Beautiful and sweet"
+  # ^Re#-^Do-Sib Sol# Sol#
+  - notes:
+      - midi: 75  # D#5/Eb5
+        duration: 0.5
+        hand: right
+      - midi: 72  # C5
+        duration: 0.5
+        hand: right
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+      - midi: 68  # G#4
+        duration: 0.75
+        hand: right
+      - midi: 68  # G#4
+        duration: 0.75
+        hand: right
+
+  # "I never knew you were the someone"
+  # Sol# Sib-^Do ^Do# ^Do# ^Do Sib Sib-Sol#
+  - notes:
+      - midi: 68  # G#4
+        duration: 0.5
+        hand: right
+      - midi: 70  # Bb4
+        duration: 0.25
+        hand: right
+      - midi: 72  # C5
+        duration: 0.25
+        hand: right
+      - midi: 73  # C#5/Db5
+        duration: 0.5
+        hand: right
+      - midi: 73  # C#5/Db5
+        duration: 0.5
+        hand: right
+      - midi: 72  # C5
+        duration: 0.5
+        hand: right
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+
+  - notes:
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+      - midi: 68  # G#4
+        duration: 1.0
+        hand: right
+
+  # "Waiting for me"
+  # Sol#-Sib ^Do Sib-Sol#-Sib
+  - notes:
+      - midi: 68  # G#4
+        duration: 0.5
+        hand: right
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+      - midi: 72  # C5
+        duration: 0.5
+        hand: right
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+      - midi: 68  # G#4
+        duration: 0.5
+        hand: right
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+
+  # CHORUS: "Baby, I'm dancing in the dark"
+  # ^Do-^Re#-^Do-Sib-Sol#
+  - notes:
+      - midi: 72  # C5
+        duration: 0.5
+        hand: right
+      - midi: 75  # D#5
+        duration: 0.5
+        hand: right
+      - midi: 72  # C5
+        duration: 0.5
+        hand: right
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+      - midi: 68  # G#4
+        duration: 1.0
+        hand: right
+
+  # Sol# ^Sol#-^Sol ^Fa ^Sol ^Do
+  - notes:
+      - midi: 68  # G#4
+        duration: 0.5
+        hand: right
+      - midi: 80  # G#5
+        duration: 0.25
+        hand: right
+      - midi: 79  # G5
+        duration: 0.25
+        hand: right
+      - midi: 77  # F5
+        duration: 0.5
+        hand: right
+      - midi: 79  # G5
+        duration: 0.5
+        hand: right
+      - midi: 72  # C5
+        duration: 1.0
+        hand: right
+
+  # "With you between my arms"
+  # ^Re# ^Re# ^Do#-^Do Sib Sol#
+  - notes:
+      - midi: 75  # D#5
+        duration: 0.5
+        hand: right
+      - midi: 75  # D#5
+        duration: 0.5
+        hand: right
+      - midi: 73  # C#5
+        duration: 0.25
+        hand: right
+      - midi: 72  # C5
+        duration: 0.25
+        hand: right
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+      - midi: 68  # G#4
+        duration: 1.0
+        hand: right
+
+  # "Barefoot on the grass"
+  # ^Sol#-^Sol ^Fa ^Sol ^Do-Sib-Sol#
+  - notes:
+      - midi: 80  # G#5
+        duration: 0.25
+        hand: right
+      - midi: 79  # G5
+        duration: 0.25
+        hand: right
+      - midi: 77  # F5
+        duration: 0.5
+        hand: right
+      - midi: 79  # G5
+        duration: 0.5
+        hand: right
+      - midi: 72  # C5
+        duration: 0.5
+        hand: right
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+      - midi: 68  # G#4
+        duration: 0.5
+        hand: right
+
+  # "Listening to our favourite song"
+  # ^Re#-^Re#-^Re# ^Re# ^Fa ^Do-Sib Sol#
+  - notes:
+      - midi: 75  # D#5
+        duration: 0.5
+        hand: right
+      - midi: 75  # D#5
+        duration: 0.5
+        hand: right
+      - midi: 75  # D#5
+        duration: 0.5
+        hand: right
+      - midi: 75  # D#5
+        duration: 0.5
+        hand: right
+      - midi: 77  # F5
+        duration: 0.5
+        hand: right
+      - midi: 72  # C5
+        duration: 0.5
+        hand: right
+
+  - notes:
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+      - midi: 68  # G#4
+        duration: 1.5
+        hand: right
+
+  # "You look perfect tonight"
+  # ^Do Sib Sib-Sol# Sol#-Sol#
+  - notes:
+      - midi: 72  # C5
+        duration: 0.5
+        hand: right
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+      - midi: 70  # Bb4
+        duration: 0.5
+        hand: right
+      - midi: 68  # G#4
+        duration: 0.5
+        hand: right
+      - midi: 68  # G#4
+        duration: 0.5
+        hand: right
+      - midi: 68  # G#4
+        duration: 1.5
+        hand: right

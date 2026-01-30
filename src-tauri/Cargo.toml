@@ -3,13 +3,17 @@ name = "piano-tauri-backend"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "piano-tauri-backend"
+path = "src/main.rs"
+
 [lib]
 name = "piano_tauri_backend"
 path = "src/lib.rs"
 
 [dependencies]
 # Tauri
-tauri = { version = "2.0", features = ["protocol-asset"] }
+tauri = { version = "2.0", features = [] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
@@ -39,4 +43,4 @@ uuid = { version = "1.0", features = ["v4", "serde"] }
 piano-domain = { path = "../crates/piano-domain" }
 
 [build-dependencies]
-tauri-build = "2.0"
+tauri-build = { version = "2.0", features = [] }

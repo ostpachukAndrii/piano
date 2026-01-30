@@ -1,0 +1,65 @@
+title: "Play Left Hand - Bass Line Practice"
+description: "Play a bass line with proper timing. Follow the tempo."
+mode: play_left_hand_timing
+settings:
+  tempo: 90
+  time_signature: "4/4"
+  key_signature: "C major"
+
+measures:
+  # Measure 1: Simple bass pattern
+  - notes:
+      - midi: 48  # C3
+        duration: 1.0
+        hand: left
+      - midi: 48  # C3
+        duration: 1.0
+        hand: left
+      - midi: 52  # E3
+        duration: 1.0
+        hand: left
+      - midi: 55  # G3
+        duration: 1.0
+        hand: left
+
+  # Measure 2: Walking bass
+  - notes:
+      - midi: 48  # C3
+        duration: 1.0
+        hand: left
+      - midi: 50  # D3
+        duration: 1.0
+        hand: left
+      - midi: 52  # E3
+        duration: 1.0
+        hand: left
+      - midi: 53  # F3
+        duration: 1.0
+        hand: left
+
+  # Measure 3: G bass with pattern
+  - notes:
+      - midi: 43  # G2
+        duration: 1.0
+        hand: left
+      - midi: 47  # B2
+        duration: 1.0
+        hand: left
+      - midi: 50  # D3
+        duration: 1.0
+        hand: left
+      - midi: 43  # G2
+        duration: 1.0
+        hand: left
+
+  # Measure 4: Return to C
+  - notes:
+      - midi: 48  # C3
+        duration: 2.0
+        hand: left
+      - midi: 43  # G2
+        duration: 1.0
+        hand: left
+      - midi: 48  # C3
+        duration: 1.0
+        hand: left

@@ -1,0 +1,560 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner "Storybook" [ref=e6]:
+    - heading "Storybook" [level=1] [ref=e7]
+    - img
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - link "Skip to content" [ref=e14] [cursor=pointer]:
+            - /url: "#storybook-preview-wrapper"
+          - link "Storybook" [ref=e16] [cursor=pointer]:
+            - /url: ./
+            - img "Storybook" [ref=e17]
+          - switch "Settings" [ref=e22] [cursor=pointer]:
+            - img [ref=e23]
+        - generic [ref=e28]:
+          - generic [ref=e30] [cursor=pointer]:
+            - button "Open onboarding guide" [ref=e34]:
+              - img [ref=e36]
+              - strong [ref=e38]: Get started
+            - generic [ref=e39]:
+              - button "Collapse onboarding checklist" [expanded] [ref=e40]:
+                - img [ref=e41]
+              - button "35% completed" [ref=e43]:
+                - generic [ref=e44]:
+                  - img [ref=e45]
+                  - img [ref=e47]
+                - generic [ref=e50]: 35%
+          - list [ref=e52]:
+            - listitem [ref=e53]:
+              - button "Open onboarding guide for Take the guided tour" [ref=e54] [cursor=pointer]:
+                - img [ref=e56]
+                - generic [ref=e59]: Take the guided tour
+              - button "Start"
+            - listitem [ref=e60]:
+              - button "Open onboarding guide for Change a story with Controls" [ref=e61] [cursor=pointer]:
+                - img [ref=e63]
+                - generic [ref=e66]: Change a story with Controls
+            - listitem [ref=e67]:
+              - button "Open onboarding guide for Run accessibility tests" [ref=e68] [cursor=pointer]:
+                - img [ref=e70]
+                - generic [ref=e73]: Run accessibility tests
+      - generic [ref=e74]: Search for components
+      - search [ref=e75]:
+        - combobox "Search for components" [ref=e76]:
+          - generic:
+            - img
+          - searchbox "Search for components" [ref=e77]
+          - code: ⌃ K
+          - button "Tag filters" [ref=e79] [cursor=pointer]:
+            - img [ref=e80]
+      - navigation "Stories" [ref=e83]:
+        - heading "Stories" [level=2] [ref=e84]
+        - generic [ref=e86]:
+          - link "Configure your project" [ref=e88] [cursor=pointer]:
+            - /url: /?path=/docs/configure-your-project--docs
+            - img [ref=e90]
+            - text: Configure your project
+          - generic [ref=e92]:
+            - button "Collapse" [expanded] [ref=e93] [cursor=pointer]:
+              - img [ref=e95]
+              - text: Components
+            - button "Expand all" [ref=e97] [cursor=pointer]:
+              - img [ref=e98]
+          - button "GrandStaff" [ref=e101] [cursor=pointer]:
+            - generic [ref=e102]:
+              - img [ref=e104]
+              - img [ref=e106]
+            - text: GrandStaff
+          - button "ScrollingPlayer" [expanded] [ref=e109] [cursor=pointer]:
+            - generic [ref=e110]:
+              - img [ref=e112]
+              - img [ref=e114]
+            - text: ScrollingPlayer
+          - link "Docs" [ref=e117] [cursor=pointer]:
+            - /url: /?path=/docs/components-scrollingplayer--docs
+            - img [ref=e119]
+            - text: Docs
+          - link "Default" [ref=e122] [cursor=pointer]:
+            - /url: /?path=/story/components-scrollingplayer--default
+            - img [ref=e124]
+            - text: Default
+          - generic [ref=e126]:
+            - link "Two Hands" [ref=e127] [cursor=pointer]:
+              - /url: /?path=/story/components-scrollingplayer--two-hands
+              - img [ref=e129]
+              - text: Two Hands
+            - link "Skip to content" [ref=e131] [cursor=pointer]:
+              - /url: "#storybook-preview-wrapper"
+          - link "With Chords" [ref=e133] [cursor=pointer]:
+            - /url: /?path=/story/components-scrollingplayer--with-chords
+            - img [ref=e135]
+            - text: With Chords
+          - link "Fast Tempo" [ref=e138] [cursor=pointer]:
+            - /url: /?path=/story/components-scrollingplayer--fast-tempo
+            - img [ref=e140]
+            - text: Fast Tempo
+          - link "Wide Range" [ref=e143] [cursor=pointer]:
+            - /url: /?path=/story/components-scrollingplayer--wide-range
+            - img [ref=e145]
+            - text: Wide Range
+          - link "No Lesson" [ref=e148] [cursor=pointer]:
+            - /url: /?path=/story/components-scrollingplayer--no-lesson
+            - img [ref=e150]
+            - text: No Lesson
+          - link "With Active Notes" [ref=e153] [cursor=pointer]:
+            - /url: /?path=/story/components-scrollingplayer--with-active-notes
+            - img [ref=e155]
+            - text: With Active Notes
+          - link "Auto Play Demo" [ref=e158] [cursor=pointer]:
+            - /url: /?path=/story/components-scrollingplayer--auto-play-demo
+            - img [ref=e160]
+            - text: Auto Play Demo
+          - link "Play To End" [ref=e163] [cursor=pointer]:
+            - /url: /?path=/story/components-scrollingplayer--play-to-end
+            - img [ref=e165]
+            - text: Play To End
+          - button "Staff" [ref=e168] [cursor=pointer]:
+            - generic [ref=e169]:
+              - img [ref=e171]
+              - img [ref=e173]
+            - text: Staff
+          - generic [ref=e175]:
+            - button "Collapse" [expanded] [ref=e176] [cursor=pointer]:
+              - img [ref=e178]
+              - text: Example
+            - button "Expand all" [ref=e180] [cursor=pointer]:
+              - img [ref=e181]
+          - button "Button" [ref=e184] [cursor=pointer]:
+            - generic [ref=e185]:
+              - img [ref=e187]
+              - img [ref=e189]
+            - text: Button
+          - button "Header" [ref=e192] [cursor=pointer]:
+            - generic [ref=e193]:
+              - img [ref=e195]
+              - img [ref=e197]
+            - text: Header
+          - button "Page" [ref=e200] [cursor=pointer]:
+            - generic [ref=e201]:
+              - img [ref=e203]
+              - img [ref=e205]
+            - text: Page
+  - generic [ref=e208]:
+    - region "Toolbar" [ref=e209]:
+      - heading "Toolbar" [level=2] [ref=e210]
+      - toolbar [ref=e211]:
+        - generic [ref=e212]:
+          - button "Reload story" [ref=e213] [cursor=pointer]:
+            - img [ref=e214]
+          - switch "Grid visibility" [ref=e216] [cursor=pointer]:
+            - img [ref=e217]
+          - button "Preview background" [ref=e219] [cursor=pointer]:
+            - img [ref=e220]
+          - switch "Measure tool" [ref=e223] [cursor=pointer]:
+            - img [ref=e224]
+          - switch "Outline tool" [ref=e227] [cursor=pointer]:
+            - img [ref=e228]
+          - button "Viewport size" [ref=e230] [cursor=pointer]:
+            - img [ref=e231]
+          - button "Vision filter" [ref=e235] [cursor=pointer]:
+            - img [ref=e236]
+        - generic [ref=e240]:
+          - button "Change zoom level" [ref=e241] [cursor=pointer]: 100%
+          - button "Enter full screen" [ref=e242] [cursor=pointer]:
+            - img [ref=e243]
+          - button "Share" [ref=e245] [cursor=pointer]:
+            - img [ref=e246]
+          - button "Open in editor" [ref=e249] [cursor=pointer]:
+            - img [ref=e250]
+    - main "Main preview area" [ref=e253]:
+      - heading "Main preview area" [level=2] [ref=e254]
+      - generic [ref=e256]:
+        - link "Skip to sidebar" [ref=e257] [cursor=pointer]:
+          - /url: "#components-scrollingplayer--two-hands"
+        - iframe [ref=e261]:
+          - generic [ref=f1e4]:
+            - generic [ref=f1e7]:
+              - button "Play/Pause" [ref=f1e8] [cursor=pointer]:
+                - img [ref=f1e9]: play_arrow
+              - generic [ref=f1e12]:
+                - progressbar [ref=f1e13]
+                - generic [ref=f1e16]: 0%
+              - generic [ref=f1e17]:
+                - img [ref=f1e18]: speed
+                - generic [ref=f1e19] [cursor=pointer]:
+                  - slider "Tempo" [ref=f1e20]: "100"
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic: "100"
+                - generic [ref=f1e21]: 100%
+              - radiogroup "Play Mode" [ref=f1e22]:
+                - radio "Flow" [ref=f1e23] [cursor=pointer]:
+                  - generic [ref=f1e24]:
+                    - img [ref=f1e25]: play_circle
+                    - text: Flow
+                - radio "Wait" [checked] [ref=f1e26] [cursor=pointer]:
+                  - generic [ref=f1e27]:
+                    - img [ref=f1e29]: pause_circle
+                    - text: Wait
+            - generic [ref=f1e32]:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic [ref=f1e34]: C
+                    - generic [ref=f1e37]: D
+                    - generic [ref=f1e40]: E
+                    - generic [ref=f1e42]: F
+                    - generic [ref=f1e45]: G
+                    - generic [ref=f1e48]: A
+                    - generic [ref=f1e51]: B
+                    - generic [ref=f1e53]: C
+                    - generic [ref=f1e56]: D
+                    - generic [ref=f1e59]: E
+                    - generic [ref=f1e61]: F
+                    - generic [ref=f1e64]: G
+                    - generic [ref=f1e67]: A
+                    - generic [ref=f1e70]: B
+                    - generic [ref=f1e72]: C
+                    - generic [ref=f1e75]: D
+                    - generic [ref=f1e78]: E
+                    - generic [ref=f1e80]: F
+                    - generic [ref=f1e83]: G
+                    - generic [ref=f1e86]: A
+                    - generic [ref=f1e89]: B
+                    - generic [ref=f1e91]: C
+                    - generic [ref=f1e94]: D
+                    - generic [ref=f1e97]: E
+                    - generic [ref=f1e99]: F
+                    - generic [ref=f1e102]: G
+                    - generic [ref=f1e105]: A
+                    - generic [ref=f1e108]: B
+                    - generic [ref=f1e110]: C
+  - region "Addon panel" [ref=e264]:
+    - heading "Addon panel" [level=2] [ref=e265]
+    - generic [ref=e266]:
+      - generic [ref=e267]:
+        - generic [ref=e268]:
+          - button "Move addon panel to right" [ref=e269] [cursor=pointer]:
+            - img [ref=e270]
+          - button "Hide addon panel" [ref=e273] [cursor=pointer]:
+            - img [ref=e274]
+        - tablist "Available addons" [ref=e279]:
+          - tab "Controls 49" [selected] [ref=e280] [cursor=pointer]:
+            - generic [ref=e281]:
+              - generic [ref=e282]: Controls
+              - generic [ref=e283]: "49"
+          - tab "Actions" [ref=e284] [cursor=pointer]:
+            - generic [ref=e286]: Actions
+          - tab "Interactions" [ref=e287] [cursor=pointer]:
+            - generic [ref=e289]: Interactions
+          - tab "Accessibility 2" [ref=e290] [cursor=pointer]:
+            - generic [ref=e291]:
+              - generic [ref=e292]: Accessibility
+              - generic [ref=e293]: "2"
+      - tabpanel "Controls 49" [ref=e294]:
+        - generic [ref=e301]:
+          - button "Reset controls" [ref=e303] [cursor=pointer]:
+            - img [ref=e304]
+          - table [ref=e306]:
+            - rowgroup [ref=e307]:
+              - row "Name Control" [ref=e308]:
+                - columnheader "Name" [ref=e309]
+                - columnheader "Control" [ref=e310]
+            - rowgroup [ref=e311]:
+              - row "Hide inputs items inputs Hide inputs items" [ref=e312]:
+                - cell "Hide inputs items inputs" [ref=e313]:
+                  - button "Hide inputs items" [ref=e314]
+                  - generic [ref=e315]:
+                    - img [ref=e316]
+                    - text: inputs
+                - cell "Hide inputs items" [ref=e318]:
+                  - button "Hide inputs items" [ref=e319]
+              - 'row "lesson Edit the lesson properties in JSON format lesson : { add a new property to the object ''lesson'' title : \"Two Hand Exercise\" remove the property ''title'' with value ''Two Hand Exercise'' from ''undefined'' description : \"Practice coordinating both hands\" remove the property ''description'' with value ''Practice coordinating both hands'' from ''undefined'' tempo : 100 remove the property ''tempo'' with value ''100'' from ''undefined'' time_signature : \"4/4\" remove the property ''time_signature'' with value ''4/4'' from ''undefined'' key_signature : \"C\" remove the property ''key_signature'' with value ''C'' from ''undefined'' total_beats : 16 remove the property ''total_beats'' with value ''16'' from ''undefined'' total_seconds : 9.6 remove the property ''total_seconds'' with value ''9.6'' from ''undefined'' measures : [...] 4 items remove the array ''measures'' } remove the object ''lesson''" [ref=e320]':
+                - cell "lesson" [ref=e321]
+                - 'cell "Edit the lesson properties in JSON format lesson : { add a new property to the object ''lesson'' title : \"Two Hand Exercise\" remove the property ''title'' with value ''Two Hand Exercise'' from ''undefined'' description : \"Practice coordinating both hands\" remove the property ''description'' with value ''Practice coordinating both hands'' from ''undefined'' tempo : 100 remove the property ''tempo'' with value ''100'' from ''undefined'' time_signature : \"4/4\" remove the property ''time_signature'' with value ''4/4'' from ''undefined'' key_signature : \"C\" remove the property ''key_signature'' with value ''C'' from ''undefined'' total_beats : 16 remove the property ''total_beats'' with value ''16'' from ''undefined'' total_seconds : 9.6 remove the property ''total_seconds'' with value ''9.6'' from ''undefined'' measures : [...] 4 items remove the array ''measures'' } remove the object ''lesson''" [ref=e322]':
+                  - generic [ref=e323]:
+                    - switch "Edit the lesson properties in JSON format" [ref=e324] [cursor=pointer]: Edit JSON
+                    - generic [ref=e326]:
+                      - button "lesson :" [expanded] [ref=e327]
+                      - region "lesson :" [ref=e328]:
+                        - text: "{"
+                        - button "add a new property to the object 'lesson'" [ref=e329] [cursor=pointer]:
+                          - img [ref=e330]
+                        - list [ref=e333]:
+                          - listitem [ref=e334]:
+                            - generic [ref=e335]: "title :"
+                            - generic [ref=e336]: "\"Two Hand Exercise\""
+                            - button "remove the property 'title' with value 'Two Hand Exercise' from 'undefined'" [ref=e337] [cursor=pointer]:
+                              - img [ref=e338]
+                          - listitem [ref=e341]:
+                            - generic [ref=e342]: "description :"
+                            - generic [ref=e343]: "\"Practice coordinating both hands\""
+                            - button "remove the property 'description' with value 'Practice coordinating both hands' from 'undefined'" [ref=e344] [cursor=pointer]:
+                              - img [ref=e345]
+                          - listitem [ref=e348]:
+                            - generic [ref=e349]: "tempo :"
+                            - generic [ref=e350]: "100"
+                            - button "remove the property 'tempo' with value '100' from 'undefined'" [ref=e351] [cursor=pointer]:
+                              - img [ref=e352]
+                          - listitem [ref=e355]:
+                            - generic [ref=e356]: "time_signature :"
+                            - generic [ref=e357]: "\"4/4\""
+                            - button "remove the property 'time_signature' with value '4/4' from 'undefined'" [ref=e358] [cursor=pointer]:
+                              - img [ref=e359]
+                          - listitem [ref=e362]:
+                            - generic [ref=e363]: "key_signature :"
+                            - generic [ref=e364]: "\"C\""
+                            - button "remove the property 'key_signature' with value 'C' from 'undefined'" [ref=e365] [cursor=pointer]:
+                              - img [ref=e366]
+                          - listitem [ref=e369]:
+                            - generic [ref=e370]: "total_beats :"
+                            - generic [ref=e371]: "16"
+                            - button "remove the property 'total_beats' with value '16' from 'undefined'" [ref=e372] [cursor=pointer]:
+                              - img [ref=e373]
+                          - listitem [ref=e376]:
+                            - generic [ref=e377]: "total_seconds :"
+                            - generic [ref=e378]: "9.6"
+                            - button "remove the property 'total_seconds' with value '9.6' from 'undefined'" [ref=e379] [cursor=pointer]:
+                              - img [ref=e380]
+                          - listitem [ref=e383]:
+                            - button "measures :" [ref=e384]
+                            - region "measures :" [ref=e385]:
+                              - generic [ref=e386]: "[...] 4 items"
+                              - button "remove the array 'measures'" [ref=e387] [cursor=pointer]:
+                                - img [ref=e388]
+                        - text: "}"
+                        - button "remove the object 'lesson'" [ref=e391] [cursor=pointer]:
+                          - img [ref=e392]
+              - 'row "activeNotes Edit the activeNotes properties in JSON format activeNotes : [ add a new item to the ''activeNotes'' array ] remove the array ''activeNotes''" [ref=e395]':
+                - cell "activeNotes" [ref=e396]
+                - 'cell "Edit the activeNotes properties in JSON format activeNotes : [ add a new item to the ''activeNotes'' array ] remove the array ''activeNotes''" [ref=e397]':
+                  - generic [ref=e398]:
+                    - switch "Edit the activeNotes properties in JSON format" [ref=e399] [cursor=pointer]: Edit JSON
+                    - listitem [ref=e401]:
+                      - button "activeNotes :" [expanded] [ref=e402]
+                      - region "activeNotes :" [ref=e403]:
+                        - text: "["
+                        - button "add a new item to the 'activeNotes' array" [ref=e404] [cursor=pointer]:
+                          - img [ref=e405]
+                        - list
+                        - text: "]"
+                        - button "remove the array 'activeNotes'" [ref=e408] [cursor=pointer]:
+                          - img [ref=e409]
+              - row "Hide properties items properties Hide properties items" [ref=e412]:
+                - cell "Hide properties items properties" [ref=e413]:
+                  - button "Hide properties items" [ref=e414]
+                  - generic [ref=e415]:
+                    - img [ref=e416]
+                    - text: properties
+                - cell "Hide properties items" [ref=e418]:
+                  - button "Hide properties items" [ref=e419]
+              - row "_frameCount Set number" [ref=e420]:
+                - cell "_frameCount" [ref=e421]
+                - cell "Set number" [ref=e422]:
+                  - button "Set number" [ref=e423] [cursor=pointer]
+              - row "_scrollingNotes Set object" [ref=e424]:
+                - cell "_scrollingNotes" [ref=e425]
+                - cell "Set object" [ref=e426]:
+                  - button "Set object" [ref=e427] [cursor=pointer]
+              - row "activeNotesArray Set object" [ref=e428]:
+                - cell "activeNotesArray" [ref=e429]
+                - cell "Set object" [ref=e430]:
+                  - button "Set object" [ref=e431] [cursor=pointer]
+              - row "animationId Set object" [ref=e432]:
+                - cell "animationId" [ref=e433]
+                - cell "Set object" [ref=e434]:
+                  - button "Set object" [ref=e435] [cursor=pointer]
+              - row "correctNotes Set object" [ref=e436]:
+                - cell "correctNotes" [ref=e437]
+                - cell "Set object" [ref=e438]:
+                  - button "Set object" [ref=e439] [cursor=pointer]
+              - row "currentBeat Set object" [ref=e440]:
+                - cell "currentBeat" [ref=e441]
+                - cell "Set object" [ref=e442]:
+                  - button "Set object" [ref=e443] [cursor=pointer]
+              - row "evaluationService Set object" [ref=e444]:
+                - cell "evaluationService" [ref=e445]
+                - cell "Set object" [ref=e446]:
+                  - button "Set object" [ref=e447] [cursor=pointer]
+              - row "hintNotes Set object" [ref=e448]:
+                - cell "hintNotes" [ref=e449]
+                - cell "Set object" [ref=e450]:
+                  - button "Set object" [ref=e451] [cursor=pointer]
+              - row "HIT_WINDOW_BEATS Set number" [ref=e452]:
+                - cell "HIT_WINDOW_BEATS" [ref=e453]
+                - cell "Set number" [ref=e454]:
+                  - button "Set number" [ref=e455] [cursor=pointer]
+              - row "isPlaying Set object" [ref=e456]:
+                - cell "isPlaying" [ref=e457]
+                - cell "Set object" [ref=e458]:
+                  - button "Set object" [ref=e459] [cursor=pointer]
+              - row "keyboardRange Set object" [ref=e460]:
+                - cell "keyboardRange" [ref=e461]
+                - cell "Set object" [ref=e462]:
+                  - button "Set object" [ref=e463] [cursor=pointer]
+              - row "lastFrameTime Set number" [ref=e464]:
+                - cell "lastFrameTime" [ref=e465]
+                - cell "Set number" [ref=e466]:
+                  - button "Set number" [ref=e467] [cursor=pointer]
+              - row "midiService Set object" [ref=e468]:
+                - cell "midiService" [ref=e469]
+                - cell "Set object" [ref=e470]:
+                  - button "Set object" [ref=e471] [cursor=pointer]
+              - row "pianoService Set object" [ref=e472]:
+                - cell "pianoService" [ref=e473]
+                - cell "Set object" [ref=e474]:
+                  - button "Set object" [ref=e475] [cursor=pointer]
+              - row "PIXELS_PER_BEAT Set number" [ref=e476]:
+                - cell "PIXELS_PER_BEAT" [ref=e477]
+                - cell "Set number" [ref=e478]:
+                  - button "Set number" [ref=e479] [cursor=pointer]
+              - row "playheadX Set object" [ref=e480]:
+                - cell "playheadX" [ref=e481]
+                - cell "Set object" [ref=e482]:
+                  - button "Set object" [ref=e483] [cursor=pointer]
+              - row "playMode Set object" [ref=e484]:
+                - cell "playMode" [ref=e485]
+                - cell "Set object" [ref=e486]:
+                  - button "Set object" [ref=e487] [cursor=pointer]
+              - row "progressPercent Set object" [ref=e488]:
+                - cell "progressPercent" [ref=e489]
+                - cell "Set object" [ref=e490]:
+                  - button "Set object" [ref=e491] [cursor=pointer]
+              - row "scrollingNotesArray Set object" [ref=e492]:
+                - cell "scrollingNotesArray" [ref=e493]
+                - cell "Set object" [ref=e494]:
+                  - button "Set object" [ref=e495] [cursor=pointer]
+              - row "stageHeight Set number" [ref=e496]:
+                - cell "stageHeight" [ref=e497]
+                - cell "Set number" [ref=e498]:
+                  - button "Set number" [ref=e499] [cursor=pointer]
+              - row "stageWidth Set number" [ref=e500]:
+                - cell "stageWidth" [ref=e501]
+                - cell "Set number" [ref=e502]:
+                  - button "Set number" [ref=e503] [cursor=pointer]
+              - row "tempoPercent Set object" [ref=e504]:
+                - cell "tempoPercent" [ref=e505]
+                - cell "Set object" [ref=e506]:
+                  - button "Set object" [ref=e507] [cursor=pointer]
+              - row "totalBeats Set number" [ref=e508]:
+                - cell "totalBeats" [ref=e509]
+                - cell "Set number" [ref=e510]:
+                  - button "Set number" [ref=e511] [cursor=pointer]
+              - row "wrongNotes Set object" [ref=e512]:
+                - cell "wrongNotes" [ref=e513]
+                - cell "Set object" [ref=e514]:
+                  - button "Set object" [ref=e515] [cursor=pointer]
+              - row "Hide outputs items outputs Hide outputs items" [ref=e516]:
+                - cell "Hide outputs items outputs" [ref=e517]:
+                  - button "Hide outputs items" [ref=e518]
+                  - generic [ref=e519]:
+                    - img [ref=e520]
+                    - text: outputs
+                - cell "Hide outputs items" [ref=e522]:
+                  - button "Hide outputs items" [ref=e523]
+              - row "completed Set object" [ref=e524]:
+                - cell "completed" [ref=e525]
+                - cell "Set object" [ref=e526]:
+                  - button "Set object" [ref=e527] [cursor=pointer]
+              - row "paused Set object" [ref=e528]:
+                - cell "paused" [ref=e529]
+                - cell "Set object" [ref=e530]:
+                  - button "Set object" [ref=e531] [cursor=pointer]
+              - row "Hide methods items methods Hide methods items" [ref=e532]:
+                - cell "Hide methods items methods" [ref=e533]:
+                  - button "Hide methods items" [ref=e534]
+                  - generic [ref=e535]:
+                    - img [ref=e536]
+                    - text: methods
+                - cell "Hide methods items" [ref=e538]:
+                  - button "Hide methods items" [ref=e539]
+              - row "beatToX Set object" [ref=e540]:
+                - cell "beatToX" [ref=e541]
+                - cell "Set object" [ref=e542]:
+                  - button "Set object" [ref=e543] [cursor=pointer]
+              - row "checkNoteHit Set object" [ref=e544]:
+                - cell "checkNoteHit" [ref=e545]
+                - cell "Set object" [ref=e546]:
+                  - button "Set object" [ref=e547] [cursor=pointer]
+              - row "clearHints Set object" [ref=e548]:
+                - cell "clearHints" [ref=e549]
+                - cell "Set object" [ref=e550]:
+                  - button "Set object" [ref=e551] [cursor=pointer]
+              - row "flashKeys Set object" [ref=e552]:
+                - cell "flashKeys" [ref=e553]
+                - cell "Set object" [ref=e554]:
+                  - button "Set object" [ref=e555] [cursor=pointer]
+              - row "gameLoop Set object" [ref=e556]:
+                - cell "gameLoop" [ref=e557]
+                - cell "Set object" [ref=e558]:
+                  - button "Set object" [ref=e559] [cursor=pointer]
+              - row "getActiveNote Set object" [ref=e560]:
+                - cell "getActiveNote" [ref=e561]
+                - cell "Set object" [ref=e562]:
+                  - button "Set object" [ref=e563] [cursor=pointer]
+              - row "getNoteDuration Set object" [ref=e564]:
+                - cell "getNoteDuration" [ref=e565]
+                - cell "Set object" [ref=e566]:
+                  - button "Set object" [ref=e567] [cursor=pointer]
+              - row "handleMidiInput Set object" [ref=e568]:
+                - cell "handleMidiInput" [ref=e569]
+                - cell "Set object" [ref=e570]:
+                  - button "Set object" [ref=e571] [cursor=pointer]
+              - row "initializeNotes Set object" [ref=e572]:
+                - cell "initializeNotes" [ref=e573]
+                - cell "Set object" [ref=e574]:
+                  - button "Set object" [ref=e575] [cursor=pointer]
+              - row "ngAfterViewInit Set object" [ref=e576]:
+                - cell "ngAfterViewInit" [ref=e577]
+                - cell "Set object" [ref=e578]:
+                  - button "Set object" [ref=e579] [cursor=pointer]
+              - row "ngOnChanges Set object" [ref=e580]:
+                - cell "ngOnChanges" [ref=e581]
+                - cell "Set object" [ref=e582]:
+                  - button "Set object" [ref=e583] [cursor=pointer]
+              - row "ngOnDestroy Set object" [ref=e584]:
+                - cell "ngOnDestroy" [ref=e585]
+                - cell "Set object" [ref=e586]:
+                  - button "Set object" [ref=e587] [cursor=pointer]
+              - row "onModeChange Set object" [ref=e588]:
+                - cell "onModeChange" [ref=e589]
+                - cell "Set object" [ref=e590]:
+                  - button "Set object" [ref=e591] [cursor=pointer]
+              - row "onPause Set object" [ref=e592]:
+                - cell "onPause" [ref=e593]
+                - cell "Set object" [ref=e594]:
+                  - button "Set object" [ref=e595] [cursor=pointer]
+              - row "onTempoChange Set object" [ref=e596]:
+                - cell "onTempoChange" [ref=e597]
+                - cell "Set object" [ref=e598]:
+                  - button "Set object" [ref=e599] [cursor=pointer]
+              - row "start Set object" [ref=e600]:
+                - cell "start" [ref=e601]
+                - cell "Set object" [ref=e602]:
+                  - button "Set object" [ref=e603] [cursor=pointer]
+              - row "stop Set object" [ref=e604]:
+                - cell "stop" [ref=e605]
+                - cell "Set object" [ref=e606]:
+                  - button "Set object" [ref=e607] [cursor=pointer]
+              - row "toggle Set object" [ref=e608]:
+                - cell "toggle" [ref=e609]
+                - cell "Set object" [ref=e610]:
+                  - button "Set object" [ref=e611] [cursor=pointer]
+              - row "updateHints Set object" [ref=e612]:
+                - cell "updateHints" [ref=e613]
+                - cell "Set object" [ref=e614]:
+                  - button "Set object" [ref=e615] [cursor=pointer]
+              - row "updateKeyboardRange Set object" [ref=e616]:
+                - cell "updateKeyboardRange" [ref=e617]
+                - cell "Set object" [ref=e618]:
+                  - button "Set object" [ref=e619] [cursor=pointer]
+              - row "updateNoteStates Set object" [ref=e620]:
+                - cell "updateNoteStates" [ref=e621]
+                - cell "Set object" [ref=e622]:
+                  - button "Set object" [ref=e623] [cursor=pointer]
+```

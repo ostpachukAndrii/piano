@@ -1,0 +1,82 @@
+title: "Full Performance - Both Hands"
+description: "Complete performance with both hands and timing. The ultimate challenge!"
+mode: play_two_hands_timing
+settings:
+  tempo: 80
+  time_signature: "4/4"
+  key_signature: "C major"
+
+measures:
+  # Measure 1: Left hand chord, right hand melody
+  - notes:
+      - midi: [48, 52, 55]  # C Major chord left
+        duration: 2.0
+        hand: left
+        chord: "C Major"
+      - midi: 60  # C4 right
+        duration: 1.0
+        hand: right
+      - midi: 62  # D4 right
+        duration: 1.0
+        hand: right
+
+  # Measure 2: Continue melody with bass support
+  - notes:
+      - midi: 43  # G2 left
+        duration: 2.0
+        hand: left
+      - midi: 64  # E4 right
+        duration: 1.0
+        hand: right
+      - midi: 65  # F4 right
+        duration: 1.0
+        hand: right
+
+  # Measure 3: F Major section
+  - notes:
+      - midi: [41, 45, 48]  # F Major chord left
+        duration: 2.0
+        hand: left
+        chord: "F Major"
+      - midi: 67  # G4 right
+        duration: 2.0
+        hand: right
+
+  # Measure 4: G Major section
+  - notes:
+      - midi: [43, 47, 50]  # G Major chord left
+        duration: 2.0
+        hand: left
+        chord: "G Major"
+      - midi: 65  # F4 right
+        duration: 1.0
+        hand: right
+      - midi: 64  # E4 right
+        duration: 1.0
+        hand: right
+
+  # Measure 5: Return to C with arpeggio
+  - notes:
+      - midi: 48  # C3 left
+        duration: 1.0
+        hand: left
+      - midi: 60  # C4 right
+        duration: 1.0
+        hand: right
+      - midi: 52  # E3 left
+        duration: 1.0
+        hand: left
+      - midi: 62  # D4 right
+        duration: 1.0
+        hand: right
+
+  # Measure 6: Final cadence
+  - notes:
+      - midi: [48, 52, 55]  # C Major left
+        duration: 2.0
+        hand: left
+        chord: "C Major"
+      - midi: [60, 64, 67]  # C Major right
+        duration: 2.0
+        hand: right
+        chord: "C Major"

@@ -3,10 +3,10 @@
     "version": "0.1.0",
     "identifier": "com.example.pianolesson",
     "build": {
-        "beforeBuildCommand": "",
-        "beforeDevCommand": "",
-        "devUrl": "http://localhost:3000",
-        "frontendDist": "../src-leptos/dist"
+        "beforeBuildCommand": "powershell -Command \"cd ../src; npm run build\"",
+        "beforeDevCommand": "powershell -Command \"cd ../src; npm start\"",
+        "devUrl": "http://localhost:4200",
+        "frontendDist": "../src/dist/piano-app/browser"
     },
     "app": {
         "windows": [
@@ -29,9 +29,6 @@
         "targets": [
             "msi",
             "nsis"
-        ],
-        "msiInstallerAssets": null,
-        "nsiInstallerAssets": null,
-        "nsiInstallerLanguages": null
+        ]
     }
 }

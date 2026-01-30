@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "src-tauri",
-    "src-leptos",
+    # "src-leptos", # REMOVED - Migrating to Angular
     "crates/piano-domain",
     "crates/piano-lessons",
     "crates/piano-midi",

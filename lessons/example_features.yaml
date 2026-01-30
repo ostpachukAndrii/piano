@@ -41,11 +41,10 @@ measures:
       
   # Measure 5: Mixed notes and rests
   - notes:
-      - pitch: 67  # Sol
+      - midi: 67  # Sol
         duration: 0.5
-      - rest: true
-        duration: 0.5
-- midi: 69  # La
+      - rest: 0.5
+      - midi: 69  # La
         duration: 1.0
       - rest: 1.0
       

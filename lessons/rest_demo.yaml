@@ -1,0 +1,77 @@
+title: "Rest Demo"
+description: "Learn all types of rests: whole, half, quarter, eighth, sixteenth"
+settings:
+  tempo: 80
+  time_signature: "4/4"
+  key_signature: "C major"
+
+measures:
+  # Measure 1: Whole rest (4 beats of silence)
+  - notes:
+      - duration: 4.0  # Whole rest - hangs from 4th line
+
+  # Measure 2: Two half rests (2 beats silence + 2 beats silence)
+  - notes:
+      - duration: 2.0  # Half rest - sits on 3rd line (middle)
+      - duration: 2.0  # Half rest
+
+  # Measure 3: Four quarter rests
+  - notes:
+      - duration: 1.0  # Quarter rest - squiggle shape
+      - duration: 1.0
+      - duration: 1.0
+      - duration: 1.0
+
+  # Measure 4: Eight eighth rests
+  - notes:
+      - duration: 0.5  # Eighth rest - single flag
+      - duration: 0.5
+      - duration: 0.5
+      - duration: 0.5
+      - duration: 0.5
+      - duration: 0.5
+      - duration: 0.5
+      - duration: 0.5
+
+  # Measure 5: Mix of notes and rests
+  - notes:
+      - midi: 60  # C
+        duration: 1.0
+        hand: "right"
+      - duration: 1.0  # Quarter rest
+      - midi: 64  # E
+        duration: 1.0
+        hand: "right"
+      - duration: 1.0  # Quarter rest
+
+  # Measure 6: Rhythm pattern with eighth notes and rests
+  - notes:
+      - midi: 67  # G
+        duration: 0.5
+        hand: "right"
+      - duration: 0.5  # Eighth rest
+      - midi: 67  # G
+        duration: 0.5
+        hand: "right"
+      - duration: 0.5  # Eighth rest
+      - midi: 69  # A
+        duration: 0.5
+        hand: "right"
+      - duration: 0.5  # Eighth rest
+      - midi: 67  # G
+        duration: 0.5
+        hand: "right"
+      - duration: 0.5  # Eighth rest
+
+  # Measure 7: Half note + half rest
+  - notes:
+      - midi: 72  # High C
+        duration: 2.0
+        hand: "right"
+      - duration: 2.0  # Half rest
+
+  # Measure 8: Final resolution
+  - notes:
+      - midi: 60  # C
+        duration: 4.0
+        hand: "right"

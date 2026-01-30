@@ -1,0 +1,133 @@
+title: "All Sharp Notes (♯)"
+description: "Practice all five black keys using sharp notation: C♯, D♯, F♯, G♯, A♯"
+settings:
+  tempo: 80
+  time_signature: "4/4"
+  key_signature: "C major"  # No sharps - so all black keys will show ♯
+
+measures:
+  # Measure 1: C and C♯ (ascending)
+  - notes:
+      - midi: 60  # C (Middle C)
+        duration: 1.0
+        hand: "right"
+      - midi: 61  # C♯ (Black key - shown with ♯ symbol)
+        duration: 1.0
+        hand: "right"
+      - midi: 60  # C (back down)
+        duration: 1.0
+        hand: "right"
+      - midi: 61  # C♯ (back up)
+        duration: 1.0
+        hand: "right"
+
+  # Measure 2: D and D♯ (ascending)
+  - notes:
+      - midi: 62  # D
+        duration: 1.0
+        hand: "right"
+      - midi: 63  # D♯ (Black key - shown with ♯ symbol)
+        duration: 1.0
+        hand: "right"
+      - midi: 62  # D (back down)
+        duration: 1.0
+        hand: "right"
+      - midi: 63  # D♯ (back up)
+        duration: 1.0
+        hand: "right"
+
+  # Measure 3: E and F (no sharp between)
+  - notes:
+      - midi: 64  # E
+        duration: 2.0
+        hand: "right"
+      - midi: 65  # F
+        duration: 2.0
+        hand: "right"
+
+  # Measure 4: F and F♯
+  - notes:
+      - midi: 65  # F
+        duration: 1.0
+        hand: "right"
+      - midi: 66  # F♯ (Black key - shown with ♯ symbol)
+        duration: 1.0
+        hand: "right"
+      - midi: 65  # F (back down)
+        duration: 1.0
+        hand: "right"
+      - midi: 66  # F♯ (back up)
+        duration: 1.0
+        hand: "right"
+
+  # Measure 5: G and G♯ (ascending)
+  - notes:
+      - midi: 67  # G
+        duration: 1.0
+        hand: "right"
+      - midi: 68  # G♯ (Black key - shown with ♯ symbol)
+        duration: 1.0
+        hand: "right"
+      - midi: 67  # G (back down)
+        duration: 1.0
+        hand: "right"
+      - midi: 68  # G♯ (back up)
+        duration: 1.0
+        hand: "right"
+
+  # Measure 6: A and A♯ (ascending)
+  - notes:
+      - midi: 69  # A
+        duration: 1.0
+        hand: "right"
+      - midi: 70  # A♯ (Black key - shown with ♯ symbol)
+        duration: 1.0
+        hand: "right"
+      - midi: 69  # A (back down)
+        duration: 1.0
+        hand: "right"
+      - midi: 70  # A♯ (back up)
+        duration: 1.0
+        hand: "right"
+
+  # Measure 7: B and C (no sharp between)
+  - notes:
+      - midi: 71  # B
+        duration: 2.0
+        hand: "right"
+      - midi: 72  # C (octave up)
+        duration: 2.0
+        hand: "right"
+
+  # Measure 8: All sharps in sequence (8th notes beamed)
+  - notes:
+      - midi: 61  # C♯
+        duration: 0.5
+        hand: "right"
+      - midi: 63  # D♯
+        duration: 0.5
+        hand: "right"
+      - midi: 66  # F♯
+        duration: 0.5
+        hand: "right"
+      - midi: 68  # G♯
+        duration: 0.5
+        hand: "right"
+      - midi: 70  # A♯
+        duration: 0.5
+        hand: "right"
+      - midi: 68  # G♯ (back down)
+        duration: 0.5
+        hand: "right"
+      - midi: 66  # F♯
+        duration: 0.5
+        hand: "right"
+      - midi: 63  # D♯
+        duration: 0.5
+        hand: "right"
+
+  # Measure 9: All sharps as chord (whole note)
+  - notes:
+      - midi: [61, 63, 66, 68, 70]  # All 5 black keys as chord
+        duration: 4.0
+        hand: "right"

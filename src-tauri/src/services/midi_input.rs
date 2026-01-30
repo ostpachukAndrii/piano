@@ -37,6 +37,11 @@ impl MidiInputService {
         }
     }
 
+    /// Get a clone of the event buffer for external processing
+    pub fn get_event_buffer(&self) -> Arc<Mutex<Vec<MidiEvent>>> {
+        Arc::clone(&self.event_buffer)
+    }
+
     /// Set callback for chord detection
     pub fn set_chord_callback<F>(&mut self, callback: F)
     where

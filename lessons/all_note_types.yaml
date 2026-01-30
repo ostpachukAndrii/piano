@@ -1,0 +1,64 @@
+title: "All Note Types"
+description: "Learn different note durations: whole, half, quarter, and eighth notes"
+settings:
+  tempo: 60
+  time_signature: "4/4"
+  key_signature: "C major"
+
+measures:
+  # Measure 1: 1 Whole note (4 beats) - hollow oval, no stem
+  - notes:
+      - midi: 60  # C4
+        duration: 4.0
+        hand: right
+
+  # Measure 2: 2 Half notes (2 beats each) - hollow oval with stem
+  - notes:
+      - midi: 62  # D4
+        duration: 2.0
+        hand: right
+      - midi: 64  # E4
+        duration: 2.0
+        hand: right
+
+  # Measure 3: 4 Quarter notes (1 beat each) - filled with stem
+  - notes:
+      - midi: 65  # F4
+        duration: 1.0
+        hand: right
+      - midi: 67  # G4
+        duration: 1.0
+        hand: right
+      - midi: 69  # A4
+        duration: 1.0
+        hand: right
+      - midi: 71  # B4
+        duration: 1.0
+        hand: right
+
+  # Measure 4: 8 Eighth notes (0.5 beats each) - filled with stem and flag
+  - notes:
+      - midi: 72  # C5
+        duration: 0.5
+        hand: right
+      - midi: 74  # D5
+        duration: 0.5
+        hand: right
+      - midi: 76  # E5
+        duration: 0.5
+        hand: right
+      - midi: 77  # F5
+        duration: 0.5
+        hand: right
+      - midi: 79  # G5
+        duration: 0.5
+        hand: right
+      - midi: 77  # F5
+        duration: 0.5
+        hand: right
+      - midi: 76  # E5
+        duration: 0.5
+        hand: right
+      - midi: 74  # D5
+        duration: 0.5
+        hand: right

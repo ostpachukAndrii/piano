@@ -8,11 +8,52 @@ use crate::lesson_parser::YamlLesson;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+/// Get the lessons directory path
+/// In dev: uses the workspace lessons/ folder
+/// In production: would use bundled resources
+fn get_lessons_dir() -> PathBuf {
+    // Try multiple locations
+    let candidates = [
+        // Relative to workspace root (dev mode)
+        PathBuf::from("lessons"),
+        // From src-tauri location
+        PathBuf::from("../lessons"),
+        // Absolute path for dev (Windows)
+        PathBuf::from(r"G:\Rust run\roland\lessons"),
+    ];
+
+    for path in &candidates {
+        if path.exists() {
+            return path.clone();
+        }
+    }
+
+    // Default fallback
+    PathBuf::from("lessons")
+}
+
+/// Lesson mode - determines evaluation behavior
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum LessonMode {
+    // Study modes (no timing)
+    StudyLeftHandNoTiming,
+    #[default]
+    StudyRightHandNoTiming,
+    StudyTwoHandsNoTiming,
+    // Play modes (with timing)
+    PlayLeftHandTiming,
+    PlayRightHandTiming,
+    PlayTwoHandsTiming,
+}
+
 /// Response DTO for a loaded lesson
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LessonDTO {
     pub title: String,
     pub description: Option<String>,
+    #[serde(default)]
+    pub mode: LessonMode,
     pub tempo: u32,
     pub time_signature: String,
     pub key_signature: String,
@@ -57,6 +98,8 @@ pub struct LessonMetadata {
     pub id: String,
     pub title: String,
     pub description: Option<String>,
+    #[serde(default)]
+    pub mode: LessonMode,
     pub duration_seconds: f32,
 }
 
@@ -64,7 +107,8 @@ pub struct LessonMetadata {
 #[tauri::command]
 pub fn load_lesson(lesson_id: String) -> Result<LessonDTO, String> {
     // Construct path to lesson file
-    let lesson_path = PathBuf::from("lessons").join(format!("{}.yaml", lesson_id));
+    let lessons_dir = get_lessons_dir();
+    let lesson_path = lessons_dir.join(format!("{}.yaml", lesson_id));
 
     // Parse the YAML file
     let yaml_lesson = YamlLesson::from_file(&lesson_path)?;
@@ -81,9 +125,13 @@ pub fn load_lesson(lesson_id: String) -> Result<LessonDTO, String> {
         })
         .collect();
 
+    // Parse mode from YAML settings or use default
+    let mode = yaml_lesson.mode.clone().unwrap_or_default();
+
     Ok(LessonDTO {
         title: yaml_lesson.title.clone(),
         description: yaml_lesson.description.clone(),
+        mode,
         tempo: yaml_lesson.settings.tempo,
         time_signature: yaml_lesson.settings.time_signature.clone(),
         key_signature: yaml_lesson.settings.key_signature.clone(),
@@ -96,7 +144,7 @@ pub fn load_lesson(lesson_id: String) -> Result<LessonDTO, String> {
 /// List all available lessons
 #[tauri::command]
 pub fn list_lessons() -> Result<Vec<LessonMetadata>, String> {
-    let lessons_dir = PathBuf::from("lessons");
+    let lessons_dir = get_lessons_dir();
 
     if !lessons_dir.exists() {
         return Err("Lessons directory not found".to_string());
@@ -122,10 +170,12 @@ pub fn list_lessons() -> Result<Vec<LessonMetadata>, String> {
                     .to_string();
 
                 let duration_seconds = yaml_lesson.total_seconds();
+                let mode = yaml_lesson.mode.clone().unwrap_or_default();
                 lessons.push(LessonMetadata {
                     id,
                     title: yaml_lesson.title.clone(),
                     description: yaml_lesson.description.clone(),
+                    mode,
                     duration_seconds,
                 });
             }

@@ -1,73 +1,111 @@
 title: "Happy Birthday"
 description: "Learn to play Happy Birthday melody"
 settings:
-  tempo: 120
+  tempo: 100
   time_signature: "4/4"
   key_signature: "C major"
 
 measures:
+  # "Happy birthday to you" (first phrase)
+  # Beat count: rest(2) + Hap(0.5) + py(0.5) + birth(1.0) = 4 beats
   - notes:
-      - midi: 60
+      - rest: 2.0
+      - midi: 60  # Hap-
         duration: 0.5
-      - midi: 60
+        hand: right
+      - midi: 60  # -py
         duration: 0.5
-      - midi: 62
+        hand: right
+      - midi: 62  # birth-
         duration: 1.0
-      
+        hand: right
+
+  # Beat count: day(1.0) + to(1.0) + you(2.0) = 4 beats
   - notes:
-      - midi: 60
-        duration: 0.5
-      - midi: 65
-        duration: 0.5
-      - midi: 64
+      - midi: 60  # -day
         duration: 1.0
-      
-  - notes:
-      - midi: 60
-        duration: 0.5
-      - pitch: 60
-        duration: 0.5
-      - midi: 62
+        hand: right
+      - midi: 65  # to
         duration: 1.0
-      
+        hand: right
+      - midi: 64  # you
+        duration: 2.0
+        hand: right
+
+  # "Happy birthday to you" (second phrase)
+  # Beat count: rest(2) + Hap(0.5) + py(0.5) + birth(1.0) = 4 beats
   - notes:
-      - midi: 60
+      - rest: 2.0
+      - midi: 60  # Hap-
         duration: 0.5
-      - midi: 67
+        hand: right
+      - midi: 60  # -py
         duration: 0.5
-      - midi: 65
+        hand: right
+      - midi: 62  # birth-
         duration: 1.0
-      
+        hand: right
+
+  # Beat count: day(1.0) + to(1.0) + you(2.0) = 4 beats
   - notes:
-      - midi: 60
-        duration: 0.5
-      - midi: 60
-        duration: 0.5
-      - midi: 72
-        duration: 0.5
-      - midi: 69
-        duration: 0.5
-      
-  - notes:
-      - midi: 65
-        duration: 0.5
-      - midi: 64
-        duration: 0.5
-      - midi: 62
-        duration: 0.5
-      - midi: 71
-        duration: 0.5
-      
-  - notes:
-      - midi: 71
+      - midi: 60  # -day
         duration: 1.0
-      - midi: 69
-        duration: 0.5
-      - midi: 65
-        duration: 0.5
-      
+        hand: right
+      - midi: 67  # to
+        duration: 1.0
+        hand: right
+      - midi: 65  # you
+        duration: 2.0
+        hand: right
+
+  # "Happy birthday dear [name]"
+  # Beat count: rest(2) + Hap(0.5) + py(0.5) + birth(1.0) = 4 beats
   - notes:
-      - midi: 67
+      - rest: 2.0
+      - midi: 60  # Hap-
+        duration: 0.5
+        hand: right
+      - midi: 60  # -py
+        duration: 0.5
+        hand: right
+      - midi: 72  # birth-
         duration: 1.0
-      - midi: 65
+        hand: right
+
+  # Beat count: day(1.0) + dear(1.0) + [name](2.0) = 4 beats
+  - notes:
+      - midi: 69  # -day
         duration: 1.0
+        hand: right
+      - midi: 65  # dear
+        duration: 1.0
+        hand: right
+      - midi: 64  # [name]
+        duration: 2.0
+        hand: right
+
+  # "Happy birthday to you" (last phrase)
+  # Beat count: rest(2) + Hap(0.5) + py(0.5) + birth(1.0) = 4 beats
+  - notes:
+      - rest: 2.0
+      - midi: 71  # Hap-
+        duration: 0.5
+        hand: right
+      - midi: 71  # -py
+        duration: 0.5
+        hand: right
+      - midi: 69  # birth-
+        duration: 1.0
+        hand: right
+
+  # Beat count: day(1.0) + to(1.0) + you(2.0) = 4 beats
+  - notes:
+      - midi: 65  # -day
+        duration: 1.0
+        hand: right
+      - midi: 67  # to
+        duration: 1.0
+        hand: right
+      - midi: 65  # you
+        duration: 2.0
+        hand: right

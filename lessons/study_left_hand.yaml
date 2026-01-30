@@ -1,0 +1,62 @@
+title: "Study Left Hand - Bass Clef Notes"
+description: "Learn bass clef note positions. Take your time - no timing required."
+mode: study_left_hand_no_timing
+settings:
+  tempo: 80
+  time_signature: "4/4"
+  key_signature: "C major"
+
+measures:
+  # Measure 1: C2-D2-E2-F2 (left hand, low bass)
+  - notes:
+      - midi: 36  # C2
+        duration: 1.0
+        hand: left
+      - midi: 38  # D2
+        duration: 1.0
+        hand: left
+      - midi: 40  # E2
+        duration: 1.0
+        hand: left
+      - midi: 41  # F2
+        duration: 1.0
+        hand: left
+
+  # Measure 2: G2-A2-B2-C3
+  - notes:
+      - midi: 43  # G2
+        duration: 1.0
+        hand: left
+      - midi: 45  # A2
+        duration: 1.0
+        hand: left
+      - midi: 47  # B2
+        duration: 1.0
+        hand: left
+      - midi: 48  # C3
+        duration: 1.0
+        hand: left
+
+  # Measure 3: Simple bass pattern
+  - notes:
+      - midi: 36  # C2
+        duration: 2.0
+        hand: left
+      - midi: 43  # G2
+        duration: 2.0
+        hand: left
+
+  # Measure 4: Descending
+  - notes:
+      - midi: 48  # C3
+        duration: 1.0
+        hand: left
+      - midi: 47  # B2
+        duration: 1.0
+        hand: left
+      - midi: 45  # A2
+        duration: 1.0
+        hand: left
+      - midi: 43  # G2
+        duration: 1.0
+        hand: left

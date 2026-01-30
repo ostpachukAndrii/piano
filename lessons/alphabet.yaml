@@ -72,3 +72,4 @@ measures:
       - midi: 65  # Y
         duration: 1.0
       - midi: 64  # Z
+        duration: 1.0

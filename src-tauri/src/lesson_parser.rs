@@ -1,3 +1,4 @@
+use crate::commands::lesson::LessonMode;
 use crate::models::{GlobalSettings, Measure, Note};
 use serde_yaml;
 use std::fs;
@@ -8,6 +9,7 @@ use std::path::Path;
 pub struct YamlLesson {
     pub title: String,
     pub description: Option<String>,
+    pub mode: Option<LessonMode>,
     pub settings: GlobalSettings,
     pub measures: Vec<Measure>,
 }
@@ -35,6 +37,9 @@ impl YamlLesson {
         // Extract description (optional)
         let description = value["description"].as_str().map(|s| s.to_string());
 
+        // Extract mode (optional) - determines lesson behavior
+        let mode = value["mode"].as_str().and_then(|s| parse_lesson_mode(s));
+
         // Extract settings
         let settings = parse_settings(&value["settings"])?;
 
@@ -44,6 +49,7 @@ impl YamlLesson {
         Ok(YamlLesson {
             title,
             description,
+            mode,
             settings,
             measures,
         })
@@ -86,6 +92,19 @@ fn parse_settings(settings_value: &serde_yaml::Value) -> Result<GlobalSettings, 
         time_signature,
         key_signature,
     })
+}
+
+/// Parse lesson mode from string
+fn parse_lesson_mode(mode_str: &str) -> Option<LessonMode> {
+    match mode_str {
+        "study_left_hand_no_timing" => Some(LessonMode::StudyLeftHandNoTiming),
+        "study_right_hand_no_timing" => Some(LessonMode::StudyRightHandNoTiming),
+        "study_two_hands_no_timing" => Some(LessonMode::StudyTwoHandsNoTiming),
+        "play_left_hand_timing" => Some(LessonMode::PlayLeftHandTiming),
+        "play_right_hand_timing" => Some(LessonMode::PlayRightHandTiming),
+        "play_two_hands_timing" => Some(LessonMode::PlayTwoHandsTiming),
+        _ => None,
+    }
 }
 
 fn parse_measures(measures_value: &serde_yaml::Value) -> Result<Vec<Measure>, String> {

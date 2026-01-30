@@ -1,0 +1,34 @@
+title: "All Rest Types"
+description: "Learn different rest durations: whole, half, quarter, and eighth rests"
+settings:
+  tempo: 60
+  time_signature: "4/4"
+  key_signature: "C major"
+
+measures:
+  # Measure 1: Whole rest (4 beats) - rectangle hanging from 4th line
+  - notes:
+      - rest: 4.0
+
+  # Measure 2: Half rests (2 beats each) - rectangle sitting on 3rd line
+  - notes:
+      - rest: 2.0
+      - rest: 2.0
+
+  # Measure 3: Quarter rests (1 beat each) - zigzag symbol
+  - notes:
+      - rest: 1.0
+      - rest: 1.0
+      - rest: 1.0
+      - rest: 1.0
+
+  # Measure 4: Eighth rests (0.5 beats each) - slanted with flag
+  - notes:
+      - rest: 0.5
+      - rest: 0.5
+      - rest: 0.5
+      - rest: 0.5
+      - rest: 0.5
+      - rest: 0.5
+      - rest: 0.5
+      - rest: 0.5

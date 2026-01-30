@@ -1,0 +1,50 @@
+title: "Notes and Rests"
+description: "Practice playing notes with rests in between"
+settings:
+  tempo: 80
+  time_signature: "4/4"
+  key_signature: "C major"
+
+measures:
+  # Measure 1: Quarter note, quarter rest, quarter note, quarter rest
+  - notes:
+      - midi: 60
+        duration: 1.0
+        hand: right
+      - rest: 1.0
+      - midi: 62
+        duration: 1.0
+        hand: right
+      - rest: 1.0
+
+  # Measure 2: Half note, half rest
+  - notes:
+      - midi: 64
+        duration: 2.0
+        hand: right
+      - rest: 2.0
+
+  # Measure 3: Eighth notes with eighth rests
+  - notes:
+      - midi: 65
+        duration: 0.5
+        hand: right
+      - rest: 0.5
+      - midi: 67
+        duration: 0.5
+        hand: right
+      - rest: 0.5
+      - midi: 69
+        duration: 0.5
+        hand: right
+      - rest: 0.5
+      - midi: 71
+        duration: 0.5
+        hand: right
+      - rest: 0.5
+
+  # Measure 4: Whole note
+  - notes:
+      - midi: 72
+        duration: 4.0
+        hand: right

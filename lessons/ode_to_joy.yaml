@@ -1,0 +1,121 @@
+title: "Ode to Joy"
+description: "Beethoven's famous melody from Symphony No. 9"
+settings:
+  tempo: 100
+  time_signature: "4/4"
+  key_signature: "C major"
+
+measures:
+  # Measure 1: E E F G
+  - notes:
+      - midi: 64  # E
+        duration: 1.0
+        hand: right
+      - midi: 64  # E
+        duration: 1.0
+        hand: right
+      - midi: 65  # F
+        duration: 1.0
+        hand: right
+      - midi: 67  # G
+        duration: 1.0
+        hand: right
+
+  # Measure 2: G F E D
+  - notes:
+      - midi: 67  # G
+        duration: 1.0
+        hand: right
+      - midi: 65  # F
+        duration: 1.0
+        hand: right
+      - midi: 64  # E
+        duration: 1.0
+        hand: right
+      - midi: 62  # D
+        duration: 1.0
+        hand: right
+
+  # Measure 3: C C D E
+  - notes:
+      - midi: 60  # C
+        duration: 1.0
+        hand: right
+      - midi: 60  # C
+        duration: 1.0
+        hand: right
+      - midi: 62  # D
+        duration: 1.0
+        hand: right
+      - midi: 64  # E
+        duration: 1.0
+        hand: right
+
+  # Measure 4: E. D D (dotted quarter, eighth, half)
+  - notes:
+      - midi: 64  # E (dotted quarter)
+        duration: 1.5
+        hand: right
+      - midi: 62  # D (eighth)
+        duration: 0.5
+        hand: right
+      - midi: 62  # D (half)
+        duration: 2.0
+        hand: right
+
+  # Measure 5: E E F G (repeat)
+  - notes:
+      - midi: 64  # E
+        duration: 1.0
+        hand: right
+      - midi: 64  # E
+        duration: 1.0
+        hand: right
+      - midi: 65  # F
+        duration: 1.0
+        hand: right
+      - midi: 67  # G
+        duration: 1.0
+        hand: right
+
+  # Measure 6: G F E D
+  - notes:
+      - midi: 67  # G
+        duration: 1.0
+        hand: right
+      - midi: 65  # F
+        duration: 1.0
+        hand: right
+      - midi: 64  # E
+        duration: 1.0
+        hand: right
+      - midi: 62  # D
+        duration: 1.0
+        hand: right
+
+  # Measure 7: C C D E
+  - notes:
+      - midi: 60  # C
+        duration: 1.0
+        hand: right
+      - midi: 60  # C
+        duration: 1.0
+        hand: right
+      - midi: 62  # D
+        duration: 1.0
+        hand: right
+      - midi: 64  # E
+        duration: 1.0
+        hand: right
+
+  # Measure 8: D. C C (dotted quarter, eighth, half)
+  - notes:
+      - midi: 62  # D (dotted quarter)
+        duration: 1.5
+        hand: right
+      - midi: 60  # C (eighth)
+        duration: 0.5
+        hand: right
+      - midi: 60  # C (half)
+        duration: 2.0
+        hand: right

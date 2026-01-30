@@ -1,0 +1,56 @@
+title: "Study Both Hands - Coordination"
+description: "Practice hand coordination. Take your time learning each hand's part."
+mode: study_two_hands_no_timing
+settings:
+  tempo: 60
+  time_signature: "4/4"
+  key_signature: "C major"
+
+measures:
+  # Measure 1: Right hand C, then left hand C
+  - notes:
+      - midi: 60  # C4 right
+        duration: 2.0
+        hand: right
+      - midi: 48  # C3 left
+        duration: 2.0
+        hand: left
+
+  # Measure 2: Left hand chord, right hand melody
+  - notes:
+      - midi: [48, 52, 55]  # C Major left hand
+        duration: 2.0
+        hand: left
+        chord: "C Major"
+      - midi: 60  # C4 right
+        duration: 1.0
+        hand: right
+      - midi: 62  # D4 right
+        duration: 1.0
+        hand: right
+
+  # Measure 3: Alternating hands
+  - notes:
+      - midi: 48  # C3 left
+        duration: 1.0
+        hand: left
+      - midi: 60  # C4 right
+        duration: 1.0
+        hand: right
+      - midi: 43  # G2 left
+        duration: 1.0
+        hand: left
+      - midi: 67  # G4 right
+        duration: 1.0
+        hand: right
+
+  # Measure 4: Simple coordination
+  - notes:
+      - midi: [48, 52, 55]  # C Major left
+        duration: 2.0
+        hand: left
+        chord: "C Major"
+      - midi: [60, 64, 67]  # C Major right
+        duration: 2.0
+        hand: right
+        chord: "C Major"
