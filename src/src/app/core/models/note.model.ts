@@ -13,6 +13,7 @@ export interface SingleNoteDTO {
     duration: number;
     hand: string;
     accidental?: string;
+    start_beat?: number;
 }
 
 /**
@@ -23,13 +24,16 @@ export interface ChordNoteDTO {
     duration: number;
     hand: string;
     chord?: string;
+    start_beat?: number;
 }
 
 /**
- * Rest - only has duration, no midi
+ * Rest - has duration and hand, no midi
  */
 export interface RestNoteDTO {
     duration: number;
+    hand: string;
+    start_beat?: number;
 }
 
 /**
@@ -76,4 +80,11 @@ export function getMidiNumbers(note: NoteDTO): number[] {
     }
     // It's a rest
     return [];
+}
+
+/**
+ * Get start_beat from any note type
+ */
+export function getStartBeat(note: NoteDTO): number | undefined {
+    return (note as { start_beat?: number }).start_beat;
 }

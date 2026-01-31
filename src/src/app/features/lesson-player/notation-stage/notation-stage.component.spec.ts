@@ -31,7 +31,7 @@ describe('NotationStageComponent', () => {
         });
 
         it('should have PIXELS_PER_BEAT constant', () => {
-            expect(component.PIXELS_PER_BEAT).toBe(80);
+            expect(component.PIXELS_PER_BEAT).toBe(120);
         });
     });
 
@@ -123,8 +123,8 @@ describe('NotationStageComponent', () => {
             expect(component.getStateColor('upcoming')).toBe('#ffffff');
         });
 
-        it('should return blue for active notes', () => {
-            expect(component.getStateColor('active')).toBe('#3B82F6');
+        it('should return purple for active notes', () => {
+            expect(component.getStateColor('active')).toBe('#8B5CF6');
         });
 
         it('should return green for hit notes', () => {

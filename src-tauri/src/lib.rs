@@ -1,10 +1,13 @@
 // Tauri Piano Backend Library
 // This module re-exports all public commands, services, and models
 
+pub mod adapters;
 pub mod commands;
 pub mod config;
+pub mod errors;
 pub mod lesson_parser;
 pub mod models;
+pub mod mxl_parser;
 pub mod services;
 pub mod utils;
 
@@ -12,6 +15,7 @@ pub mod utils;
 pub use config::*;
 pub use lesson_parser::YamlLesson;
 pub use models::{GlobalSettings, Measure, MidiChord, MidiDeviceInfo, MidiEvent, Note};
+pub use mxl_parser::MxlLesson;
 pub use services::{
     EvaluationResult, EvaluationService, FeedbackType, LessonParser, MidiInputService,
     PlaybackManager, StatisticsService,

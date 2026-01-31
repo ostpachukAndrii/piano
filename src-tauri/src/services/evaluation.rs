@@ -9,12 +9,6 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Tolerance for timing check in milliseconds
-const TIMING_TOLERANCE_MS: u64 = 150;
-
-/// Tolerance for duration check as percentage (0.0 - 1.0)
-const DURATION_TOLERANCE: f32 = 0.25;
-
 /// Feedback type for evaluation results
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FeedbackType {
@@ -117,8 +111,10 @@ impl EvaluationService {
     /// Check if timing is within tolerance
     /// Returns (is_correct, offset_ms)
     pub fn timing_correct(played_time_ms: u64, expected_time_ms: u64) -> (bool, i64) {
+        let config = crate::config::get_config();
+        let tolerance = config.evaluation.timing_acceptable_ms as u64;
         let offset = played_time_ms as i64 - expected_time_ms as i64;
-        let is_correct = offset.unsigned_abs() <= TIMING_TOLERANCE_MS;
+        let is_correct = offset.unsigned_abs() <= tolerance;
         (is_correct, offset)
     }
 
@@ -129,9 +125,11 @@ impl EvaluationService {
             return (true, 0.0);
         }
 
+        let config = crate::config::get_config();
+        let tolerance = config.evaluation.duration_tolerance_percent / 100.0; // Convert from percentage
         let difference =
             (played_duration_ms as f32 - expected_duration_ms as f32) / expected_duration_ms as f32;
-        let is_correct = difference.abs() <= DURATION_TOLERANCE;
+        let is_correct = difference.abs() <= tolerance;
         (is_correct, difference)
     }
 
@@ -242,10 +240,10 @@ mod tests {
         assert!(ok);
         assert_eq!(offset, 100);
 
-        // Outside tolerance
-        let (ok, offset) = EvaluationService::timing_correct(1200, 1000);
+        // Outside tolerance (config default is 200ms, so 250ms should fail)
+        let (ok, offset) = EvaluationService::timing_correct(1250, 1000);
         assert!(!ok);
-        assert_eq!(offset, 200);
+        assert_eq!(offset, 250);
     }
 
     #[test]

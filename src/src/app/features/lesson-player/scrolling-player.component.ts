@@ -18,7 +18,9 @@ import { LessonDTO } from '../../core/models/lesson.model';
 import {
     ChordNoteDTO,
     NoteDTO,
+    RestNoteDTO,
     SingleNoteDTO,
+    getStartBeat,
     isChordNote,
     isRestNote,
     isSingleNote,
@@ -26,6 +28,7 @@ import {
 import { EvaluationService } from '../../core/services/evaluation.service';
 import { MidiService } from '../../core/services/midi.service';
 import { PianoSoundService } from '../../core/services/piano-sound.service';
+import { SoundService } from '../../core/services/sound.service';
 import { KeyboardRange, KeySignature, ScrollingNote, WrongNoteEvent } from './models/scrolling-note.model';
 import { ExtendedStats } from './lesson-completion-dialog.component';
 import { NotationStageComponent } from './notation-stage/notation-stage.component';
@@ -60,10 +63,14 @@ import { VirtualKeyboardComponent } from './virtual-keyboard/virtual-keyboard.co
                 [tempoPercent]="tempoPercent()"
                 [playMode]="playMode()"
                 [computerSoundEnabled]="computerSoundEnabled()"
+                [pianoSoundEnabled]="pianoSoundEnabled()"
+                [soundEffectsEnabled]="soundEffectsEnabled()"
                 [isFullscreen]="isFullscreen()"
                 (playToggle)="onPause()"
                 (autoPlayToggle)="onAutoPlayToggle()"
                 (computerSoundToggle)="onComputerSoundToggle()"
+                (pianoSoundToggle)="onPianoSoundToggle()"
+                (soundEffectsToggle)="onSoundEffectsToggle()"
                 (restart)="onRestart()"
                 (tempoChange)="onTempoChange($event)"
                 (modeChange)="onModeChange($event)"
@@ -82,7 +89,8 @@ import { VirtualKeyboardComponent } from './virtual-keyboard/virtual-keyboard.co
                 [beatsPerMeasure]="beatsPerMeasure"
                 [totalBeats]="totalBeats"
                 [wrongNoteEvents]="wrongNoteEvents()"
-                [keySignature]="keySignature()">
+                [keySignature]="keySignature()"
+                [timeSignature]="lesson?.time_signature ?? null">
             </app-notation-stage>
         </div>
 
@@ -126,8 +134,9 @@ import { VirtualKeyboardComponent } from './virtual-keyboard/virtual-keyboard.co
             height: 25%;
             min-height: 100px;
             background: linear-gradient(180deg, #1a1a2e 0%, #0f0f23 100%);
-            border-top: 2px solid #3B82F6;
+            border-top: 2px solid #8B5CF6;
             padding: 1rem;
+            box-sizing: border-box;
         }
     `]
 })
@@ -153,6 +162,7 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     private midiService = inject(MidiService);
     private evaluationService = inject(EvaluationService);
     private pianoService = inject(PianoSoundService);
+    private soundService = inject(SoundService);
     private elementRef = inject(ElementRef);
 
     private animationId: number | null = null;
@@ -171,6 +181,8 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     progressPercent = signal(0);
     currentBeat = signal(0);
     computerSoundEnabled = signal(true); // Computer sound playback on correct notes
+    pianoSoundEnabled = signal(true); // Piano note sounds
+    soundEffectsEnabled = signal(true); // Game sound effects (wrong notes, achievements, etc.)
     isFullscreen = signal(false);
 
     // Scrolling notes state - using signal for change detection
@@ -316,21 +328,46 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         if (!this.lesson) return;
 
         const notes: ScrollingNote[] = [];
-        let beatPosition = 0;
+        let fallbackBeatPosition = 0; // Used only when start_beat is not provided
+        let maxBeat = 0; // Track the maximum beat position for total duration
 
-        for (const measure of this.lesson.measures) {
+        // Calculate measure offset using time signature (e.g., 4/4 = 4 beats per measure)
+        const beatsPerMeasure = this.beatsPerMeasure;
+
+        for (let measureIndex = 0; measureIndex < this.lesson.measures.length; measureIndex++) {
+            const measure = this.lesson.measures[measureIndex];
+            // Measure offset = (measure number - 1) * beats per measure
+            // Measure numbers are 1-based, so first measure has offset 0
+            const measureOffset = (measure.number - 1) * beatsPerMeasure;
+
             for (const note of measure.notes) {
                 const duration = this.getNoteDuration(note);
+
+                // Use start_beat from backend if available, otherwise calculate sequentially
+                // Backend provides beat positions RELATIVE to each measure (0-based per measure)
+                // We add measureOffset to convert to absolute position across the piece
+                const backendStartBeat = getStartBeat(note);
+                let startBeat: number;
+
+                if (backendStartBeat !== undefined) {
+                    // MXL file: start_beat is relative to measure, add offset for absolute position
+                    startBeat = measureOffset + backendStartBeat;
+                } else {
+                    // YAML lesson: no start_beat, use sequential calculation
+                    startBeat = fallbackBeatPosition;
+                    fallbackBeatPosition += duration;
+                }
 
                 if (isRestNote(note)) {
                     // Rests: silent notes with no MIDI values
                     // They take up time and space but require no user input
+                    const restNote = note as RestNoteDTO;
                     notes.push({
                         midi: [],
-                        startBeat: beatPosition,
+                        startBeat,
                         durationBeats: duration,
                         state: 'upcoming',
-                        hand: 'right', // Default to treble staff for rendering
+                        hand: (restNote.hand as 'left' | 'right') || 'right',
                         isRest: true
                     });
                 } else {
@@ -349,7 +386,7 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
 
                     notes.push({
                         midi: midiValues,
-                        startBeat: beatPosition,
+                        startBeat,
                         durationBeats: duration,
                         state: 'upcoming',
                         hand,
@@ -357,12 +394,24 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
                     });
                 }
 
-                beatPosition += duration;
+                // Track maximum beat position for total duration
+                maxBeat = Math.max(maxBeat, startBeat + duration);
             }
         }
 
+        // Sort notes by startBeat to ensure proper ordering for display and playback
+        // Notes at the same beat position will be adjacent for proper visual grouping
+        notes.sort((a, b) => a.startBeat - b.startBeat);
+
+        // Debug: Log first few notes to verify beat positions
+        console.log('[ScrollingPlayer] First 10 notes after sorting:');
+        for (let i = 0; i < Math.min(10, notes.length); i++) {
+            const n = notes[i];
+            console.log(`  Note ${i}: startBeat=${n.startBeat.toFixed(2)}, hand=${n.hand}, midi=${n.midi.join(',')}, isRest=${n.isRest}`);
+        }
+
         this._scrollingNotes.set(notes);
-        this._totalBeats = beatPosition;
+        this._totalBeats = maxBeat;
         this.currentBeat.set(0);
         this.progressPercent.set(0);
     }
@@ -536,6 +585,26 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
      */
     onComputerSoundToggle() {
         this.computerSoundEnabled.set(!this.computerSoundEnabled());
+    }
+
+    /**
+     * Toggle piano sound playback
+     * When enabled, plays piano sounds when user plays notes
+     */
+    onPianoSoundToggle() {
+        this.pianoSoundEnabled.set(!this.pianoSoundEnabled());
+        this.pianoService.toggle();
+        console.log('[ScrollingPlayer] Piano sound toggled:', this.pianoSoundEnabled());
+    }
+
+    /**
+     * Toggle sound effects
+     * When enabled, plays game sound effects (wrong notes, achievements, etc.)
+     */
+    onSoundEffectsToggle() {
+        this.soundEffectsEnabled.set(!this.soundEffectsEnabled());
+        this.soundService.toggleSound();
+        console.log('[ScrollingPlayer] Sound effects toggled:', this.soundEffectsEnabled());
     }
 
     /**
@@ -726,8 +795,11 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
                 'completionTarget:', completionTargetBeat,
                 'allNotesCompleteBeat:', this.allNotesCompleteBeat);
             this.stop();
-            // Small delay for the sound to finish, then show completion
+
+            // Show completion dialog in fullscreen - don't exit fullscreen yet
+            // Fullscreen will be exited only if user clicks "Back to Lessons"
             setTimeout(() => {
+                console.log('[ScrollingPlayer] Emitting completion event (staying in fullscreen)');
                 this.completed.emit(this.calculateExtendedStats());
             }, 500);
             return;
@@ -1160,7 +1232,7 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
      */
     private cleanupOffscreenWrongNotes(): void {
         const currentBeat = this.currentBeat();
-        const pixelsPerBeat = 80; // Same as NotationStageComponent.PIXELS_PER_BEAT
+        const pixelsPerBeat = 120; // Same as NotationStageComponent.PIXELS_PER_BEAT
         const playheadX = 300; // Same as NotationStageComponent default
 
         // Calculate the beat threshold for off-screen (X < -50)

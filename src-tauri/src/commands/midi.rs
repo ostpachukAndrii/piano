@@ -61,63 +61,47 @@ pub fn start_midi_listening(
 
     tracing::info!("Starting MIDI polling thread...");
 
+    // Create event processor using configuration
+    let processor = crate::services::EventProcessor::from_config();
+
     // Start a polling loop in a separate thread
     let app_handle = app.clone();
     std::thread::spawn(move || {
-        use crate::models::MidiChord;
-        use std::time::{Duration, Instant};
-
-        let start_time = Instant::now();
-        const CHORD_WINDOW_MS: u64 = 50;
+        use crate::services::midi::ProcessResult;
+        use std::time::Duration;
 
         loop {
             std::thread::sleep(Duration::from_millis(10));
 
             // Process events from the shared buffer
-            if let Ok(mut buffer) = event_buffer.lock() {
-                if buffer.is_empty() {
-                    continue;
+            match processor.process_buffer(&event_buffer) {
+                Ok(results) => {
+                    for result in results {
+                        match result {
+                            ProcessResult::NoEvents | ProcessResult::WaitingForWindow => {
+                                // Nothing to emit
+                            }
+                            ProcessResult::NoteOffsReady(notes) => {
+                                // Emit note-off events
+                                for midi in notes {
+                                    let _ = app_handle.emit("midi_note_off", midi);
+                                    tracing::debug!("Emitted note_off: {}", midi);
+                                }
+                            }
+                            ProcessResult::ChordReady(chord) => {
+                                // Emit chord to frontend
+                                tracing::info!(
+                                    "Emitted chord: {:?} (hand: {}) to frontend",
+                                    chord.notes,
+                                    chord.hand
+                                );
+                                let _ = app_handle.emit("midi_chord_detected", &chord);
+                            }
+                        }
+                    }
                 }
-
-                // Separate Note On and Note Off events
-                let note_on_events: Vec<_> =
-                    buffer.iter().filter(|e| e.is_note_on).cloned().collect();
-                let note_off_events: Vec<_> =
-                    buffer.iter().filter(|e| !e.is_note_on).cloned().collect();
-
-                // Emit note-off events immediately (no grouping needed)
-                for event in &note_off_events {
-                    let _ = app_handle.emit("midi_note_off", event.midi);
-                    tracing::debug!("Emitted note_off: {}", event.midi);
-                }
-
-                // Process note-on events with chord grouping
-                if note_on_events.is_empty() {
-                    buffer.clear();
-                    continue;
-                }
-
-                // Check if oldest event is older than chord window
-                let oldest = note_on_events
-                    .first()
-                    .map(|e| e.timestamp)
-                    .unwrap_or_else(Instant::now);
-
-                if oldest.elapsed() >= Duration::from_millis(CHORD_WINDOW_MS) {
-                    // Group events into a chord
-                    let chord = MidiChord::from_events(&note_on_events, start_time);
-
-                    // Emit to frontend
-                    let _ = app_handle.emit("midi_chord_detected", &chord);
-
-                    tracing::info!(
-                        "Emitted chord: {:?} (hand: {}) to frontend",
-                        chord.notes,
-                        chord.hand
-                    );
-
-                    // Clear buffer
-                    buffer.clear();
+                Err(e) => {
+                    tracing::error!("Error processing MIDI events: {}", e);
                 }
             }
         }

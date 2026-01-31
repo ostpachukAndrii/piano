@@ -81,17 +81,18 @@ impl MidiChord {
     }
 
     /// Determine hand assignment based on note positions
-    /// Split point: MIDI 60 (Middle C)
-    /// - All notes < 60 → left hand
-    /// - All notes >= 60 → right hand
+    /// Split point from configuration (default: MIDI 60 = Middle C)
+    /// - All notes < split_point → left hand
+    /// - All notes >= split_point → right hand
     /// - Mixed → both hands
     fn determine_hand(notes: &[u8]) -> String {
         if notes.is_empty() {
             return "right".to_string();
         }
 
-        let has_left = notes.iter().any(|&n| n < 60);
-        let has_right = notes.iter().any(|&n| n >= 60);
+        let split_point = crate::config::get_config().midi.hand_split_point;
+        let has_left = notes.iter().any(|&n| n < split_point);
+        let has_right = notes.iter().any(|&n| n >= split_point);
 
         match (has_left, has_right) {
             (true, false) => "left".to_string(),

@@ -1320,7 +1320,7 @@ export class LessonPlayerComponent implements OnInit, OnDestroy {
      * Show completion dialog when lesson is finished
      * @param extendedStats Optional extended statistics from scrolling player
      */
-    showCompletionDialog(extendedStats?: ExtendedStats): void {
+    async showCompletionDialog(extendedStats?: ExtendedStats): Promise<void> {
         // Prevent duplicate dialogs
         if (this.isCompletionDialogOpen) {
             console.log('[LessonPlayer] Completion dialog already open, ignoring');
@@ -1331,7 +1331,10 @@ export class LessonPlayerComponent implements OnInit, OnDestroy {
         console.log('[LessonPlayer] Current lesson:', this.lesson());
         console.log('[LessonPlayer] Current stats:', this.evaluationService.stats());
         console.log('[LessonPlayer] Extended stats:', extendedStats);
+        console.log('[LessonPlayer] Fullscreen state:', !!document.fullscreenElement);
 
+        // Show dialog in fullscreen - high z-index CSS ensures it appears on top
+        // Only exit fullscreen if user clicks "Back to Lessons"
         this.isCompletionDialogOpen = true;
 
         // Award lesson completion XP
@@ -1343,22 +1346,37 @@ export class LessonPlayerComponent implements OnInit, OnDestroy {
                 stats: this.evaluationService.stats(),
                 extendedStats: extendedStats
             },
-            disableClose: true,
+            disableClose: false, // Allow clicking outside to close
             width: '500px',
+            maxWidth: '90vw', // Ensure it fits on screen
             // Ensure dialog appears above fullscreen content
-            panelClass: 'completion-dialog-fullscreen',
+            panelClass: ['completion-dialog-fullscreen', 'force-clickable'],
             hasBackdrop: true,
-            backdropClass: 'completion-dialog-backdrop'
+            backdropClass: 'completion-dialog-backdrop',
+            // Material Dialog centers automatically - don't override position
+            autoFocus: true, // Auto-focus first button
+            restoreFocus: true
         });
 
         console.log('[LessonPlayer] Dialog opened, ref:', dialogRef);
 
-        dialogRef.afterClosed().subscribe(result => {
+        dialogRef.afterClosed().subscribe(async result => {
             console.log('[LessonPlayer] Dialog closed with result:', result);
             this.isCompletionDialogOpen = false;
+
             if (result === 'replay') {
+                // Stay in fullscreen when replaying
                 this.replayLesson();
             } else {
+                // Exit fullscreen when going back to lessons
+                if (document.fullscreenElement) {
+                    console.log('[LessonPlayer] Exiting fullscreen before going back');
+                    try {
+                        await document.exitFullscreen();
+                    } catch (error) {
+                        console.error('[LessonPlayer] Error exiting fullscreen:', error);
+                    }
+                }
                 this.goBack();
             }
         });

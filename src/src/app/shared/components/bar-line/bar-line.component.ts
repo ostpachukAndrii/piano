@@ -173,6 +173,7 @@ export type BarLineType = 'single' | 'double' | 'end' | 'repeat-start' | 'repeat
     styles: [`
         :host {
             display: inline-block;
+            background: #0f0f23;
         }
 
         .bar-line-svg {
@@ -183,7 +184,7 @@ export type BarLineType = 'single' | 'double' | 'end' | 'repeat-start' | 'repeat
 export class BarLineComponent {
     @Input() type: BarLineType = 'single';
     @Input() height = 60; // Height of the bar line (staff height)
-    @Input() color = '#333333';
+    @Input() color = '#ffffff';
     @Input() size: 'small' | 'medium' | 'large' = 'medium';
 
     // Line width constants

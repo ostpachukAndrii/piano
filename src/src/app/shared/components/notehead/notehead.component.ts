@@ -128,11 +128,30 @@ export function beatsToNoteDuration(beats: number): NoteDuration {
                     class="hit-ring"
                 />
             }
+
+            <!-- Anchor point (red dot) for Storybook -->
+            @if (showAnchor) {
+                <circle
+                    [attr.cx]="noteheadCx"
+                    [attr.cy]="noteheadCy"
+                    r="3"
+                    fill="#ff0000"
+                    class="anchor-point"
+                />
+                <circle
+                    [attr.cx]="noteheadCx"
+                    [attr.cy]="noteheadCy"
+                    r="1"
+                    fill="#ffffff"
+                    class="anchor-center"
+                />
+            }
         </svg>
     `,
     styles: [`
         :host {
             display: inline-block;
+            background: #0f0f23;
         }
 
         .notehead-svg {
@@ -165,6 +184,7 @@ export class NoteheadComponent {
     @Input() size: 'small' | 'medium' | 'large' = 'medium';
     @Input() stemDirection: 'up' | 'down' = 'up';
     @Input() showHitEffect = true;
+    @Input() showAnchor = false;
 
     // Base dimensions
     readonly noteheadRx = 10;

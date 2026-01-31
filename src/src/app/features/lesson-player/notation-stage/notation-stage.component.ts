@@ -8,8 +8,17 @@ import {
     SimpleChanges,
     ViewChild,
     signal,
+    inject,
 } from '@angular/core';
 import { BeamGroup, KeySignature, NoteState, ScrollingNote, TimingFeedback, WrongNoteEvent } from '../models/scrolling-note.model';
+import { ClefRendererService } from './clef-renderer.service';
+import { NoteheadRendererService } from './notehead-renderer.service';
+import { RestRendererService } from './rest-renderer.service';
+import { AccidentalRendererService } from './accidental-renderer.service';
+import { StaffRendererService } from './staff-renderer.service';
+import { TimeSignatureRendererService } from './time-signature-renderer.service';
+import { StaffMathService } from './staff-math.service';
+import { BeamingService, BeamableNote, BeamGroupResult } from './beaming.service';
 
 /**
  * Notation Stage Component (Zone B)
@@ -50,8 +59,8 @@ import { BeamGroup, KeySignature, NoteState, ScrollingNote, TimingFeedback, Wron
             top: 0;
             bottom: 0;
             width: 3px;
-            background: #3B82F6;
-            box-shadow: 0 0 10px #3B82F6, 0 0 20px #3B82F6;
+            background: #8B5CF6;
+            box-shadow: 0 0 10px #8B5CF6, 0 0 20px #8B5CF6;
             z-index: 10;
             pointer-events: none;
         }
@@ -60,6 +69,15 @@ import { BeamGroup, KeySignature, NoteState, ScrollingNote, TimingFeedback, Wron
 export class NotationStageComponent implements AfterViewInit, OnChanges {
     @ViewChild('stageCanvas') canvas!: ElementRef<HTMLCanvasElement>;
 
+    private clefRenderer = inject(ClefRendererService);
+    private noteheadRenderer = inject(NoteheadRendererService);
+    private restRenderer = inject(RestRendererService);
+    private accidentalRenderer = inject(AccidentalRendererService);
+    private staffRenderer = inject(StaffRendererService);
+    private timeSignatureRenderer = inject(TimeSignatureRendererService);
+    private staffMath = inject(StaffMathService);
+    private beamingService = inject(BeamingService);
+
     // Inputs
     @Input() scrollingNotes: ScrollingNote[] = [];
     @Input() currentBeat = 0;
@@ -67,6 +85,7 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
     @Input() stageWidth = 1200;
     @Input() stageHeight = 400;
     @Input() beatsPerMeasure = 4; // For bar lines
+    @Input() timeSignature: string | null = null; // e.g., "4/4", "3/4", "6/8"
 
     // Computed: playhead position as percentage (for CSS scaling)
     get playheadPercent(): number {
@@ -83,13 +102,14 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
     private beamedNoteIds = new Set<string>();
 
     // Rendering constants
-    readonly PIXELS_PER_BEAT = 80;
-    readonly NOTE_BAR_OFFSET = 15; // Offset notes from bar lines (in pixels)
+    // Increased from 80 to 120 for better spacing between beamed notes
+    readonly PIXELS_PER_BEAT = 120;
+    readonly NOTE_BAR_OFFSET = 20; // Offset notes from bar lines (in pixels)
 
     // State colors
     private readonly STATE_COLORS: Record<NoteState, string> = {
         'upcoming': '#ffffff',
-        'active': '#3B82F6',
+        'active': '#8B5CF6',
         'hit': '#22c55e',
         'missed': '#ef4444'
     };
@@ -132,6 +152,12 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
         // Draw staff lines
         this.drawStaffLines(ctx, height);
 
+        // Draw clefs at the start of each staff
+        this.drawClefs(ctx, height);
+
+        // Draw time signature after clef
+        this.drawTimeSignature(ctx, height);
+
         // Draw key signature at the start of the staff
         this.drawKeySignature(ctx, height);
 
@@ -161,14 +187,14 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
      * Draw the treble and bass staff lines
      */
     drawStaffLines(ctx: CanvasRenderingContext2D, height: number): void {
-        const staffHeight = height * 0.35;
+        const staffHeight = height * StaffMathService.STAFF_HEIGHT_RATIO;
         const lineSpacing = staffHeight / 5;
 
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
         ctx.lineWidth = 1.5;
 
         // Treble staff (top)
-        const trebleTop = height * 0.1;
+        const trebleTop = height * StaffMathService.TREBLE_TOP_RATIO;
         for (let i = 0; i < 5; i++) {
             const y = trebleTop + i * lineSpacing;
             ctx.beginPath();
@@ -178,7 +204,7 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
         }
 
         // Bass staff (bottom)
-        const bassTop = height * 0.55;
+        const bassTop = height * StaffMathService.BASS_TOP_RATIO;
         for (let i = 0; i < 5; i++) {
             const y = bassTop + i * lineSpacing;
             ctx.beginPath();
@@ -189,15 +215,96 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
     }
 
     /**
+     * Draw treble and bass clefs at the start of each staff
+     *
+     * Uses ClefRendererService for consistent rendering with ClefComponent.
+     *
+     * Staff lines (numbered from top):
+     * - Line 0 (top):    trebleTop + 0*L  ->  F5 (treble) / A3 (bass)
+     * - Line 1:          trebleTop + 1*L  ->  D5 (treble) / F3 (bass) ← BASS ANCHOR
+     * - Line 2 (middle): trebleTop + 2*L  ->  B4 (treble) / D3 (bass)
+     * - Line 3:          trebleTop + 3*L  ->  G4 (treble) / B2 (bass) ← TREBLE ANCHOR
+     * - Line 4 (bottom): trebleTop + 4*L  ->  E4 (treble) / G2 (bass)
+     *
+     * @see ClefComponent for standalone clef rendering
+     * @see ClefRendererService for shared rendering logic
+     */
+    drawClefs(ctx: CanvasRenderingContext2D, height: number): void {
+        const staffHeight = height * StaffMathService.STAFF_HEIGHT_RATIO;
+        const L = staffHeight / 5; // Line spacing
+
+        // Calculate staff line positions (from top to bottom)
+        const trebleTop = height * StaffMathService.TREBLE_TOP_RATIO;
+        const bassTop = height * StaffMathService.BASS_TOP_RATIO;
+
+        // TREBLE CLEF - G4 line (Line 3)
+        const trebleG4Line = trebleTop + (3 * L);
+        const trebleX = 30;
+        this.clefRenderer.drawTrebleClef(ctx, trebleX, trebleG4Line, L);
+
+        // BASS CLEF - F3 line (Line 1)
+        const bassF3Line = bassTop + (1 * L);
+        const bassX = 30;
+        this.clefRenderer.drawBassClef(ctx, bassX, bassF3Line, L);
+    }
+
+    /**
+     * Draw time signature after clef on both staves
+     */
+    drawTimeSignature(ctx: CanvasRenderingContext2D, height: number): void {
+        if (!this.timeSignature) return;
+
+        // Parse time signature (e.g., "4/4" -> numerator: 4, denominator: 4)
+        const parts = this.timeSignature.split('/');
+        if (parts.length !== 2) return;
+
+        const numerator = parseInt(parts[0], 10);
+        const denominator = parseInt(parts[1], 10);
+
+        if (isNaN(numerator) || isNaN(denominator)) return;
+
+        const staffHeight = height * StaffMathService.STAFF_HEIGHT_RATIO;
+        const L = staffHeight / 5; // Line spacing
+
+        const trebleTop = height * StaffMathService.TREBLE_TOP_RATIO;
+        const bassTop = height * StaffMathService.BASS_TOP_RATIO;
+
+        // Position: after clef (needs extra space for larger 4.5x bass clef)
+        const timeSignatureX = 110;
+
+        // Draw on treble staff
+        this.timeSignatureRenderer.drawTimeSignature(
+            ctx,
+            timeSignatureX,
+            trebleTop,
+            L,
+            numerator,
+            denominator,
+            '#ffffff'
+        );
+
+        // Draw on bass staff
+        this.timeSignatureRenderer.drawTimeSignature(
+            ctx,
+            timeSignatureX,
+            bassTop,
+            L,
+            numerator,
+            denominator,
+            '#ffffff'
+        );
+    }
+
+    /**
      * Draw bar lines at measure boundaries
      */
     drawBarLines(ctx: CanvasRenderingContext2D, height: number): void {
         if (this.beatsPerMeasure <= 0) return;
 
-        const staffHeight = height * 0.35;
-        const trebleTop = height * 0.1;
+        const staffHeight = height * StaffMathService.STAFF_HEIGHT_RATIO;
+        const trebleTop = height * StaffMathService.TREBLE_TOP_RATIO;
         const trebleBottom = trebleTop + staffHeight;
-        const bassTop = height * 0.55;
+        const bassTop = height * StaffMathService.BASS_TOP_RATIO;
         const bassBottom = bassTop + staffHeight;
 
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
@@ -294,25 +401,33 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
                 continue;
             }
 
-            // For chords, find the average Y to determine stem direction
+            // Calculate Y positions for noteheads
             const ys = note.midi.map(midi => this.midiToY(midi, note.hand, height));
             const avgY = ys.reduce((a, b) => a + b, 0) / ys.length;
-            const stemUp = note.hand === 'right' ? avgY > height * 0.3 : avgY > height * 0.7;
+            // Stem direction based on hand (traditional notation):
+            // - Right hand: stems UP (toward top of staff)
+            // - Left hand: stems DOWN (toward bottom of staff)
+            const stemUp = note.hand === 'right';
 
-            // Draw each notehead in chord (with ledger lines if needed)
+            // Draw ledger lines first (behind everything)
+            for (const midi of note.midi) {
+                this.drawLedgerLines(ctx, x, midi, note.hand, height);
+            }
+
+            // Draw stem BEFORE noteheads (so noteheads appear on top)
+            // Skip if note is beamed (stems are drawn with the beam group)
+            if (note.durationBeats < 4 && !isBeamed) {
+                // For chords, stem connects to the extreme notehead
+                const stemY = stemUp ? Math.min(...ys) : Math.max(...ys);
+                this.noteheadRenderer.drawStem(ctx, x, stemY, color, stemUp, note.durationBeats);
+            }
+
+            // Draw accidentals and noteheads on top
             for (const midi of note.midi) {
                 const y = this.midiToY(midi, note.hand, height);
-                // Draw ledger lines first (behind the note)
-                this.drawLedgerLines(ctx, x, midi, note.hand, height);
                 // Draw accidental (sharp/flat) for black keys
                 this.drawAccidental(ctx, x, y, midi, color);
                 this.drawNoteHead(ctx, x, y, color, note.state, note.durationBeats);
-            }
-
-            // Draw stem for notes that need one (not whole notes)
-            // Skip if note is beamed (stems are drawn with the beam group)
-            if (note.durationBeats < 4 && !isBeamed) {
-                this.drawStem(ctx, x, ys, color, stemUp, note.durationBeats);
             }
 
             // Draw duration tail (for scrolling visualization)
@@ -443,7 +558,7 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
         hand: 'left' | 'right',
         height: number
     ): void {
-        const staffHeight = height * 0.35;
+        const staffHeight = height * StaffMathService.STAFF_HEIGHT_RATIO;
         const lineSpacing = staffHeight / 5;
         const stepSpacing = lineSpacing / 2;
         // Ledger line width should be ~1.6-1.8x notehead width for clear visibility
@@ -458,7 +573,7 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
         if (hand === 'right' || midi >= 60) {
             // Treble staff
             // Bottom line (E4, MIDI 64) at step 30, top line (F5, MIDI 77) at step 38
-            const trebleTop = height * 0.1;
+            const trebleTop = height * StaffMathService.TREBLE_TOP_RATIO;
             const trebleBottomLine = trebleTop + lineSpacing * 4;
             const e4Step = this.midiToDiatonicStep(64); // E4 = bottom line
             const f5Step = this.midiToDiatonicStep(77); // F5 = top line
@@ -489,7 +604,7 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
         } else {
             // Bass staff
             // Bottom line (G2, MIDI 43) at step 18, top line (A3, MIDI 57) at step 26
-            const bassTop = height * 0.55;
+            const bassTop = height * StaffMathService.BASS_TOP_RATIO;
             const bassBottomLine = bassTop + lineSpacing * 4;
             const g2Step = this.midiToDiatonicStep(43); // G2 = bottom line
             const a3Step = this.midiToDiatonicStep(57); // A3 = top line
@@ -519,7 +634,7 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
     }
 
     /**
-     * Draw a single notehead
+     * Draw a single notehead using NoteheadRendererService
      */
     drawNoteHead(
         ctx: CanvasRenderingContext2D,
@@ -529,52 +644,19 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
         state: NoteState,
         duration: number
     ): void {
-        // Determine if notehead should be hollow or filled
-        // Whole notes (4 beats) and half notes (2 beats) are hollow
-        // Quarter notes (1 beat) and shorter are filled
-        const isHollow = duration >= 2;
-
-        // Glow for active notes
-        if (state === 'active') {
-            ctx.shadowColor = color;
-            ctx.shadowBlur = 15;
-        }
-
-        // Draw notehead with slight rotation for musical appearance
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(-0.3); // Slight tilt like real noteheads
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 10, 7, 0, 0, Math.PI * 2);
-
-        if (isHollow) {
-            // Draw hollow notehead with stroke
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        } else {
-            // Draw filled notehead
-            ctx.fillStyle = color;
-            ctx.fill();
-        }
-
-        ctx.restore();
-        ctx.shadowBlur = 0;
-
-        // Hit explosion effect
-        if (state === 'hit') {
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
-            ctx.globalAlpha = 0.5;
-            ctx.beginPath();
-            ctx.arc(x, y, 20, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.globalAlpha = 1;
-        }
+        this.noteheadRenderer.drawNotehead(
+            ctx,
+            x,
+            y,
+            color,
+            state === 'active',
+            duration,
+            state === 'hit'
+        );
     }
 
     /**
-     * Draw a rest symbol based on duration
+     * Draw a rest symbol based on duration using RestRendererService
      * Rests are positioned in the center of the staff (treble or bass)
      */
     drawRest(
@@ -585,124 +667,21 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
         height: number,
         color: string
     ): void {
-        const staffHeight = height * 0.35;
+        const staffHeight = height * StaffMathService.STAFF_HEIGHT_RATIO;
         const lineSpacing = staffHeight / 5;
 
         // Calculate staff positions
-        const trebleTop = height * 0.1;
-        const bassTop = height * 0.55;
+        const trebleTop = height * StaffMathService.TREBLE_TOP_RATIO;
+        const bassTop = height * StaffMathService.BASS_TOP_RATIO;
 
         // Line positions (from top to bottom: 0, 1, 2, 3, 4)
         const staffTop = (hand === 'right') ? trebleTop : bassTop;
-        const line3 = staffTop + lineSpacing * 2; // Middle line (3rd from top)
-        const line4 = staffTop + lineSpacing * 3; // 4th line from top
 
-        ctx.fillStyle = color;
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2.5;
-        ctx.lineCap = 'round';
-
-        // Draw appropriate rest symbol based on duration
-        if (duration >= 4) {
-            // Whole rest (4+ beats) - hanging block below 4th line
-            // "Hangs down from the 4th line (second from top)"
-            const width = 16;
-            const blockHeight = 8;
-            const restY = line4; // Starts at line 4 and hangs down
-            ctx.fillRect(x - width / 2, restY, width, blockHeight);
-        } else if (duration >= 2) {
-            // Half rest (2-3.99 beats) - sitting block on 3rd line (middle)
-            // "Sits on top of the 3rd line (the middle line)"
-            const width = 16;
-            const blockHeight = 8;
-            const restY = line3; // Sits on middle line (goes upward)
-            ctx.fillRect(x - width / 2, restY - blockHeight, width, blockHeight);
-        } else if (duration >= 1) {
-            // Quarter rest (1-1.99 beats) - squiggle shape
-            // Centered on the middle line
-            const y = line3;
-            ctx.beginPath();
-            ctx.moveTo(x - 4, y - 15);
-            ctx.quadraticCurveTo(x + 8, y - 12, x - 2, y - 5);
-            ctx.quadraticCurveTo(x - 6, y, x + 4, y + 2);
-            ctx.lineTo(x - 3, y + 8);
-            ctx.quadraticCurveTo(x - 8, y + 12, x - 2, y + 15);
-            ctx.stroke();
-
-            // Add filled circle at top
-            ctx.beginPath();
-            ctx.arc(x - 1, y - 15, 3, 0, Math.PI * 2);
-            ctx.fill();
-        } else if (duration >= 0.5) {
-            // Eighth rest (0.5-0.99 beats) - flag with filled circle
-            // Centered on the middle line
-            const y = line3;
-            ctx.beginPath();
-            ctx.arc(x, y, 3, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Draw stem and flag
-            ctx.beginPath();
-            ctx.moveTo(x + 3, y);
-            ctx.lineTo(x + 3, y - 12);
-            ctx.stroke();
-
-            // Draw flag curve
-            ctx.beginPath();
-            ctx.moveTo(x + 3, y - 12);
-            ctx.quadraticCurveTo(x + 10, y - 8, x + 8, y - 3);
-            ctx.stroke();
-        } else if (duration >= 0.25) {
-            // Sixteenth rest (0.25-0.49 beats) - double flag with filled circle
-            // Centered on the middle line
-            const y = line3;
-            ctx.beginPath();
-            ctx.arc(x, y, 3, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Draw stem
-            ctx.beginPath();
-            ctx.moveTo(x + 3, y);
-            ctx.lineTo(x + 3, y - 15);
-            ctx.stroke();
-
-            // Draw first flag
-            ctx.beginPath();
-            ctx.moveTo(x + 3, y - 15);
-            ctx.quadraticCurveTo(x + 10, y - 11, x + 8, y - 6);
-            ctx.stroke();
-
-            // Draw second flag
-            ctx.beginPath();
-            ctx.moveTo(x + 3, y - 10);
-            ctx.quadraticCurveTo(x + 10, y - 6, x + 8, y - 1);
-            ctx.stroke();
-        } else {
-            // 32nd rest and shorter (< 0.25 beats) - triple flag
-            // Centered on the middle line
-            const y = line3;
-            ctx.beginPath();
-            ctx.arc(x, y, 3, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Draw stem
-            ctx.beginPath();
-            ctx.moveTo(x + 3, y);
-            ctx.lineTo(x + 3, y - 18);
-            ctx.stroke();
-
-            // Draw three flags
-            for (let i = 0; i < 3; i++) {
-                ctx.beginPath();
-                ctx.moveTo(x + 3, y - 18 + i * 5);
-                ctx.quadraticCurveTo(x + 10, y - 14 + i * 5, x + 8, y - 9 + i * 5);
-                ctx.stroke();
-            }
-        }
+        this.restRenderer.drawRest(ctx, x, staffTop, lineSpacing, duration, color);
     }
 
     /**
-     * Draw accidental (sharp/flat) symbol for notes
+     * Draw accidental (sharp/flat) symbol for notes using AccidentalRendererService
      * Uses key signature to determine whether to show sharp or flat
      * Displays to the left of the notehead
      */
@@ -713,113 +692,7 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
         midi: number,
         color: string
     ): void {
-        const noteInOctave = midi % 12;
-        const blackKeys = [1, 3, 6, 8, 10]; // C#/Db, D#/Eb, F#/Gb, G#/Ab, A#/Bb
-
-        if (!blackKeys.includes(noteInOctave)) return;
-
-        ctx.save();
-
-        // Position accidental to the left of the notehead
-        const accidentalX = x - 20;
-        const fontSize = 20;  // Larger size for better visibility
-
-        ctx.font = `bold ${fontSize}px Arial, sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        // Determine whether to show sharp or flat based on key signature
-        let symbol = '♯'; // Default to sharp (U+266F)
-
-        if (this.keySignature) {
-            // Check if this note is in the key signature
-            if (this.keySignature.sharpNotes.includes(noteInOctave)) {
-                symbol = '♯';
-            } else if (this.keySignature.flatNotes.includes(noteInOctave)) {
-                symbol = '♭';
-            } else if (this.keySignature.accidentals < 0) {
-                // In flat keys, prefer flats for accidentals
-                symbol = '♭';  // U+266D
-            }
-        }
-
-        // Draw shadow/outline for better visibility
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.lineWidth = 3;
-        ctx.strokeText(symbol, accidentalX, y);
-
-        // Draw the symbol (always full opacity - don't dim courtesy accidentals)
-        ctx.fillStyle = color;
-        ctx.fillText(symbol, accidentalX, y);
-
-        ctx.restore();
-    }
-
-    /**
-     * Draw stem for a note or chord
-     */
-    drawStem(
-        ctx: CanvasRenderingContext2D,
-        x: number,
-        ys: number[],
-        color: string,
-        stemUp: boolean,
-        duration: number
-    ): void {
-        const stemLength = 35;
-        const noteheadRadius = 10;
-
-        // Find the extreme Y position for the stem attachment
-        const attachY = stemUp ? Math.min(...ys) : Math.max(...ys);
-        const stemX = stemUp ? x + noteheadRadius - 1 : x - noteheadRadius + 1;
-        const stemEndY = stemUp ? attachY - stemLength : attachY + stemLength;
-
-        // Draw stem
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(stemX, attachY);
-        ctx.lineTo(stemX, stemEndY);
-        ctx.stroke();
-
-        // Draw flags for eighth and sixteenth notes
-        if (duration <= 0.5) {
-            this.drawFlag(ctx, stemX, stemEndY, color, stemUp);
-        }
-        if (duration <= 0.25) {
-            // Second flag for sixteenth
-            const flagOffset = stemUp ? 8 : -8;
-            this.drawFlag(ctx, stemX, stemEndY + flagOffset, color, stemUp);
-        }
-    }
-
-    /**
-     * Draw a flag on a stem
-     */
-    drawFlag(
-        ctx: CanvasRenderingContext2D,
-        x: number,
-        y: number,
-        color: string,
-        stemUp: boolean
-    ): void {
-        ctx.fillStyle = color;
-        ctx.beginPath();
-
-        if (stemUp) {
-            // Flag curves to the right
-            ctx.moveTo(x, y);
-            ctx.quadraticCurveTo(x + 15, y + 10, x + 10, y + 20);
-            ctx.quadraticCurveTo(x + 8, y + 12, x, y + 8);
-        } else {
-            // Flag curves to the left
-            ctx.moveTo(x, y);
-            ctx.quadraticCurveTo(x - 15, y - 10, x - 10, y - 20);
-            ctx.quadraticCurveTo(x - 8, y - 12, x, y - 8);
-        }
-
-        ctx.closePath();
-        ctx.fill();
+        this.accidentalRenderer.drawAccidental(ctx, x, y, midi, color, this.keySignature);
     }
 
     /**
@@ -830,9 +703,9 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
             this.playheadX - 30, 0,
             this.playheadX + 30, 0
         );
-        gradient.addColorStop(0, 'rgba(59, 130, 246, 0)');
-        gradient.addColorStop(0.5, 'rgba(59, 130, 246, 0.1)');
-        gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+        gradient.addColorStop(0, 'rgba(139, 92, 246, 0)');
+        gradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.1)');
+        gradient.addColorStop(1, 'rgba(139, 92, 246, 0)');
 
         ctx.fillStyle = gradient;
         ctx.fillRect(this.playheadX - 30, 0, 60, height);
@@ -851,103 +724,24 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
      * Convert MIDI note to diatonic step (C=0, D=1, E=2, F=3, G=4, A=5, B=6)
      * Returns total diatonic steps from C0
      * For black keys: uses key signature to determine sharp vs flat positioning
+     * Delegates to shared StaffMathService for consistent positioning across views
      */
     midiToDiatonicStep(midi: number): number {
-        const octave = Math.floor(midi / 12) - 1; // MIDI 60 = C4, so octave 4
-        const noteInOctave = midi % 12;
-
-        // Check if this is a black key
-        const blackKeys = [1, 3, 6, 8, 10]; // C#/Db, D#/Eb, F#/Gb, G#/Ab, A#/Bb
-        const isBlackKey = blackKeys.includes(noteInOctave);
-
-        let diatonicInOctave: number;
-
-        if (!isBlackKey) {
-            // White keys: straightforward mapping
-            const whiteToDiatonic = [0, -1, 1, -1, 2, 3, -1, 4, -1, 5, -1, 6];
-            diatonicInOctave = whiteToDiatonic[noteInOctave];
-        } else {
-            // Black keys: depends on whether we treat as sharp or flat
-            // If key signature has flats (or we're in a flat key), use flat positioning
-            const useFlat = this.keySignature && (
-                this.keySignature.flatNotes.includes(noteInOctave) ||
-                this.keySignature.accidentals < 0
-            );
-
-            if (useFlat) {
-                // Flat: position on the UPPER letter (Db on D, Eb on E, etc.)
-                // MIDI 61 (Db) → D position (1)
-                // MIDI 63 (Eb) → E position (2)
-                // MIDI 66 (Gb) → G position (4)
-                // MIDI 68 (Ab) → A position (5)
-                // MIDI 70 (Bb) → B position (6)
-                const blackToFlatDiatonic: Record<number, number> = {
-                    1: 1,   // Db → D
-                    3: 2,   // Eb → E
-                    6: 4,   // Gb → G
-                    8: 5,   // Ab → A
-                    10: 6   // Bb → B
-                };
-                diatonicInOctave = blackToFlatDiatonic[noteInOctave];
-            } else {
-                // Sharp: position on the LOWER letter (C# on C, D# on D, etc.)
-                // MIDI 61 (C#) → C position (0)
-                // MIDI 63 (D#) → D position (1)
-                // MIDI 66 (F#) → F position (3)
-                // MIDI 68 (G#) → G position (4)
-                // MIDI 70 (A#) → A position (5)
-                const blackToSharpDiatonic: Record<number, number> = {
-                    1: 0,   // C# → C
-                    3: 1,   // D# → D
-                    6: 3,   // F# → F
-                    8: 4,   // G# → G
-                    10: 5   // A# → A
-                };
-                diatonicInOctave = blackToSharpDiatonic[noteInOctave];
-            }
-        }
-
-        return octave * 7 + diatonicInOctave;
+        return this.staffMath.midiToDiatonicStep(midi, this.keySignature);
     }
 
     /**
      * Convert MIDI note number to Y coordinate
      * Handles both treble and bass clef positioning
      * Uses diatonic steps for proper staff placement
+     * Delegates to shared StaffMathService for consistent positioning across views
+     *
+     * IMPORTANT: Hand assignment takes priority over MIDI range
+     * - right hand = treble staff (top)
+     * - left hand = bass staff (bottom)
      */
     midiToY(midi: number, hand: 'left' | 'right', height: number): number {
-        const staffHeight = height * 0.35;
-        const lineSpacing = staffHeight / 5;
-        // Each line/space is half a lineSpacing (one diatonic step)
-        const stepSpacing = lineSpacing / 2;
-
-        if (hand === 'right' || midi >= 60) {
-            // Treble staff
-            // Reference: E4 (MIDI 64) is on the bottom line (line 0)
-            // G4 (MIDI 67) is on line 1 (second from bottom)
-            // B4 (MIDI 71) is on line 2 (middle)
-            // D5 (MIDI 74) is on line 3
-            // F5 (MIDI 77) is on line 4 (top)
-            const trebleTop = height * 0.1;
-            const trebleBottomLine = trebleTop + lineSpacing * 4; // Line 0 (E4)
-            const referenceStep = this.midiToDiatonicStep(64); // E4
-            const noteStep = this.midiToDiatonicStep(midi);
-            const stepDiff = noteStep - referenceStep;
-            return trebleBottomLine - (stepDiff * stepSpacing);
-        } else {
-            // Bass staff
-            // Reference: G2 (MIDI 43) is on the bottom line (line 0)
-            // B2 (MIDI 47) is on line 1
-            // D3 (MIDI 50) is on line 2 (middle)
-            // F3 (MIDI 53) is on line 3
-            // A3 (MIDI 57) is on line 4 (top)
-            const bassTop = height * 0.55;
-            const bassBottomLine = bassTop + lineSpacing * 4; // Line 0 (G2)
-            const referenceStep = this.midiToDiatonicStep(43); // G2
-            const noteStep = this.midiToDiatonicStep(midi);
-            const stepDiff = noteStep - referenceStep;
-            return bassBottomLine - (stepDiff * stepSpacing);
-        }
+        return this.staffMath.midiToY(midi, hand, height, this.keySignature);
     }
 
     /**
@@ -959,9 +753,10 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
 
     /**
      * Check if a duration should be rendered as hollow notehead
+     * Delegates to shared StaffMathService for consistency
      */
     isHollowNote(duration: number): boolean {
-        return duration >= 2;
+        return this.staffMath.isHollowNote(duration);
     }
 
     /**
@@ -972,7 +767,7 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
     drawWrongNotes(ctx: CanvasRenderingContext2D, height: number): void {
         if (!this.wrongNoteEvents || this.wrongNoteEvents.length === 0) return;
 
-        const staffHeight = height * 0.35;
+        const staffHeight = height * StaffMathService.STAFF_HEIGHT_RATIO;
         const lineSpacing = staffHeight / 5;
 
         for (const event of this.wrongNoteEvents) {
@@ -1021,15 +816,18 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
         lineSpacing: number,
         alpha: number
     ): void {
-        const staffHeight = height * 0.35;
+        const staffHeight = height * StaffMathService.STAFF_HEIGHT_RATIO;
         const ledgerWidth = lineSpacing * 1.5;
 
         ctx.strokeStyle = `rgba(239, 68, 68, ${alpha * 0.7})`;
         ctx.lineWidth = 1.5;
 
-        if (hand === 'right' || y < height * 0.5) {
+        // Calculate midpoint between treble and bass staves
+        const trebleBottom = height * (StaffMathService.TREBLE_TOP_RATIO + StaffMathService.STAFF_HEIGHT_RATIO);
+        const midpoint = (trebleBottom + height * StaffMathService.BASS_TOP_RATIO) / 2;
+        if (hand === 'right' || y < midpoint) {
             // Treble staff
-            const trebleTop = height * 0.1;
+            const trebleTop = height * StaffMathService.TREBLE_TOP_RATIO;
             const trebleBottom = trebleTop + staffHeight;
 
             // Ledger lines above treble staff
@@ -1052,7 +850,7 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
             }
         } else {
             // Bass staff
-            const bassTop = height * 0.55;
+            const bassTop = height * StaffMathService.BASS_TOP_RATIO;
             const bassBottom = bassTop + staffHeight;
 
             // Ledger lines above bass staff (middle C area)
@@ -1113,108 +911,69 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
     }
 
     /**
-     * Build beam groups from notes that can be beamed together
-     * Groups notes within the same beat that have duration < 1 beat
+     * Build beam groups from notes using shared BeamingService
+     * Ensures consistent beaming logic between scrolling and classic views
+     *
+     * Beaming rules (from BeamingService):
+     * - Right hand: stems always UP (toward top of staff)
+     * - Left hand: stems always DOWN (toward bottom of staff)
+     * - Notes are grouped by measure and hand
+     * - Maximum 4 notes per beam group (traditional beaming)
      */
     private buildBeamGroups(): BeamGroup[] {
         const groups: BeamGroup[] = [];
+        const height = this.stageHeight;
 
-        // Filter notes that can be beamed (duration < 1 beat, not rests)
-        const beamableNotes = this.scrollingNotes.filter(
-            n => n.durationBeats < 1 && !n.isRest && n.durationBeats > 0
-        );
+        // Convert ScrollingNote[] to BeamableNote[] for shared service
+        const beamableNotes: BeamableNote[] = this.scrollingNotes.map((note, index) => ({
+            midi: note.midi,
+            startPosition: note.startBeat,
+            durationBeats: note.durationBeats,
+            hand: note.hand,
+            isRest: note.isRest,
+            originalNote: { note, index } // Track original note and index
+        }));
 
-        if (beamableNotes.length === 0) return groups;
+        // Use shared BeamingService to build beam groups
+        const beamGroupResults = this.beamingService.buildBeamGroups(beamableNotes, this.beatsPerMeasure);
 
-        // Group notes by beat boundary and hand
-        // Notes within the same beat should be grouped together
-        const beatGroups = new Map<string, ScrollingNote[]>();
-
-        for (const note of beamableNotes) {
-            // Calculate which beat this note starts in
-            const beatIndex = Math.floor(note.startBeat);
-            const key = `${beatIndex}-${note.hand}`;
-
-            if (!beatGroups.has(key)) {
-                beatGroups.set(key, []);
-            }
-            beatGroups.get(key)!.push(note);
-        }
-
-        // Process each beat group
-        for (const [, notes] of beatGroups) {
-            if (notes.length < 2) continue; // Need at least 2 notes to beam
-
-            // Sort by start beat
-            notes.sort((a, b) => a.startBeat - b.startBeat);
-
-            // Check if notes are consecutive (no gaps larger than expected)
-            let canBeam = true;
-            for (let i = 1; i < notes.length; i++) {
-                const prevEnd = notes[i - 1].startBeat + notes[i - 1].durationBeats;
-                const gap = notes[i].startBeat - prevEnd;
-                // Allow small tolerance for floating point
-                if (gap > 0.01) {
-                    canBeam = false;
-                    break;
-                }
-            }
-
-            if (!canBeam) continue;
-
-            // Calculate positions and stem direction
-            const height = this.stageHeight;
+        // Convert BeamGroupResult[] to BeamGroup[] with X/Y positions
+        for (const result of beamGroupResults) {
+            const notes: ScrollingNote[] = [];
             const xPositions: number[] = [];
             const yPositions: number[] = [];
-            let allYs: number[] = [];
 
-            for (const note of notes) {
+            for (const beamNote of result.notes) {
+                const original = beamNote.originalNote as { note: ScrollingNote; index: number };
+                if (!original) continue;
+
+                const note = original.note;
+                notes.push(note);
+
+                // Calculate X position (active notes at playhead, others with bar line offset)
                 const x = note.state === 'active'
                     ? this.playheadX
                     : this.getNoteX(note.startBeat);
                 xPositions.push(x);
 
-                // Average Y for this note (for chords)
+                // Calculate Y position (average for chords)
                 const ys = note.midi.map(m => this.midiToY(m, note.hand, height));
                 const avgY = ys.reduce((a, b) => a + b, 0) / ys.length;
                 yPositions.push(avgY);
-                allYs = allYs.concat(ys);
-            }
 
-            // Determine common stem direction based on farthest note from middle
-            const hand = notes[0].hand;
-            const middleY = hand === 'right' ? height * 0.3 : height * 0.7;
-
-            // Find the note farthest from middle line
-            let maxDistance = 0;
-            let stemUp = true;
-            for (const y of allYs) {
-                const distance = Math.abs(y - middleY);
-                if (distance > maxDistance) {
-                    maxDistance = distance;
-                    // If farthest note is above middle, stems go down
-                    stemUp = y > middleY;
-                }
-            }
-
-            // Determine beam count based on shortest note duration
-            const minDuration = Math.min(...notes.map(n => n.durationBeats));
-            let beamCount = 1; // Default: 8th notes
-            if (minDuration <= 0.25) beamCount = 2; // 16th notes
-            if (minDuration <= 0.125) beamCount = 3; // 32nd notes
-
-            // Mark notes as beamed
-            for (const note of notes) {
+                // Mark note as beamed
                 this.beamedNoteIds.add(this.getNoteId(note));
             }
 
-            groups.push({
-                notes,
-                stemUp,
-                xPositions,
-                yPositions,
-                beamCount
-            });
+            if (notes.length >= 2) {
+                groups.push({
+                    notes,
+                    stemUp: result.stemUp,
+                    xPositions,
+                    yPositions,
+                    beamCount: result.beamCount
+                });
+            }
         }
 
         return groups;
@@ -1222,15 +981,15 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
 
     /**
      * Draw beam groups (beams and connected stems)
+     * Uses shared BeamingService for consistent rendering with classic view
      */
     private drawBeamGroups(
         ctx: CanvasRenderingContext2D,
         beamGroups: BeamGroup[],
         height: number
     ): void {
-        const beamThickness = 4;
-        const beamSpacing = 6;
-        const noteheadRadius = 10;
+        const noteheadRadiusX = 10; // Horizontal radius
+        const noteheadRadiusY = 7;  // Vertical radius (notehead is an ellipse)
 
         for (const group of beamGroups) {
             if (group.notes.length < 2) continue;
@@ -1244,118 +1003,31 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
             // Get color from first note (could vary, but typically same state in a beam)
             const color = this.STATE_COLORS[group.notes[0].state];
 
-            // Calculate dynamic stem length based on note range
-            // First, find the range of Y positions in this beam group
-            let allYs: number[] = [];
-            for (const note of group.notes) {
-                const ys = note.midi.map(m => this.midiToY(m, note.hand, height));
-                allYs = allYs.concat(ys);
-            }
-            const minY = Math.min(...allYs);
-            const maxY = Math.max(...allYs);
-            const yRange = maxY - minY;
+            // Convert BeamGroup to BeamGroupResult format for shared service
+            const beamGroupResult: BeamGroupResult = {
+                notes: group.notes.map(n => ({
+                    midi: n.midi,
+                    startPosition: n.startBeat,
+                    durationBeats: n.durationBeats,
+                    hand: n.hand,
+                    isRest: n.isRest,
+                    originalNote: n
+                })),
+                stemUp: group.stemUp,
+                beamCount: group.beamCount,
+                noteIndices: group.notes.map((_, i) => i) // Not used for drawing
+            };
 
-            // Minimum stem length should be at least 2.5x the note size (50px)
-            // Add extra length if notes span a wide range
-            const minStemLength = 50;
-            const stemLength = Math.max(minStemLength, 50 + yRange * 0.3);
-
-            // Calculate stem endpoints
-            const stemEndpoints: { x: number; y: number }[] = [];
-
-            for (let i = 0; i < group.notes.length; i++) {
-                const note = group.notes[i];
-                const x = group.xPositions[i];
-
-                // Get all Y positions for this note (chord support)
-                const ys = note.midi.map(m => this.midiToY(m, note.hand, height));
-                const attachY = group.stemUp ? Math.min(...ys) : Math.max(...ys);
-
-                const stemX = group.stemUp ? x + noteheadRadius - 1 : x - noteheadRadius + 1;
-                const stemEndY = group.stemUp ? attachY - stemLength : attachY + stemLength;
-
-                stemEndpoints.push({ x: stemX, y: stemEndY });
-            }
-
-            // Calculate beam line (from first to last stem endpoint)
-            // Apply slight slope based on pitch contour
-            const firstEnd = stemEndpoints[0];
-            const lastEnd = stemEndpoints[stemEndpoints.length - 1];
-
-            // Calculate slope (limited to reasonable angle)
-            const dx = lastEnd.x - firstEnd.x;
-            const idealSlope = dx !== 0 ? (lastEnd.y - firstEnd.y) / dx : 0;
-            const maxSlope = 0.15; // Max ~15% slope
-            const slope = Math.max(-maxSlope, Math.min(maxSlope, idealSlope));
-
-            // Recalculate beam Y positions with controlled slope
-            const beamStartY = firstEnd.y;
-            const beamYAtX = (x: number) => beamStartY + slope * (x - firstEnd.x);
-
-            // Draw stems to beam
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
-
-            for (let i = 0; i < group.notes.length; i++) {
-                const note = group.notes[i];
-                const x = group.xPositions[i];
-                const ys = note.midi.map(m => this.midiToY(m, note.hand, height));
-                const attachY = group.stemUp ? Math.min(...ys) : Math.max(...ys);
-
-                const stemX = group.stemUp ? x + noteheadRadius - 1 : x - noteheadRadius + 1;
-                const beamY = beamYAtX(stemX);
-
-                ctx.beginPath();
-                ctx.moveTo(stemX, attachY);
-                ctx.lineTo(stemX, beamY);
-                ctx.stroke();
-            }
-
-            // Draw primary beam (connects all notes)
-            ctx.fillStyle = color;
-            const firstStemX = stemEndpoints[0].x;
-            const lastStemX = stemEndpoints[stemEndpoints.length - 1].x;
-
-            ctx.beginPath();
-            if (group.stemUp) {
-                // Beam above stems
-                ctx.moveTo(firstStemX, beamYAtX(firstStemX));
-                ctx.lineTo(lastStemX, beamYAtX(lastStemX));
-                ctx.lineTo(lastStemX, beamYAtX(lastStemX) + beamThickness);
-                ctx.lineTo(firstStemX, beamYAtX(firstStemX) + beamThickness);
-            } else {
-                // Beam below stems
-                ctx.moveTo(firstStemX, beamYAtX(firstStemX));
-                ctx.lineTo(lastStemX, beamYAtX(lastStemX));
-                ctx.lineTo(lastStemX, beamYAtX(lastStemX) - beamThickness);
-                ctx.lineTo(firstStemX, beamYAtX(firstStemX) - beamThickness);
-            }
-            ctx.closePath();
-            ctx.fill();
-
-            // Draw secondary beams for 16th notes and shorter
-            if (group.beamCount >= 2) {
-                const offset = group.stemUp ? beamSpacing : -beamSpacing;
-                ctx.beginPath();
-                ctx.moveTo(firstStemX, beamYAtX(firstStemX) + offset);
-                ctx.lineTo(lastStemX, beamYAtX(lastStemX) + offset);
-                ctx.lineTo(lastStemX, beamYAtX(lastStemX) + offset + (group.stemUp ? beamThickness : -beamThickness));
-                ctx.lineTo(firstStemX, beamYAtX(firstStemX) + offset + (group.stemUp ? beamThickness : -beamThickness));
-                ctx.closePath();
-                ctx.fill();
-            }
-
-            // Draw tertiary beams for 32nd notes
-            if (group.beamCount >= 3) {
-                const offset = group.stemUp ? beamSpacing * 2 : -beamSpacing * 2;
-                ctx.beginPath();
-                ctx.moveTo(firstStemX, beamYAtX(firstStemX) + offset);
-                ctx.lineTo(lastStemX, beamYAtX(lastStemX) + offset);
-                ctx.lineTo(lastStemX, beamYAtX(lastStemX) + offset + (group.stemUp ? beamThickness : -beamThickness));
-                ctx.lineTo(firstStemX, beamYAtX(firstStemX) + offset + (group.stemUp ? beamThickness : -beamThickness));
-                ctx.closePath();
-                ctx.fill();
-            }
+            // Use shared BeamingService for consistent beam rendering
+            this.beamingService.drawBeamGroup(
+                ctx,
+                beamGroupResult,
+                group.xPositions,
+                group.yPositions,
+                color,
+                noteheadRadiusX,
+                noteheadRadiusY
+            );
         }
     }
 
@@ -1366,7 +1038,7 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
     private drawKeySignature(ctx: CanvasRenderingContext2D, height: number): void {
         if (!this.keySignature) return;
 
-        const staffHeight = height * 0.35;
+        const staffHeight = height * StaffMathService.STAFF_HEIGHT_RATIO;
         const lineSpacing = staffHeight / 5;
         const stepSpacing = lineSpacing / 2;
 
@@ -1405,9 +1077,9 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
         // Bass staff adjusts by +2 positions (one line down)
         const bassOffset = 2;
 
-        const trebleTop = height * 0.1;
+        const trebleTop = height * StaffMathService.TREBLE_TOP_RATIO;
         const trebleMiddle = trebleTop + lineSpacing * 2; // Middle line (B4)
-        const bassTop = height * 0.55;
+        const bassTop = height * StaffMathService.BASS_TOP_RATIO;
         const bassMiddle = bassTop + lineSpacing * 2; // Middle line (D3)
 
         const accidentals = this.keySignature.accidentals;

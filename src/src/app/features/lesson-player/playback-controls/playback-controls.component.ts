@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 /**
  * Playback Controls Component (Zone A)
@@ -18,6 +19,7 @@ import { MatSliderModule } from '@angular/material/slider';
         MatIconModule,
         MatSliderModule,
         MatButtonToggleModule,
+        MatTooltipModule,
     ],
     template: `
         <div class="control-bar">
@@ -43,8 +45,29 @@ import { MatSliderModule } from '@angular/material/slider';
                     (click)="onComputerSoundToggle()"
                     class="sound-btn"
                     [class.active]="computerSoundEnabled"
-                    aria-label="Computer Sound">
+                    aria-label="Computer Sound"
+                    matTooltip="Toggle computer playback">
                 <mat-icon>{{ computerSoundEnabled ? 'volume_up' : 'volume_off' }}</mat-icon>
+            </button>
+
+            <!-- Piano sound toggle button -->
+            <button mat-icon-button
+                    (click)="onPianoSoundToggle()"
+                    class="sound-btn"
+                    [class.active]="pianoSoundEnabled"
+                    aria-label="Piano Sound"
+                    matTooltip="Toggle piano sound">
+                <mat-icon>{{ pianoSoundEnabled ? 'piano' : 'piano_off' }}</mat-icon>
+            </button>
+
+            <!-- Sound effects toggle button -->
+            <button mat-icon-button
+                    (click)="onSoundEffectsToggle()"
+                    class="sound-btn"
+                    [class.active]="soundEffectsEnabled"
+                    aria-label="Sound Effects"
+                    matTooltip="Toggle sound effects">
+                <mat-icon>{{ soundEffectsEnabled ? 'music_note' : 'music_off' }}</mat-icon>
             </button>
 
             <div class="progress-section">
@@ -77,16 +100,21 @@ import { MatSliderModule } from '@angular/material/slider';
             </div>
 
             <mat-button-toggle-group
+                class="mode-toggle"
                 [value]="playMode"
                 (change)="onModeToggleChange($event.value)"
                 aria-label="Play Mode">
                 <mat-button-toggle value="flow">
-                    <mat-icon>play_circle</mat-icon>
-                    Flow
+                    <span class="toggle-content">
+                        <mat-icon>play_circle</mat-icon>
+                        <span class="toggle-text">Flow</span>
+                    </span>
                 </mat-button-toggle>
                 <mat-button-toggle value="wait">
-                    <mat-icon>pause_circle</mat-icon>
-                    Wait
+                    <span class="toggle-content">
+                        <mat-icon>pause_circle</mat-icon>
+                        <span class="toggle-text">Wait</span>
+                    </span>
                 </mat-button-toggle>
             </mat-button-toggle-group>
 
@@ -103,16 +131,19 @@ import { MatSliderModule } from '@angular/material/slider';
         :host {
             display: block;
             width: 100%;
+            height: 100%;
         }
 
         .control-bar {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            padding: 0 1rem;
+            gap: 0.5rem;
+            padding: 0 0.75rem;
             height: 100%;
             background: linear-gradient(180deg, #16213e 0%, #1a1a2e 100%);
-            border-bottom: 2px solid #3B82F6;
+            border-bottom: 2px solid #8B5CF6;
+            flex-wrap: nowrap;
+            overflow-x: auto;
         }
 
         .restart-btn {
@@ -142,11 +173,11 @@ import { MatSliderModule } from '@angular/material/slider';
             transition: all 0.2s ease;
 
             &:hover {
-                color: #3B82F6;
+                color: #8B5CF6;
             }
 
             &.active {
-                color: #3B82F6;
+                color: #8B5CF6;
             }
         }
 
@@ -157,6 +188,7 @@ import { MatSliderModule } from '@angular/material/slider';
 
         .progress-section {
             flex: 1;
+            min-width: 150px;
             display: flex;
             align-items: center;
             gap: 0.75rem;
@@ -179,10 +211,10 @@ import { MatSliderModule } from '@angular/material/slider';
 
             .progress-fill {
                 height: 100%;
-                background: linear-gradient(90deg, #22c55e 0%, #3B82F6 50%, #8B5CF6 100%);
+                background: linear-gradient(90deg, #22c55e 0%, #8B5CF6 100%);
                 border-radius: 6px;
                 transition: width 0.1s ease-out;
-                box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+                box-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
             }
 
             .progress-indicator {
@@ -198,8 +230,8 @@ import { MatSliderModule } from '@angular/material/slider';
                 height: 18px;
                 background: white;
                 border-radius: 50%;
-                border: 3px solid #3B82F6;
-                box-shadow: 0 0 10px rgba(59, 130, 246, 0.8), 0 2px 4px rgba(0, 0, 0, 0.3);
+                border: 3px solid #8B5CF6;
+                box-shadow: 0 0 10px rgba(139, 92, 246, 0.8), 0 2px 4px rgba(0, 0, 0, 0.3);
             }
 
             .progress-labels {
@@ -227,6 +259,7 @@ import { MatSliderModule } from '@angular/material/slider';
             align-items: center;
             gap: 0.5rem;
             color: white;
+            flex-shrink: 0;
 
             mat-slider {
                 width: 100px;
@@ -238,8 +271,42 @@ import { MatSliderModule } from '@angular/material/slider';
             }
         }
 
-        mat-button-toggle-group {
+        .mode-toggle {
             border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            flex-shrink: 0;
+            height: 32px;
+
+            ::ng-deep .mat-button-toggle-label-content {
+                padding: 0 8px !important;
+                line-height: 32px !important;
+            }
+
+            ::ng-deep .mat-button-toggle {
+                height: 32px;
+            }
+
+            ::ng-deep .mat-button-toggle-button {
+                height: 32px;
+            }
+        }
+
+        .toggle-content {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+
+            mat-icon {
+                font-size: 16px;
+                width: 16px;
+                height: 16px;
+            }
+        }
+
+        .toggle-text {
+            font-size: 0.75rem;
+            font-weight: 500;
         }
 
         .fullscreen-btn {
@@ -264,12 +331,16 @@ export class PlaybackControlsComponent {
     @Input() tempoPercent = 100;
     @Input() playMode: 'flow' | 'wait' = 'wait';
     @Input() computerSoundEnabled = true;
+    @Input() pianoSoundEnabled = true;
+    @Input() soundEffectsEnabled = true;
     @Input() isFullscreen = false;
 
     // Outputs
     @Output() playToggle = new EventEmitter<void>();
     @Output() autoPlayToggle = new EventEmitter<void>();
     @Output() computerSoundToggle = new EventEmitter<void>();
+    @Output() pianoSoundToggle = new EventEmitter<void>();
+    @Output() soundEffectsToggle = new EventEmitter<void>();
     @Output() restart = new EventEmitter<void>();
     @Output() tempoChange = new EventEmitter<number>();
     @Output() modeChange = new EventEmitter<'flow' | 'wait'>();
@@ -301,6 +372,20 @@ export class PlaybackControlsComponent {
      */
     onComputerSoundToggle(): void {
         this.computerSoundToggle.emit();
+    }
+
+    /**
+     * Handle piano sound toggle button click
+     */
+    onPianoSoundToggle(): void {
+        this.pianoSoundToggle.emit();
+    }
+
+    /**
+     * Handle sound effects toggle button click
+     */
+    onSoundEffectsToggle(): void {
+        this.soundEffectsToggle.emit();
     }
 
     /**

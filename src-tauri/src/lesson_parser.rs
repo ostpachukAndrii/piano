@@ -140,8 +140,11 @@ fn parse_notes(notes_value: &serde_yaml::Value) -> Result<Vec<Note>, String> {
 fn parse_note(note_value: &serde_yaml::Value) -> Result<Note, String> {
     // Check if it's a rest
     if let Some(duration) = note_value["rest"].as_f64() {
+        let hand = note_value["hand"].as_str().unwrap_or("right").to_string();
         return Ok(Note::Rest {
             duration_beats: duration as f32,
+            hand,
+            start_beat: None, // YAML doesn't track beat positions
         });
     }
 
@@ -166,6 +169,7 @@ fn parse_note(note_value: &serde_yaml::Value) -> Result<Note, String> {
                 duration_beats,
                 hand,
                 chord_name,
+                start_beat: None, // YAML doesn't track beat positions
             });
         }
     }
@@ -188,6 +192,7 @@ fn parse_note(note_value: &serde_yaml::Value) -> Result<Note, String> {
         duration_beats,
         hand,
         accidental,
+        start_beat: None, // YAML doesn't track beat positions
     })
 }
 

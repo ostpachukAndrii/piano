@@ -20,14 +20,18 @@ export class PianoSoundService {
   readonly enabled = this._enabled.asReadonly();
   readonly volume = this._volume.asReadonly();
 
-  // Piano harmonic structure (relative amplitudes)
+  // Piano harmonic structure with inharmonicity
+  // Real pianos have slightly inharmonic partials (higher harmonics are sharper)
+  // This creates a richer, more realistic piano timbre
   private readonly harmonics = [
-    { ratio: 1, amplitude: 1.0 },      // Fundamental
-    { ratio: 2, amplitude: 0.5 },      // 2nd harmonic
-    { ratio: 3, amplitude: 0.25 },     // 3rd harmonic
-    { ratio: 4, amplitude: 0.125 },    // 4th harmonic
-    { ratio: 5, amplitude: 0.0625 },   // 5th harmonic
-    { ratio: 6, amplitude: 0.03 },     // 6th harmonic
+    { ratio: 1.000, amplitude: 1.00, detune: 0 },     // Fundamental
+    { ratio: 2.000, amplitude: 0.60, detune: 2 },     // 2nd harmonic (slightly sharp)
+    { ratio: 3.000, amplitude: 0.35, detune: 4 },     // 3rd harmonic
+    { ratio: 4.002, amplitude: 0.20, detune: 6 },     // 4th harmonic (inharmonic)
+    { ratio: 5.004, amplitude: 0.12, detune: 8 },     // 5th harmonic (inharmonic)
+    { ratio: 6.008, amplitude: 0.08, detune: 10 },    // 6th harmonic (inharmonic)
+    { ratio: 7.012, amplitude: 0.05, detune: 12 },    // 7th harmonic (inharmonic)
+    { ratio: 8.016, amplitude: 0.03, detune: 14 },    // 8th harmonic (inharmonic)
   ];
 
   constructor() {
@@ -90,54 +94,67 @@ export class PianoSoundService {
     const frequency = this.midiToFrequency(midi);
     const velocityScale = velocity / 127;
 
+    // Create low-pass filter for warmer tone (simulates piano soundboard resonance)
+    const filter = this.audioContext.createBiquadFilter();
+    filter.type = 'lowpass';
+    // Higher notes have brighter tone (higher cutoff)
+    // Lower notes have mellower tone (lower cutoff)
+    const baseCutoff = 2000 + (midi - 60) * 50; // Adjusts with pitch
+    filter.frequency.value = Math.min(baseCutoff, 8000);
+    filter.Q.value = 1.5;
+
     // Create envelope gain node
     const envelopeGain = this.audioContext.createGain();
+    filter.connect(envelopeGain);
     envelopeGain.connect(this.masterGain);
 
     // Create oscillators for each harmonic
     const oscillators: OscillatorNode[] = [];
 
-    this.harmonics.forEach(({ ratio, amplitude }) => {
+    this.harmonics.forEach(({ ratio, amplitude, detune }) => {
       const osc = this.audioContext!.createOscillator();
       const oscGain = this.audioContext!.createGain();
 
-      // Use different wave types for different harmonics
-      if (ratio === 1) {
-        osc.type = 'sine';
-      } else if (ratio <= 3) {
-        osc.type = 'triangle';
-      } else {
-        osc.type = 'sine';
-      }
-
+      // All harmonics use sine waves for purity
+      // The complexity comes from the number of harmonics and inharmonicity
+      osc.type = 'sine';
       osc.frequency.value = frequency * ratio;
 
+      // Add slight detuning for inharmonicity (cents)
+      osc.detune.value = detune;
+
       // Scale amplitude based on harmonic and velocity
-      // Reduced from 0.15 to 0.08 to prevent distortion/clipping
-      oscGain.gain.value = amplitude * velocityScale * 0.08;
+      // Higher harmonics decay faster (brightness decreases with time)
+      const harmonicScale = ratio === 1 ? 1 : 1 / Math.sqrt(ratio);
+      oscGain.gain.value = amplitude * velocityScale * harmonicScale * 0.12;
 
       osc.connect(oscGain);
-      oscGain.connect(envelopeGain);
+      oscGain.connect(filter);
 
       osc.start(now);
       oscillators.push(osc);
     });
 
-    // ADSR Envelope for piano-like sound
-    // Attack: Very fast for piano (3-5ms) - prevents clicking
-    // Decay: Medium (100-300ms)
-    // Sustain: Lower than peak (0.3-0.5)
-    // Release: Medium (200-500ms)
+    // ADSR Envelope for realistic piano sound
+    // Pianos have very fast attack, initial brightness spike, then gradual decay
+    // Attack: 1-3ms (percussive strike)
+    // Decay: Varies by register (lower notes decay slower)
+    // Sustain: Pianos don't truly sustain - continuous exponential decay
+    // Release: Natural resonance fadeout
 
-    const attackTime = 0.003;  // 3ms attack (very short to prevent clicks)
-    const decayTime = 0.15;    // 150ms decay
-    const sustainLevel = 0.4;  // 40% sustain
-    const releaseTime = 0.3;   // 300ms release
+    const attackTime = 0.002;  // 2ms attack (hammer strike)
+    // Lower notes decay slower, higher notes decay faster
+    const decayTime = 0.08 + (60 - midi) * 0.003;
+    const sustainLevel = 0.5;  // Initial sustain level
+    const sustainDecay = 0.15; // Continuous slow decay during sustain
+    const releaseTime = 0.4;   // 400ms release
 
-    // Set initial value and apply envelope with smooth attack
-    envelopeGain.gain.setValueAtTime(0.001, now);  // Start just above 0 to prevent pop
-    envelopeGain.gain.linearRampToValueAtTime(1, now + attackTime);
+    // Piano envelope: instant attack, bright initial tone, then decay
+    envelopeGain.gain.setValueAtTime(0, now);
+    envelopeGain.gain.linearRampToValueAtTime(1.2, now + attackTime); // Initial brightness spike
     envelopeGain.gain.exponentialRampToValueAtTime(sustainLevel, now + attackTime + decayTime);
+    // Continuous slow decay during sustain (mimics string energy loss)
+    envelopeGain.gain.exponentialRampToValueAtTime(sustainDecay, now + attackTime + decayTime + 2.0);
 
     // Store active note for later release
     this.activeNotes.set(midi, { oscillators, gain: envelopeGain });

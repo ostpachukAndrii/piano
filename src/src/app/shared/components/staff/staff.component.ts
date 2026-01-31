@@ -3,11 +3,18 @@ import {
     AfterViewInit,
     Component,
     ElementRef,
+    inject,
     Input,
     OnChanges,
     SimpleChanges,
     ViewChild,
 } from '@angular/core';
+import { TimeSignatureRendererService } from '../../../features/lesson-player/notation-stage/time-signature-renderer.service';
+import { ClefRendererService } from '../../../features/lesson-player/notation-stage/clef-renderer.service';
+import { RestRendererService } from '../../../features/lesson-player/notation-stage/rest-renderer.service';
+import { NoteheadRendererService } from '../../../features/lesson-player/notation-stage/notehead-renderer.service';
+import { StaffMathService } from '../../../features/lesson-player/notation-stage/staff-math.service';
+import { BeamingService, BeamableNote, BeamGroupResult } from '../../../features/lesson-player/notation-stage/beaming.service';
 
 /**
  * Music Staff Component
@@ -32,7 +39,7 @@ import {
     styles: [
         `
             .staff-canvas {
-                background: transparent;
+                background: #0f0f23;
                 display: block;
             }
         `,
@@ -54,16 +61,25 @@ export class StaffComponent implements AfterViewInit, OnChanges {
     @Input() globalNoteOffset = 0;
     @Input() isLastLine = false;
     @Input() globalBeatOffset = 0; // Beat offset for this staff line (for multi-line)
+    @Input() timeSignature: string | null = null; // Time signature like "4/4"
+    @Input() showFirstBar = false; // Show time signature on first measure only
 
     private ctx!: CanvasRenderingContext2D;
+    private timeSignatureRenderer = inject(TimeSignatureRendererService);
+    private clefRenderer = inject(ClefRendererService);
+    private restRenderer = inject(RestRendererService);
+    private noteheadRenderer = inject(NoteheadRendererService);
+    private staffMath = inject(StaffMathService);
+    private beamingService = inject(BeamingService);
+
+    // Track which notes are beamed (to skip individual stem drawing)
+    private beamedNoteIndices = new Set<number>();
 
     // Layout constants
     private readonly LINE_SPACING = 12;
     private readonly TOP_MARGIN = 15;
-    private readonly LEFT_MARGIN = 70;
+    private readonly LEFT_MARGIN = 110; // Increased to make room for clef and time signature
     private readonly RIGHT_MARGIN = 30;
-    private readonly NOTE_HEAD_RX = 7;
-    private readonly NOTE_HEAD_RY = 5;
     private readonly STEM_HEIGHT = 35;
     private readonly BAR_LINE_SPACE = 15;
 
@@ -85,6 +101,7 @@ export class StaffComponent implements AfterViewInit, OnChanges {
         this.clearCanvas();
         this.drawStaffLines();
         this.drawClef();
+        this.drawTimeSignature();
         this.drawNotes();
         this.drawSmoothPlayhead();
     }
@@ -94,7 +111,7 @@ export class StaffComponent implements AfterViewInit, OnChanges {
     }
 
     private drawStaffLines() {
-        this.ctx.strokeStyle = '#333';
+        this.ctx.strokeStyle = '#ffffff';
         this.ctx.lineWidth = 1;
 
         for (let i = 0; i < 5; i++) {
@@ -106,6 +123,16 @@ export class StaffComponent implements AfterViewInit, OnChanges {
         }
     }
 
+    /**
+     * Get Y coordinate for a staff line
+     * NOTE: lineIndex is FROM TOP (0 = top line, 4 = bottom line)
+     * BUT we always think in terms of FROM BOTTOM in notation logic!
+     * Line 0 (top) = Line 5 from bottom
+     * Line 1 = Line 4 from bottom
+     * Line 2 (middle) = Line 3 from bottom
+     * Line 3 = Line 2 from bottom
+     * Line 4 (bottom) = Line 1 from bottom
+     */
     private getLineY(lineIndex: number): number {
         return this.TOP_MARGIN + lineIndex * this.LINE_SPACING;
     }
@@ -119,14 +146,59 @@ export class StaffComponent implements AfterViewInit, OnChanges {
     }
 
     private drawClef() {
-        this.ctx.font = '48px Bravura, serif';
-        this.ctx.fillStyle = '#000';
+        // Standardized clef position - matches notation-stage component
+        const anchorX = 30;
 
         if (this.clef === 'treble') {
-            this.ctx.fillText('𝄞', 25, this.getLineY(4) + 8);
+            // Treble clef: anchor at G4 line (2nd from bottom = line 3 from top)
+            const anchorY = this.getLineY(3);
+            this.clefRenderer.drawTrebleClef(
+                this.ctx,
+                anchorX,
+                anchorY,
+                this.LINE_SPACING,
+                1.0,
+                '#ffffff'
+            );
         } else {
-            this.ctx.fillText('𝄢', 25, this.getLineY(2) + 5);
+            // Bass clef: anchor at F3 line (4th from bottom = line 1 from top)
+            const anchorY = this.getLineY(1);
+            this.clefRenderer.drawBassClef(
+                this.ctx,
+                anchorX,
+                anchorY,
+                this.LINE_SPACING,
+                1.0,
+                '#ffffff'
+            );
         }
+    }
+
+    private drawTimeSignature() {
+        // Only draw on first staff line (when globalBeatOffset is 0)
+        if (!this.timeSignature || this.globalBeatOffset !== 0) return;
+
+        // Parse time signature
+        const parts = this.timeSignature.split('/');
+        if (parts.length !== 2) return;
+
+        const numerator = parseInt(parts[0], 10);
+        const denominator = parseInt(parts[1], 10);
+
+        if (isNaN(numerator) || isNaN(denominator)) return;
+
+        // Time signature position - adjusted for smaller staff line spacing
+        const timeSignatureX = 70;
+
+        this.timeSignatureRenderer.drawTimeSignature(
+            this.ctx,
+            timeSignatureX,
+            this.TOP_MARGIN,
+            this.LINE_SPACING,
+            numerator,
+            denominator,
+            '#ffffff'
+        );
     }
 
     /**
@@ -235,11 +307,19 @@ export class StaffComponent implements AfterViewInit, OnChanges {
         const totalBarLineSpace = barLineCount * this.BAR_LINE_SPACE;
         const measureWidth = (availableWidth - totalBarLineSpace) / measureCount;
 
+        // Build beam groups for connected notes
+        this.beamedNoteIndices.clear();
+        const beamGroups = this.buildBeamGroups();
+
+        // Draw beam groups first (behind notes)
+        this.drawBeamGroups(beamGroups, positions);
+
         let measureIndex = 0;
 
         this.notes.forEach((note, localIndex) => {
             const globalIndex = this.globalNoteOffset + localIndex;
             const x = positions[localIndex];
+            const isBeamed = this.beamedNoteIndices.has(localIndex);
 
             // Draw the note (unless hidden - hidden notes still reserve space)
             if (!note.hidden) {
@@ -252,7 +332,8 @@ export class StaffComponent implements AfterViewInit, OnChanges {
                         // Only highlight if this is the current note position AND the midi is being played
                         const isActive = globalIndex === this.highlightNoteIndex && this.activeNotes.includes(midi);
                         this.drawLedgerLines(x, midi);
-                        this.drawNote(x, y, note.duration, isActive);
+                        // Pass isBeamed flag to skip individual stem for beamed notes
+                        this.drawNote(x, y, note.duration, isActive, isBeamed);
                     }
                 }
 
@@ -282,8 +363,122 @@ export class StaffComponent implements AfterViewInit, OnChanges {
         }
     }
 
+    /**
+     * Build beam groups from notes using shared BeamingService
+     * Only includes visible (non-hidden) notes in beam groups
+     */
+    private buildBeamGroups(): BeamGroupResult[] {
+        // Convert StaffNote[] to BeamableNote[], excluding hidden notes
+        const beamableNotes: BeamableNote[] = [];
+        let beatPosition = 0;
+        const hand = this.clef === 'treble' ? 'right' : 'left';
+
+        for (let i = 0; i < this.notes.length; i++) {
+            const note = this.notes[i];
+            const durationBeats = note.durationValue ?? this.durationToBeats(note.duration);
+
+            // Skip hidden notes from beaming (they're placeholder notes on the other staff)
+            // But still track beat position for proper timing
+            if (note.hidden) {
+                beatPosition += durationBeats;
+                if (note.measureEnd) {
+                    // Measure boundaries still apply
+                }
+                continue;
+            }
+
+            const midiValues = note.isRest ? [] :
+                (Array.isArray(note.midi) ? note.midi : [note.midi]);
+
+            beamableNotes.push({
+                midi: midiValues,
+                startPosition: beatPosition,
+                durationBeats,
+                hand: hand as 'left' | 'right',
+                isRest: note.isRest,
+                originalNote: { note, originalIndex: i } // Track original index
+            });
+
+            beatPosition += durationBeats;
+
+            // Reset beat position at measure end
+            if (note.measureEnd) {
+                // Keep accumulating for beam grouping (measures are handled by BeamingService)
+            }
+        }
+
+        // Get beam groups from service
+        // Parse time signature for correct beatsPerMeasure (e.g., "4/4" -> 4, "3/4" -> 3)
+        let beatsPerMeasure = 4;
+        if (this.timeSignature) {
+            const parts = this.timeSignature.split('/');
+            if (parts.length === 2) {
+                const numerator = parseInt(parts[0], 10);
+                if (!isNaN(numerator)) {
+                    beatsPerMeasure = numerator;
+                }
+            }
+        }
+        const beamGroups = this.beamingService.buildBeamGroups(beamableNotes, beatsPerMeasure);
+
+        // Track which notes are beamed - use original indices
+        for (const group of beamGroups) {
+            for (const beamNote of group.notes) {
+                const original = beamNote.originalNote as { note: StaffNote; originalIndex: number };
+                if (original && typeof original.originalIndex === 'number') {
+                    this.beamedNoteIndices.add(original.originalIndex);
+                }
+            }
+        }
+
+        return beamGroups;
+    }
+
+    /**
+     * Draw beam groups using shared BeamingService
+     */
+    private drawBeamGroups(beamGroups: BeamGroupResult[], positions: number[]): void {
+        for (const group of beamGroups) {
+            // Get X and Y positions for each note in the group
+            // Use original indices stored in beamNote.originalNote
+            const xPositions: number[] = [];
+            const yPositions: number[] = [];
+
+            for (const beamNote of group.notes) {
+                const original = beamNote.originalNote as { note: StaffNote; originalIndex: number };
+                if (!original || typeof original.originalIndex !== 'number') continue;
+
+                const idx = original.originalIndex;
+                const note = this.notes[idx];
+                const x = positions[idx];
+                xPositions.push(x);
+
+                // Calculate average Y for this note (for chords)
+                const midiValues = Array.isArray(note.midi) ? note.midi : [note.midi];
+                const ys = midiValues.map(m => this.midiToY(m));
+                const avgY = ys.reduce((a, b) => a + b, 0) / ys.length;
+                yPositions.push(avgY);
+            }
+
+            // Only draw if we have at least 2 notes
+            if (xPositions.length < 2) continue;
+
+            // Draw the beam group
+            this.beamingService.drawBeamGroup(
+                this.ctx,
+                group,
+                xPositions,
+                yPositions,
+                '#ffffff', // color
+                8,  // noteheadRadiusX (smaller for classic view)
+                5,  // noteheadRadiusY
+                this.STEM_HEIGHT // baseStemLength (35 for classic view)
+            );
+        }
+    }
+
     private drawBarLine(x: number): void {
-        this.ctx.strokeStyle = '#333';
+        this.ctx.strokeStyle = '#ffffff';
         this.ctx.lineWidth = 1.5;
 
         const topY = this.getLineY(0);
@@ -300,7 +495,7 @@ export class StaffComponent implements AfterViewInit, OnChanges {
         const bottomY = this.getLineY(4);
 
         // Thin line
-        this.ctx.strokeStyle = '#333';
+        this.ctx.strokeStyle = '#ffffff';
         this.ctx.lineWidth = 1.5;
         this.ctx.beginPath();
         this.ctx.moveTo(x - 6, topY);
@@ -315,83 +510,23 @@ export class StaffComponent implements AfterViewInit, OnChanges {
         this.ctx.stroke();
     }
 
-    private drawNote(x: number, y: number, duration: string, active: boolean) {
-        const isHollow = duration === 'whole' || duration === 'half';
+    private drawNote(x: number, y: number, duration: string, active: boolean, isBeamed: boolean = false) {
+        // Convert duration string to beats
+        const durationBeats = this.durationToBeats(duration);
 
-        this.ctx.save();
+        // Draw notehead using shared renderer service
+        const color = active ? '#2196F3' : '#ffffff';
+        this.noteheadRenderer.drawNotehead(this.ctx, x, y, color, active, durationBeats, false);
 
-        if (active) {
-            this.ctx.shadowColor = '#2196F3';
-            this.ctx.shadowBlur = 15;
-        }
-
-        // Note head
-        this.ctx.beginPath();
-        this.ctx.ellipse(x, y, this.NOTE_HEAD_RX, this.NOTE_HEAD_RY, (-20 * Math.PI) / 180, 0, 2 * Math.PI);
-
-        if (active) {
-            // Active notes: filled with blue
-            this.ctx.fillStyle = '#2196F3';
-            this.ctx.fill();
-            this.ctx.strokeStyle = '#2196F3';
-            this.ctx.lineWidth = 2;
-            this.ctx.stroke();
-        } else if (isHollow) {
-            // Hollow notes (whole, half): clear interior and draw thick outline
-            // First clear the area to make it truly hollow
-            this.ctx.fillStyle = '#fafafa'; // Match background
-            this.ctx.fill();
-            // Draw thick black outline
-            this.ctx.strokeStyle = '#000';
-            this.ctx.lineWidth = 2.5;
-            this.ctx.stroke();
-        } else {
-            // Filled notes (quarter, eighth, sixteenth): solid black
-            this.ctx.fillStyle = '#000';
-            this.ctx.fill();
-            this.ctx.strokeStyle = '#000';
-            this.ctx.lineWidth = 1.5;
-            this.ctx.stroke();
-        }
-
-        // Stem
-        if (duration !== 'whole') {
-            const stemUp = y > this.getStaffMiddleY();
-            const stemX = x + (stemUp ? this.NOTE_HEAD_RX : -this.NOTE_HEAD_RX);
-            const stemEndY = stemUp ? y - this.STEM_HEIGHT : y + this.STEM_HEIGHT;
-
-            this.ctx.beginPath();
-            this.ctx.moveTo(stemX, y);
-            this.ctx.lineTo(stemX, stemEndY);
-            this.ctx.lineWidth = 1.5;
-            this.ctx.stroke();
-
-            if (duration === 'eighth') {
-                this.drawFlag(stemX, stemEndY, stemUp, 1);
-            } else if (duration === 'sixteenth') {
-                this.drawFlag(stemX, stemEndY, stemUp, 2);
-            }
-        }
-
-        this.ctx.restore();
-    }
-
-    private drawFlag(x: number, y: number, stemUp: boolean, flagCount: number = 1) {
-        const flagSpacing = 8; // Space between flags for 16th notes
-
-        for (let i = 0; i < flagCount; i++) {
-            const flagY = stemUp ? y + (i * flagSpacing) : y - (i * flagSpacing);
-
-            this.ctx.beginPath();
-            if (stemUp) {
-                this.ctx.moveTo(x, flagY);
-                this.ctx.quadraticCurveTo(x + 12, flagY + 10, x + 8, flagY + 20);
-            } else {
-                this.ctx.moveTo(x, flagY);
-                this.ctx.quadraticCurveTo(x + 12, flagY - 10, x + 8, flagY - 20);
-            }
-            this.ctx.lineWidth = 2;
-            this.ctx.stroke();
+        // Draw stem (all notes except whole notes) using centralized service
+        // Skip stem drawing for beamed notes (stems are drawn with the beam group)
+        // Use hand-based stem direction for consistency with scrolling view:
+        // - treble clef = right hand → stem UP
+        // - bass clef = left hand → stem DOWN
+        if (duration !== 'whole' && !isBeamed) {
+            const hand = this.clef === 'treble' ? 'right' : 'left';
+            const stemUp = this.staffMath.getStemDirection(hand);
+            this.noteheadRenderer.drawStem(this.ctx, x, y, color, stemUp, durationBeats, this.STEM_HEIGHT);
         }
     }
 
@@ -400,7 +535,7 @@ export class StaffComponent implements AfterViewInit, OnChanges {
         const topLine = this.getLineY(0);
         const bottomLine = this.getLineY(4);
 
-        this.ctx.strokeStyle = '#333';
+        this.ctx.strokeStyle = '#ffffff';
         this.ctx.lineWidth = 1;
 
         // Above staff
@@ -429,160 +564,46 @@ export class StaffComponent implements AfterViewInit, OnChanges {
     }
 
     private drawRest(x: number, duration: string) {
-        this.ctx.save();
-        this.ctx.fillStyle = '#000';
-        this.ctx.strokeStyle = '#000';
+        // Convert duration string to beats value
+        const durationBeats = this.durationToBeats(duration);
 
-        switch (duration) {
-            case 'whole':
-                // Whole rest: filled rectangle hanging DOWN from line 1 (4th line from bottom)
-                // It hangs below the line
-                this.ctx.fillRect(x - 8, this.getLineY(1), 16, 8);
-                break;
-
-            case 'half':
-                // Half rest: filled rectangle sitting ON TOP of line 2 (3rd line from bottom)
-                // It sits above the line
-                this.ctx.fillRect(x - 8, this.getLineY(2) - 8, 16, 8);
-                break;
-
-            case 'quarter':
-                // Quarter rest: zigzag/squiggle shape drawn with paths
-                this.drawQuarterRest(x, this.getStaffMiddleY());
-                break;
-
-            case 'eighth':
-                // Eighth rest: slanted line with a single flag
-                this.drawEighthRest(x, this.getStaffMiddleY());
-                break;
-
-            case 'sixteenth':
-                // Sixteenth rest: slanted line with two flags
-                this.drawSixteenthRest(x, this.getStaffMiddleY());
-                break;
-
-            default:
-                // Default to quarter rest
-                this.drawQuarterRest(x, this.getStaffMiddleY());
-        }
-
-        this.ctx.restore();
+        // Use shared RestRendererService for consistent rendering
+        this.restRenderer.drawRest(
+            this.ctx,
+            x,
+            this.TOP_MARGIN,
+            this.LINE_SPACING,
+            durationBeats,
+            '#ffffff'
+        );
     }
 
     /**
-     * Draw a quarter rest (zigzag squiggle shape)
+     * Convert MIDI note number to Y coordinate on staff
+     * ALWAYS CALCULATE FROM BOTTOM!
+     *
+     * Reference notes (anchors):
+     * - Treble clef: G4 (MIDI 67) on line 2 from bottom
+     * - Bass clef: F3 (MIDI 53) on line 4 from bottom
      */
-    private drawQuarterRest(x: number, centerY: number) {
-        this.ctx.lineWidth = 2.5;
-        this.ctx.lineCap = 'round';
-        this.ctx.lineJoin = 'round';
-
-        // Quarter rest is a stylized zigzag
-        // Starting from top, going down in a zigzag pattern
-        const top = centerY - 15;
-        const bottom = centerY + 15;
-
-        this.ctx.beginPath();
-        // Top hook
-        this.ctx.moveTo(x + 4, top);
-        this.ctx.lineTo(x - 2, top + 8);
-        // First diagonal down-right
-        this.ctx.lineTo(x + 5, top + 14);
-        // Second diagonal down-left
-        this.ctx.lineTo(x - 3, top + 22);
-        // Third diagonal down-right to bottom
-        this.ctx.lineTo(x + 3, bottom - 2);
-        // Bottom curve/hook
-        this.ctx.quadraticCurveTo(x + 6, bottom + 4, x + 2, bottom + 6);
-
-        this.ctx.stroke();
-
-        // Add small filled circle at bottom hook
-        this.ctx.beginPath();
-        this.ctx.arc(x + 1, bottom + 3, 3, 0, Math.PI * 2);
-        this.ctx.fill();
-    }
-
-    /**
-     * Draw an eighth rest (slanted line with one flag)
-     */
-    private drawEighthRest(x: number, centerY: number) {
-        this.ctx.lineWidth = 2;
-        this.ctx.lineCap = 'round';
-
-        const top = centerY - 8;
-        const bottom = centerY + 10;
-
-        // Main slanted line
-        this.ctx.beginPath();
-        this.ctx.moveTo(x + 4, top);
-        this.ctx.lineTo(x - 4, bottom);
-        this.ctx.stroke();
-
-        // Flag/dot at top
-        this.ctx.beginPath();
-        this.ctx.arc(x + 6, top - 2, 3.5, 0, Math.PI * 2);
-        this.ctx.fill();
-
-        // Curved hook connecting dot to line
-        this.ctx.beginPath();
-        this.ctx.moveTo(x + 4, top - 1);
-        this.ctx.quadraticCurveTo(x + 2, top + 4, x + 1, top + 6);
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
-    }
-
-    /**
-     * Draw a sixteenth rest (slanted line with two flags)
-     */
-    private drawSixteenthRest(x: number, centerY: number) {
-        this.ctx.lineWidth = 2;
-        this.ctx.lineCap = 'round';
-
-        const top = centerY - 12;
-        const bottom = centerY + 12;
-
-        // Main slanted line (longer for 16th)
-        this.ctx.beginPath();
-        this.ctx.moveTo(x + 4, top);
-        this.ctx.lineTo(x - 6, bottom);
-        this.ctx.stroke();
-
-        // First flag/dot at top
-        this.ctx.beginPath();
-        this.ctx.arc(x + 6, top - 2, 3.5, 0, Math.PI * 2);
-        this.ctx.fill();
-
-        // First curved hook
-        this.ctx.beginPath();
-        this.ctx.moveTo(x + 4, top - 1);
-        this.ctx.quadraticCurveTo(x + 2, top + 4, x + 1, top + 6);
-        this.ctx.stroke();
-
-        // Second flag/dot (lower)
-        this.ctx.beginPath();
-        this.ctx.arc(x + 3, top + 8, 3.5, 0, Math.PI * 2);
-        this.ctx.fill();
-
-        // Second curved hook
-        this.ctx.beginPath();
-        this.ctx.moveTo(x + 1, top + 9);
-        this.ctx.quadraticCurveTo(x - 1, top + 14, x - 2, top + 16);
-        this.ctx.stroke();
-    }
-
     private midiToY(midi: number): number {
-        const referenceNote = this.clef === 'treble' ? 64 : 43;
+        // Use correct reference notes from ClefRendererService
+        // Treble: G4 (67) on 2nd line from bottom (line index 1)
+        // Bass: F3 (53) on 4th line from bottom (line index 3)
+        const referenceNote = this.clef === 'treble' ? 67 : 53; // G4 / F3
+        const referenceLineIndex = this.clef === 'treble' ? 1 : 3; // 2nd / 4th line from bottom
+
         const steps = this.semitonesToSteps(midi) - this.semitonesToSteps(referenceNote);
         const halfSpacing = this.LINE_SPACING / 2;
-        return this.getStaffBottomY() - steps * halfSpacing;
+        const referenceY = this.getLineY(4 - referenceLineIndex); // Convert from bottom to top indexing
+
+        return referenceY - steps * halfSpacing;
     }
 
     private semitonesToSteps(midi: number): number {
-        const octave = Math.floor(midi / 12);
-        const noteInOctave = midi % 12;
-        const stepMap = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];
-        return octave * 7 + stepMap[noteInOctave];
+        // Use shared StaffMathService for consistent diatonic step calculation
+        // This ensures classic and scrolling views position notes identically
+        return this.staffMath.midiToDiatonicStep(midi);
     }
 
     private drawCurrentNoteCursor(x: number): void {

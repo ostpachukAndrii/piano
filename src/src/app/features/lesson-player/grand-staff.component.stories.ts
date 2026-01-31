@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { GrandStaffComponent } from './grand-staff.component';
 import { StaffComponent } from '../../shared/components/staff/staff.component';
 import { LessonDTO } from '../../core/models/lesson.model';
-import { SingleNoteDTO } from '../../core/models/note.model';
+import { RestNoteDTO, SingleNoteDTO } from '../../core/models/note.model';
 
 const meta: Meta<GrandStaffComponent> = {
     title: 'Components/GrandStaff',
@@ -29,6 +29,11 @@ type Story = StoryObj<GrandStaffComponent>;
 // Helper to create single notes (matches SingleNoteDTO)
 function note(midi: number, duration: number, hand: 'right' | 'left'): SingleNoteDTO {
     return { midi, duration, hand };
+}
+
+// Helper to create rests (matches RestNoteDTO)
+function rest(duration: number, hand: 'right' | 'left' = 'right'): RestNoteDTO {
+    return { duration, hand };
 }
 
 // Mock lesson data - right hand only (treble)
@@ -247,16 +252,16 @@ const restLesson: LessonDTO = {
             number: 1,
             notes: [
                 note(60, 1, 'right'),
-                { duration: 1 }, // rest
+                rest(1), // rest
                 note(64, 1, 'right'),
-                { duration: 1 }, // rest
+                rest(1), // rest
             ]
         },
         {
             number: 2,
             notes: [
                 note(67, 2, 'right'),
-                { duration: 2 }, // half rest
+                rest(2), // half rest
             ]
         },
     ]
@@ -276,39 +281,39 @@ const allRestTypesLesson: LessonDTO = {
             number: 1,
             notes: [
                 // Whole rest (4 beats) - rectangle hanging from 4th line
-                { duration: 4 },
+                rest(4),
             ]
         },
         {
             number: 2,
             notes: [
                 // Half rests (2 beats each) - rectangle on 3rd line
-                { duration: 2 },
-                { duration: 2 },
+                rest(2),
+                rest(2),
             ]
         },
         {
             number: 3,
             notes: [
                 // Quarter rests (1 beat each) - zigzag symbol
-                { duration: 1 },
-                { duration: 1 },
-                { duration: 1 },
-                { duration: 1 },
+                rest(1),
+                rest(1),
+                rest(1),
+                rest(1),
             ]
         },
         {
             number: 4,
             notes: [
                 // Eighth rests (0.5 beats each) - slanted with flag
-                { duration: 0.5 },
-                { duration: 0.5 },
-                { duration: 0.5 },
-                { duration: 0.5 },
-                { duration: 0.5 },
-                { duration: 0.5 },
-                { duration: 0.5 },
-                { duration: 0.5 },
+                rest(0.5),
+                rest(0.5),
+                rest(0.5),
+                rest(0.5),
+                rest(0.5),
+                rest(0.5),
+                rest(0.5),
+                rest(0.5),
             ]
         },
     ]

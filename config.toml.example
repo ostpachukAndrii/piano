@@ -1,0 +1,42 @@
+# Piano Learning App Configuration
+# Copy this file to your config directory as config.toml
+# Windows: %APPDATA%\roland\config.toml
+# macOS: ~/Library/Application Support/roland/config.toml
+# Linux: ~/.config/roland/config.toml
+
+[midi]
+# Group notes within this many milliseconds into a chord
+chord_grouping_ms = 50
+
+# Split point between left and right hand (MIDI note number)
+# 60 = Middle C (C4)
+hand_split_point = 60
+
+[evaluation]
+# Timing tolerances in milliseconds
+timing_perfect_ms = 50      # ±50ms = Perfect
+timing_good_ms = 100         # ±100ms = Good
+timing_acceptable_ms = 200   # ±200ms = Acceptable
+
+# Duration tolerance as percentage
+# 20.0 means ±20% variation is acceptable
+duration_tolerance_percent = 20.0
+
+[paths]
+# Custom path to lessons directory (optional)
+# If not set, will use platform-specific defaults
+# lessons_dir = "/path/to/your/lessons"
+
+[staff]
+# Staff rendering configuration (for visual display)
+line_height = 10.0
+top_y = 0.0
+bottom_y = 40.0
+
+# MIDI note range for treble staff
+treble_min_midi = 60  # C4
+treble_max_midi = 77  # F5
+
+# MIDI note range for bass staff
+bass_min_midi = 43  # G2
+bass_max_midi = 60  # C4

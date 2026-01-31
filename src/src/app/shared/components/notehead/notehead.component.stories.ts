@@ -13,7 +13,7 @@ const meta: Meta<NoteheadComponent> = {
         backgrounds: {
             default: 'dark',
             values: [
-                { name: 'dark', value: '#1a1a2e' },
+                { name: 'dark', value: '#0f0f23' },
                 { name: 'light', value: '#ffffff' },
             ],
         },
@@ -42,6 +42,10 @@ const meta: Meta<NoteheadComponent> = {
         showHitEffect: {
             control: 'boolean',
             description: 'Show expanding ring on hit',
+        },
+        showAnchor: {
+            control: 'boolean',
+            description: 'Show red anchor point (center of notehead)',
         },
     },
 };
@@ -129,6 +133,10 @@ export const SixteenthNote: Story = {
 // === All Durations Comparison ===
 
 export const AllDurations: Story = {
+    args: {
+        state: "upcoming"
+    },
+
     render: () => ({
         template: `
             <div style="display: flex; gap: 40px; align-items: flex-end; padding: 20px;">
@@ -155,13 +163,14 @@ export const AllDurations: Story = {
             </div>
         `,
     }),
+
     parameters: {
         docs: {
             description: {
                 story: 'Comparison of all note duration types side by side',
             },
         },
-    },
+    }
 };
 
 // === All States Comparison ===
@@ -380,6 +389,60 @@ export const HollowVsFilled: Story = {
     },
 };
 
+// === Anchor Points ===
+
+export const WithAnchorPoint: Story = {
+    args: {
+        duration: 'quarter',
+        state: 'upcoming',
+        size: 'large',
+        showAnchor: true,
+    },
+    parameters: {
+        docs: {
+            description: {
+                story: 'Shows the red anchor point at the center of the notehead. This point is used for positioning on staff lines.',
+            },
+        },
+    },
+};
+
+export const AllDurationsWithAnchors: Story = {
+    render: () => ({
+        template: `
+            <div style="display: flex; gap: 40px; align-items: flex-end; padding: 20px;">
+                <div style="text-align: center;">
+                    <app-notehead duration="whole" size="large" [showAnchor]="true"></app-notehead>
+                    <div style="color: white; margin-top: 10px; font-size: 12px;">Whole<br>(4 beats)</div>
+                </div>
+                <div style="text-align: center;">
+                    <app-notehead duration="half" size="large" [showAnchor]="true"></app-notehead>
+                    <div style="color: white; margin-top: 10px; font-size: 12px;">Half<br>(2 beats)</div>
+                </div>
+                <div style="text-align: center;">
+                    <app-notehead duration="quarter" size="large" [showAnchor]="true"></app-notehead>
+                    <div style="color: white; margin-top: 10px; font-size: 12px;">Quarter<br>(1 beat)</div>
+                </div>
+                <div style="text-align: center;">
+                    <app-notehead duration="eighth" size="large" [showAnchor]="true"></app-notehead>
+                    <div style="color: white; margin-top: 10px; font-size: 12px;">Eighth<br>(0.5 beats)</div>
+                </div>
+                <div style="text-align: center;">
+                    <app-notehead duration="sixteenth" size="large" [showAnchor]="true"></app-notehead>
+                    <div style="color: white; margin-top: 10px; font-size: 12px;">Sixteenth<br>(0.25 beats)</div>
+                </div>
+            </div>
+        `,
+    }),
+    parameters: {
+        docs: {
+            description: {
+                story: 'All note durations with visible anchor points (red dots)',
+            },
+        },
+    },
+};
+
 // === Interactive Playground ===
 
 export const Playground: Story = {
@@ -389,6 +452,7 @@ export const Playground: Story = {
         size: 'large',
         stemDirection: 'up',
         showHitEffect: true,
+        showAnchor: false,
     },
     parameters: {
         docs: {

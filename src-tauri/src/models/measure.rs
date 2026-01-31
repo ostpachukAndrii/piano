@@ -21,6 +21,8 @@ pub enum Note {
         hand: String, // "left" or "right"
         #[serde(default)]
         accidental: Option<String>, // "sharp", "flat", "natural"
+        #[serde(default)]
+        start_beat: Option<f32>, // Beat position within measure
     },
     /// Multiple notes sounding together (chord)
     Chord {
@@ -30,9 +32,17 @@ pub enum Note {
         hand: String,
         #[serde(default)]
         chord_name: Option<String>,
+        #[serde(default)]
+        start_beat: Option<f32>, // Beat position within measure
     },
     /// Silence/rest
-    Rest { duration_beats: f32 },
+    Rest {
+        duration_beats: f32,
+        #[serde(default = "default_hand")]
+        hand: String,
+        #[serde(default)]
+        start_beat: Option<f32>, // Beat position within measure
+    },
 }
 
 fn default_hand() -> String {
@@ -45,7 +55,7 @@ impl Note {
         match self {
             Note::Single { duration_beats, .. } => *duration_beats,
             Note::Chord { duration_beats, .. } => *duration_beats,
-            Note::Rest { duration_beats } => *duration_beats,
+            Note::Rest { duration_beats, .. } => *duration_beats,
         }
     }
 
@@ -54,7 +64,7 @@ impl Note {
         match self {
             Note::Single { hand, .. } => Some(hand),
             Note::Chord { hand, .. } => Some(hand),
-            Note::Rest { .. } => None,
+            Note::Rest { hand, .. } => Some(hand),
         }
     }
 
@@ -69,6 +79,15 @@ impl Note {
             Note::Single { midi, .. } => vec![*midi],
             Note::Chord { midi_set, .. } => midi_set.clone(),
             Note::Rest { .. } => vec![],
+        }
+    }
+
+    /// Get the start beat position within the measure
+    pub fn start_beat(&self) -> Option<f32> {
+        match self {
+            Note::Single { start_beat, .. } => *start_beat,
+            Note::Chord { start_beat, .. } => *start_beat,
+            Note::Rest { start_beat, .. } => *start_beat,
         }
     }
 }
@@ -95,6 +114,7 @@ mod tests {
             duration_beats: 1.0,
             hand: "right".to_string(),
             accidental: None,
+            start_beat: None,
         };
         assert_eq!(note.duration_beats(), 1.0);
         assert!(!note.is_rest());
@@ -108,6 +128,7 @@ mod tests {
             duration_beats: 2.0,
             hand: "left".to_string(),
             chord_name: Some("C Major".to_string()),
+            start_beat: None,
         };
         assert_eq!(note.duration_beats(), 2.0);
         assert!(!note.is_rest());
@@ -119,10 +140,14 @@ mod tests {
     fn test_rest() {
         let note = Note::Rest {
             duration_beats: 1.0,
+            hand: "left".to_string(),
+            start_beat: Some(2.0),
         };
         assert_eq!(note.duration_beats(), 1.0);
         assert!(note.is_rest());
         let empty_vec: Vec<u8> = vec![];
         assert_eq!(note.midi_notes(), empty_vec);
+        assert_eq!(note.hand(), Some("left"));
+        assert_eq!(note.start_beat(), Some(2.0));
     }
 }

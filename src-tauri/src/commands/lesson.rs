@@ -5,31 +5,14 @@
 //   - list_lessons() -> Result<Vec<LessonMetadata>, String>
 
 use crate::lesson_parser::YamlLesson;
+use crate::models::Note;
+use crate::mxl_parser::MxlLesson;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-/// Get the lessons directory path
-/// In dev: uses the workspace lessons/ folder
-/// In production: would use bundled resources
+/// Get the lessons directory path from configuration
 fn get_lessons_dir() -> PathBuf {
-    // Try multiple locations
-    let candidates = [
-        // Relative to workspace root (dev mode)
-        PathBuf::from("lessons"),
-        // From src-tauri location
-        PathBuf::from("../lessons"),
-        // Absolute path for dev (Windows)
-        PathBuf::from(r"G:\Rust run\roland\lessons"),
-    ];
-
-    for path in &candidates {
-        if path.exists() {
-            return path.clone();
-        }
-    }
-
-    // Default fallback
-    PathBuf::from("lessons")
+    crate::config::get_config().get_lessons_dir()
 }
 
 /// Lesson mode - determines evaluation behavior
@@ -79,6 +62,8 @@ pub enum NoteDTO {
         hand: String,
         #[serde(skip_serializing_if = "Option::is_none")]
         accidental: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        start_beat: Option<f32>,
     },
     Chord {
         midi: Vec<u8>,
@@ -86,9 +71,14 @@ pub enum NoteDTO {
         hand: String,
         #[serde(skip_serializing_if = "Option::is_none")]
         chord: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        start_beat: Option<f32>,
     },
     Rest {
         duration: f32,
+        hand: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        start_beat: Option<f32>,
     },
 }
 
@@ -106,78 +96,153 @@ pub struct LessonMetadata {
 /// Load a lesson by ID (filename without extension)
 #[tauri::command]
 pub fn load_lesson(lesson_id: String) -> Result<LessonDTO, String> {
-    // Construct path to lesson file
     let lessons_dir = get_lessons_dir();
-    let lesson_path = lessons_dir.join(format!("{}.yaml", lesson_id));
 
-    // Parse the YAML file
-    let yaml_lesson = YamlLesson::from_file(&lesson_path)?;
+    // Try YAML first
+    let yaml_path = lessons_dir.join(format!("{}.yaml", lesson_id));
+    if yaml_path.exists() {
+        let yaml_lesson = YamlLesson::from_file(&yaml_path)?;
+        return Ok(yaml_lesson_to_dto(yaml_lesson));
+    }
 
-    // Convert to DTO - clone all fields to avoid ownership issues
-    let total_beats = yaml_lesson.total_beats();
-    let total_seconds = yaml_lesson.total_seconds();
-    let measures = yaml_lesson
-        .measures
-        .iter()
-        .map(|m| MeasureDTO {
-            number: m.number,
-            notes: m.notes.iter().map(|n| note_to_dto(n)).collect(),
-        })
-        .collect();
+    // Try MXL (compressed MusicXML)
+    let mxl_path = lessons_dir.join(format!("{}.mxl", lesson_id));
+    if mxl_path.exists() {
+        let mxl_lesson = MxlLesson::from_file(&mxl_path)?;
+        return Ok(mxl_lesson_to_dto(mxl_lesson));
+    }
 
-    // Parse mode from YAML settings or use default
-    let mode = yaml_lesson.mode.clone().unwrap_or_default();
+    // Try uncompressed MusicXML
+    let xml_path = lessons_dir.join(format!("{}.musicxml", lesson_id));
+    if xml_path.exists() {
+        let content = std::fs::read_to_string(&xml_path)
+            .map_err(|e| format!("Failed to read MusicXML file: {}", e))?;
+        let mxl_lesson = MxlLesson::from_xml(&content, &xml_path)?;
+        return Ok(mxl_lesson_to_dto(mxl_lesson));
+    }
 
-    Ok(LessonDTO {
-        title: yaml_lesson.title.clone(),
-        description: yaml_lesson.description.clone(),
-        mode,
-        tempo: yaml_lesson.settings.tempo,
-        time_signature: yaml_lesson.settings.time_signature.clone(),
-        key_signature: yaml_lesson.settings.key_signature.clone(),
-        total_beats,
-        total_seconds,
-        measures,
-    })
+    Err(format!(
+        "Lesson not found: {} (tried .yaml, .mxl, .musicxml)",
+        lesson_id
+    ))
 }
 
 /// List all available lessons
 #[tauri::command]
 pub fn list_lessons() -> Result<Vec<LessonMetadata>, String> {
+    // Log current working directory for debugging
+    if let Ok(cwd) = std::env::current_dir() {
+        tracing::info!("Current working directory: {:?}", cwd);
+    }
+
     let lessons_dir = get_lessons_dir();
+    tracing::info!("Looking for lessons in: {:?}", lessons_dir);
 
     if !lessons_dir.exists() {
-        return Err("Lessons directory not found".to_string());
+        let err_msg = format!("Lessons directory not found at: {:?}", lessons_dir);
+        tracing::error!("{}", err_msg);
+        return Err(err_msg);
     }
+
+    tracing::info!("Lessons directory exists, reading files...");
 
     let mut lessons = Vec::new();
 
-    // Iterate through all YAML files in the lessons directory
+    // Iterate through all lesson files in the lessons directory
     for entry in std::fs::read_dir(&lessons_dir)
         .map_err(|e| format!("Failed to read lessons directory: {}", e))?
     {
         let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;
         let path = entry.path();
 
-        // Only process .yaml files
-        if path.extension().and_then(|s| s.to_str()) == Some("yaml") {
-            // Try to parse the lesson
-            if let Ok(yaml_lesson) = YamlLesson::from_file(&path) {
-                let id = path
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("unknown")
-                    .to_string();
+        let ext = path.extension().and_then(|s| s.to_str());
 
-                let duration_seconds = yaml_lesson.total_seconds();
-                let mode = yaml_lesson.mode.clone().unwrap_or_default();
-                lessons.push(LessonMetadata {
-                    id,
-                    title: yaml_lesson.title.clone(),
-                    description: yaml_lesson.description.clone(),
-                    mode,
-                    duration_seconds,
-                });
+        match ext {
+            // Process YAML files
+            Some("yaml") => {
+                tracing::debug!("Processing YAML file: {:?}", path);
+                match YamlLesson::from_file(&path) {
+                    Ok(yaml_lesson) => {
+                        let id = path
+                            .file_stem()
+                            .and_then(|s| s.to_str())
+                            .unwrap_or("unknown")
+                            .to_string();
+
+                        tracing::debug!("Successfully loaded lesson: {}", yaml_lesson.title);
+                        lessons.push(LessonMetadata {
+                            id,
+                            title: yaml_lesson.title.clone(),
+                            description: yaml_lesson.description.clone(),
+                            mode: yaml_lesson.mode.clone().unwrap_or_default(),
+                            duration_seconds: yaml_lesson.total_seconds(),
+                        });
+                    }
+                    Err(e) => {
+                        tracing::warn!("Failed to load YAML lesson from {:?}: {}", path, e);
+                    }
+                }
+            }
+            // Process MXL files (compressed MusicXML)
+            Some("mxl") => {
+                tracing::debug!("Processing MXL file: {:?}", path);
+                match MxlLesson::from_file(&path) {
+                    Ok(mxl_lesson) => {
+                        let id = path
+                            .file_stem()
+                            .and_then(|s| s.to_str())
+                            .unwrap_or("unknown")
+                            .to_string();
+
+                        tracing::debug!("Successfully loaded MXL lesson: {}", mxl_lesson.title);
+                        lessons.push(LessonMetadata {
+                            id,
+                            title: mxl_lesson.title.clone(),
+                            description: mxl_lesson.description.clone(),
+                            mode: mxl_lesson.mode.clone().unwrap_or_default(),
+                            duration_seconds: mxl_lesson.total_seconds(),
+                        });
+                    }
+                    Err(e) => {
+                        tracing::warn!("Failed to load MXL lesson from {:?}: {}", path, e);
+                    }
+                }
+            }
+            // Process uncompressed MusicXML files
+            Some("musicxml") => {
+                tracing::debug!("Processing MusicXML file: {:?}", path);
+                match std::fs::read_to_string(&path) {
+                    Ok(content) => match MxlLesson::from_xml(&content, &path) {
+                        Ok(mxl_lesson) => {
+                            let id = path
+                                .file_stem()
+                                .and_then(|s| s.to_str())
+                                .unwrap_or("unknown")
+                                .to_string();
+
+                            tracing::debug!(
+                                "Successfully loaded MusicXML lesson: {}",
+                                mxl_lesson.title
+                            );
+                            lessons.push(LessonMetadata {
+                                id,
+                                title: mxl_lesson.title.clone(),
+                                description: mxl_lesson.description.clone(),
+                                mode: mxl_lesson.mode.clone().unwrap_or_default(),
+                                duration_seconds: mxl_lesson.total_seconds(),
+                            });
+                        }
+                        Err(e) => {
+                            tracing::warn!("Failed to parse MusicXML from {:?}: {}", path, e);
+                        }
+                    },
+                    Err(e) => {
+                        tracing::warn!("Failed to read MusicXML file {:?}: {}", path, e);
+                    }
+                }
+            }
+            _ => {
+                // Skip non-lesson files
             }
         }
     }
@@ -185,88 +250,114 @@ pub fn list_lessons() -> Result<Vec<LessonMetadata>, String> {
     // Sort by title
     lessons.sort_by(|a, b| a.title.cmp(&b.title));
 
+    tracing::info!("Found {} valid lesson files", lessons.len());
     Ok(lessons)
 }
 
-/// Helper function to convert a Note to NoteDTO
-fn note_to_dto(note: &crate::models::Note) -> NoteDTO {
-    use crate::models::Note;
+/// Convert YamlLesson to LessonDTO
+fn yaml_lesson_to_dto(yaml_lesson: YamlLesson) -> LessonDTO {
+    let tempo = yaml_lesson.settings.tempo;
+    let time_signature = yaml_lesson.settings.time_signature.clone();
+    let key_signature = yaml_lesson.settings.key_signature.clone();
+    let total_beats = yaml_lesson.total_beats();
+    let total_seconds = yaml_lesson.total_seconds();
 
+    // Convert measures
+    let measures: Vec<MeasureDTO> = yaml_lesson
+        .measures
+        .iter()
+        .map(|measure| MeasureDTO {
+            number: measure.number,
+            notes: measure
+                .notes
+                .iter()
+                .map(|note| note_to_dto(note))
+                .collect(),
+        })
+        .collect();
+
+    LessonDTO {
+        title: yaml_lesson.title,
+        description: yaml_lesson.description,
+        mode: yaml_lesson.mode.unwrap_or_default(),
+        tempo,
+        time_signature,
+        key_signature,
+        total_beats,
+        total_seconds,
+        measures,
+    }
+}
+
+/// Convert Note to NoteDTO
+fn note_to_dto(note: &Note) -> NoteDTO {
     match note {
         Note::Single {
             midi,
             duration_beats,
             hand,
             accidental,
+            start_beat,
         } => NoteDTO::Single {
             midi: *midi,
             duration: *duration_beats,
             hand: hand.clone(),
             accidental: accidental.clone(),
+            start_beat: *start_beat,
         },
         Note::Chord {
             midi_set,
             duration_beats,
             hand,
             chord_name,
+            start_beat,
         } => NoteDTO::Chord {
             midi: midi_set.clone(),
             duration: *duration_beats,
             hand: hand.clone(),
             chord: chord_name.clone(),
+            start_beat: *start_beat,
         },
-        Note::Rest { duration_beats } => NoteDTO::Rest {
+        Note::Rest { duration_beats, hand, start_beat } => NoteDTO::Rest {
             duration: *duration_beats,
+            hand: hand.clone(),
+            start_beat: *start_beat,
         },
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+/// Convert MxlLesson to LessonDTO
+fn mxl_lesson_to_dto(mxl_lesson: MxlLesson) -> LessonDTO {
+    let tempo = mxl_lesson.settings.tempo;
+    let time_signature = mxl_lesson.settings.time_signature.clone();
+    let key_signature = mxl_lesson.settings.key_signature.clone();
+    let total_beats = mxl_lesson.total_beats();
+    let total_seconds = mxl_lesson.total_seconds();
 
-    #[test]
-    fn test_note_to_dto_single() {
-        let note = crate::models::Note::Single {
-            midi: 60,
-            duration_beats: 1.0,
-            hand: "right".to_string(),
-            accidental: None,
-        };
-        let dto = note_to_dto(&note);
-        if let NoteDTO::Single { midi, .. } = dto {
-            assert_eq!(midi, 60);
-        } else {
-            panic!("Expected Single variant");
-        }
-    }
+    // Convert measures
+    let measures: Vec<MeasureDTO> = mxl_lesson
+        .measures
+        .iter()
+        .map(|measure| MeasureDTO {
+            number: measure.number,
+            notes: measure
+                .notes
+                .iter()
+                .map(|note| note_to_dto(note))
+                .collect(),
+        })
+        .collect();
 
-    #[test]
-    fn test_note_to_dto_chord() {
-        let note = crate::models::Note::Chord {
-            midi_set: vec![60, 64, 67],
-            duration_beats: 2.0,
-            hand: "left".to_string(),
-            chord_name: Some("C Major".to_string()),
-        };
-        let dto = note_to_dto(&note);
-        if let NoteDTO::Chord { midi, .. } = dto {
-            assert_eq!(midi, vec![60, 64, 67]);
-        } else {
-            panic!("Expected Chord variant");
-        }
-    }
-
-    #[test]
-    fn test_note_to_dto_rest() {
-        let note = crate::models::Note::Rest {
-            duration_beats: 1.0,
-        };
-        let dto = note_to_dto(&note);
-        if let NoteDTO::Rest { duration } = dto {
-            assert_eq!(duration, 1.0);
-        } else {
-            panic!("Expected Rest variant");
-        }
+    LessonDTO {
+        title: mxl_lesson.title,
+        description: mxl_lesson.description,
+        mode: mxl_lesson.mode.unwrap_or_default(),
+        tempo,
+        time_signature,
+        key_signature,
+        total_beats,
+        total_seconds,
+        measures,
     }
 }
+

@@ -7,9 +7,11 @@
 // - statistics: Record and retrieve session statistics
 
 mod evaluation;
+pub mod midi;
 mod midi_input;
 
 pub use evaluation::{EvaluationResult, EvaluationService, FeedbackType};
+pub use midi::{ChordGrouper, EventProcessor};
 pub use midi_input::MidiInputService;
 
 // Placeholder type exports for future phases

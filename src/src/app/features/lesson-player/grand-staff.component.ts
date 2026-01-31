@@ -43,6 +43,7 @@ interface StaffLine {
                         [globalNoteOffset]="line.globalStartIndex"
                         [globalBeatOffset]="line.globalBeatOffset"
                         [isLastLine]="line.isLastLine"
+                        [timeSignature]="lesson?.time_signature || null"
                         clef="treble">
                     </app-staff>
 
@@ -60,6 +61,7 @@ interface StaffLine {
                         [globalNoteOffset]="line.globalStartIndex"
                         [globalBeatOffset]="line.globalBeatOffset"
                         [isLastLine]="line.isLastLine"
+                        [timeSignature]="lesson?.time_signature || null"
                         clef="bass">
                     </app-staff>
 
@@ -207,18 +209,24 @@ export class GrandStaffComponent implements OnChanges {
                     const isTreble = this.isTrebleNote(note, staffNote);
                     const isBass = this.isBassNote(note, staffNote);
 
-                    // Add to treble staff (visible if treble note or rest, hidden otherwise)
+                    // Determine rest placement based on hand property (matching scrolling view)
+                    // Right hand rests go on treble, left hand rests go on bass
+                    const restHand = 'hand' in note ? (note as { hand: string }).hand : 'right';
+                    const isRightHandRest = staffNote.isRest && restHand === 'right';
+                    const isLeftHandRest = staffNote.isRest && restHand === 'left';
+
+                    // Add to treble staff (visible if treble note OR right-hand rest)
                     currentLine.treble.push({
                         ...staffNote,
-                        hidden: !isTreble && !staffNote.isRest
+                        hidden: !isTreble && !isRightHandRest,
+                        isRest: isRightHandRest // Only show rest if it's right-hand
                     });
 
-                    // Add to bass staff (visible if bass note, hidden otherwise)
-                    // Rests only show on treble to avoid duplication
+                    // Add to bass staff (visible if bass note OR left-hand rest)
                     currentLine.bass.push({
                         ...staffNote,
-                        hidden: !isBass,
-                        isRest: false // Don't show rests on bass (they're on treble)
+                        hidden: !isBass && !isLeftHandRest,
+                        isRest: isLeftHandRest // Only show rest if it's left-hand
                     });
 
                     // Track beat position
