@@ -37,6 +37,12 @@ export interface ScrollingNote {
     releasedEarly?: boolean;
     /** Whether the note was replayed after release */
     wasReplayed?: boolean;
+    /** How long the note was actually held (in milliseconds) */
+    heldDurationMs?: number;
+    /** Expected note duration (in milliseconds) */
+    expectedDurationMs?: number;
+    /** Timestamp when note was first pressed */
+    pressedAtMs?: number;
 }
 
 /**

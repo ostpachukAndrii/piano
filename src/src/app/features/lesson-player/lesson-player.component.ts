@@ -289,6 +289,16 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
                   <span class="label">Active Hands:</span>
                   <span class="value">{{ activeHands() === 'both' ? 'Both Hands' : (activeHands() === 'left' ? 'Left Hand Only' : 'Right Hand Only') }}</span>
                 </div>
+                <div class="debug-item">
+                  <span class="label">Player View:</span>
+                  <span class="value">{{ playerView() }}</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Timing Playing:</span>
+                  <span class="value" [style.color]="isTimingPlaying() ? '#ff9800' : '#666'">
+                    {{ isTimingPlaying() ? '▶ YES' : '⏸ No' }}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -302,6 +312,52 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
                 <div class="debug-item">
                   <span class="label">Note Index:</span>
                   <span class="value">{{ currentNoteIndex() }}</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Global Note Index:</span>
+                  <span class="value">{{ getCurrentGlobalNoteIndex() }}</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Playhead Position:</span>
+                  <span class="value">{{ getPlayheadPosition() }}</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Playhead Beat:</span>
+                  <span class="value">{{ playheadBeatPosition() }}</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Total Measures:</span>
+                  <span class="value">{{ lesson()?.measures?.length ?? 0 }}</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Notes in Current Measure:</span>
+                  <span class="value">{{ lesson()?.measures?.[currentMeasureIndex()]?.notes?.length ?? 0 }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="debug-section">
+              <h4>🎵 Lesson Info</h4>
+              <div class="debug-grid">
+                <div class="debug-item">
+                  <span class="label">Title:</span>
+                  <span class="value">{{ lesson()?.title ?? 'N/A' }}</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Tempo:</span>
+                  <span class="value">{{ lesson()?.tempo ?? 0 }} BPM</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Time Signature:</span>
+                  <span class="value">{{ lesson()?.time_signature ?? 'N/A' }}</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Key Signature:</span>
+                  <span class="value">{{ lesson()?.key_signature ?? 'N/A' }}</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Total Duration:</span>
+                  <span class="value">{{ lesson()?.total_seconds ?? 0 }}s</span>
                 </div>
               </div>
             </div>
@@ -327,6 +383,16 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
                     </span>
                   </span>
                 </div>
+                <div class="debug-item">
+                  <span class="label">MIDI Connected:</span>
+                  <span class="value" [style.color]="midiService.connected() ? '#4caf50' : '#f44336'">
+                    {{ midiService.connected() ? '✓ Connected' : '✗ Disconnected' }}
+                  </span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Active Notes Count:</span>
+                  <span class="value">{{ activeNotesArray().length }}</span>
+                </div>
               </div>
             </div>
 
@@ -340,6 +406,10 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
                   </span>
                 </div>
                 <div class="debug-item">
+                  <span class="label">Notes to Release:</span>
+                  <span class="value">{{ getNotesToReleaseString() }}</span>
+                </div>
+                <div class="debug-item">
                   <span class="label">Last Evaluated Key:</span>
                   <span class="value">{{ lastEvaluatedNotes() || 'None' }}</span>
                 </div>
@@ -348,6 +418,12 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
                   <span class="value" [class.correct]="evaluationService.lastResult()?.pitch_correct"
                         [class.incorrect]="evaluationService.lastResult() && !evaluationService.lastResult()?.pitch_correct">
                     {{ evaluationService.lastResult() ? (evaluationService.lastResult()?.pitch_correct ? '✓ Correct' : '✗ Wrong') : 'Waiting...' }}
+                  </span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Note Played In Window:</span>
+                  <span class="value" [style.color]="notePlayedInWindow() ? '#4caf50' : '#666'">
+                    {{ notePlayedInWindow() ? '✓ Yes' : 'No' }}
                   </span>
                 </div>
               </div>
@@ -361,12 +437,70 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
                   <span class="value">{{ evaluationService.stats()?.total_notes ?? 0 }}</span>
                 </div>
                 <div class="debug-item">
+                  <span class="label">Correct Notes:</span>
+                  <span class="value" style="color: #4caf50">{{ evaluationService.stats()?.correct_notes ?? 0 }}</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Wrong Notes:</span>
+                  <span class="value" style="color: #f44336">{{ (evaluationService.stats()?.total_notes ?? 0) - (evaluationService.stats()?.correct_notes ?? 0) }}</span>
+                </div>
+                <div class="debug-item">
                   <span class="label">Current Streak:</span>
                   <span class="value">{{ evaluationService.stats()?.current_streak ?? 0 }}</span>
                 </div>
                 <div class="debug-item">
+                  <span class="label">Best Streak:</span>
+                  <span class="value">{{ evaluationService.stats()?.best_streak ?? 0 }}</span>
+                </div>
+                <div class="debug-item">
                   <span class="label">Accuracy:</span>
                   <span class="value">{{ evaluationService.stats()?.accuracy?.toFixed(1) ?? 0 }}%</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Average Score:</span>
+                  <span class="value" style="color: #9c27b0">{{ evaluationService.stats()?.average_score?.toFixed(1) ?? 0 }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="debug-section">
+              <h4>⏱️ Timing Info</h4>
+              <div class="debug-grid">
+                <div class="debug-item">
+                  <span class="label">Timing Window:</span>
+                  <span class="value">{{ timingWindowMs }}ms</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Playback Position:</span>
+                  <span class="value">{{ playbackService.currentTimeFormatted }} / {{ playbackService.totalDurationFormatted }}</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Playback Progress:</span>
+                  <span class="value">{{ playbackService.progressPercent().toFixed(1) }}%</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Playback State:</span>
+                  <span class="value">{{ playbackService.isPlaying() ? '▶ Playing' : playbackService.isPaused() ? '⏸ Paused' : '⏹ Stopped' }}</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Current Tempo:</span>
+                  <span class="value">{{ playbackService.tempo() }} BPM</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="debug-section">
+              <h4>🔊 Audio State</h4>
+              <div class="debug-grid">
+                <div class="debug-item">
+                  <span class="label">Piano Volume:</span>
+                  <span class="value">{{ (pianoService.volume() * 100).toFixed(0) }}%</span>
+                </div>
+                <div class="debug-item">
+                  <span class="label">Piano Enabled:</span>
+                  <span class="value" [style.color]="pianoService.enabled() ? '#4caf50' : '#f44336'">
+                    {{ pianoService.enabled() ? '✓ Yes' : '✗ No' }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1017,6 +1151,16 @@ export class LessonPlayerComponent implements OnInit, OnDestroy {
     isChord = isChordNote;
     midiToNoteName = midiToNoteName;
     Math = Math; // Expose Math to template
+
+    /**
+     * Convert notesToRelease Set to a string for template display
+     * (Angular templates don't support spread operator)
+     */
+    getNotesToReleaseString(): string {
+        const notes = this.notesToRelease();
+        if (notes.size === 0) return 'None';
+        return Array.from(notes).join(', ');
+    }
 
     // Lesson mode - user-selectable signal (initialized from lesson default)
     currentMode = signal<LessonMode>('study_right_hand_no_timing');

@@ -70,6 +70,55 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                 <mat-icon>{{ soundEffectsEnabled ? 'music_note' : 'music_off' }}</mat-icon>
             </button>
 
+            <div class="hand-separator"></div>
+
+            <!-- Left hand toggle button -->
+            <button mat-icon-button
+                    (click)="onLeftHandToggle()"
+                    class="hand-btn"
+                    [class.active]="leftHandEnabled"
+                    [class.disabled]="!leftHandEnabled"
+                    aria-label="Left Hand"
+                    matTooltip="Toggle left hand (bass)">
+                <span class="hand-label">L</span>
+            </button>
+
+            <!-- Right hand toggle button -->
+            <button mat-icon-button
+                    (click)="onRightHandToggle()"
+                    class="hand-btn"
+                    [class.active]="rightHandEnabled"
+                    [class.disabled]="!rightHandEnabled"
+                    aria-label="Right Hand"
+                    matTooltip="Toggle right hand (treble)">
+                <span class="hand-label">R</span>
+            </button>
+
+            <div class="measure-separator"></div>
+
+            <!-- Measure Navigation -->
+            <div class="measure-nav">
+                <button mat-icon-button
+                        (click)="onPrevMeasure()"
+                        [disabled]="currentMeasure <= 1"
+                        class="measure-btn"
+                        aria-label="Previous Measure"
+                        matTooltip="Previous measure">
+                    <mat-icon>skip_previous</mat-icon>
+                </button>
+                <span class="measure-display" matTooltip="Current measure / Total measures">
+                    {{ currentMeasure }} / {{ totalMeasures }}
+                </span>
+                <button mat-icon-button
+                        (click)="onNextMeasure()"
+                        [disabled]="currentMeasure >= totalMeasures"
+                        class="measure-btn"
+                        aria-label="Next Measure"
+                        matTooltip="Next measure">
+                    <mat-icon>skip_next</mat-icon>
+                </button>
+            </div>
+
             <div class="progress-section">
                 <div class="progress-container">
                     <div class="progress-track">
@@ -321,6 +370,86 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                 color: #8B5CF6;
             }
         }
+
+        .hand-separator {
+            width: 1px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 0 4px;
+        }
+
+        .hand-btn {
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.2s ease;
+            min-width: 36px;
+
+            .hand-label {
+                font-size: 14px;
+                font-weight: 700;
+                font-family: monospace;
+            }
+
+            &:hover {
+                color: #22c55e;
+            }
+
+            &.active {
+                color: #22c55e;
+                background: rgba(34, 197, 94, 0.15);
+
+                .hand-label {
+                    text-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+                }
+            }
+
+            &.disabled {
+                color: rgba(255, 255, 255, 0.3);
+                background: rgba(255, 255, 255, 0.05);
+
+                .hand-label {
+                    text-decoration: line-through;
+                }
+            }
+        }
+
+        .measure-separator {
+            width: 1px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 0 4px;
+        }
+
+        .measure-nav {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+
+        .measure-btn {
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.2s ease;
+
+            &:hover:not(:disabled) {
+                color: #f59e0b;
+            }
+
+            &:disabled {
+                color: rgba(255, 255, 255, 0.2);
+            }
+        }
+
+        .measure-display {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: white;
+            background: rgba(245, 158, 11, 0.3);
+            padding: 4px 10px;
+            border-radius: 4px;
+            min-width: 50px;
+            text-align: center;
+            white-space: nowrap;
+        }
     `]
 })
 export class PlaybackControlsComponent {
@@ -334,6 +463,10 @@ export class PlaybackControlsComponent {
     @Input() pianoSoundEnabled = true;
     @Input() soundEffectsEnabled = true;
     @Input() isFullscreen = false;
+    @Input() leftHandEnabled = true;
+    @Input() rightHandEnabled = true;
+    @Input() currentMeasure = 1;
+    @Input() totalMeasures = 1;
 
     // Outputs
     @Output() playToggle = new EventEmitter<void>();
@@ -345,6 +478,9 @@ export class PlaybackControlsComponent {
     @Output() tempoChange = new EventEmitter<number>();
     @Output() modeChange = new EventEmitter<'flow' | 'wait'>();
     @Output() fullscreenToggle = new EventEmitter<void>();
+    @Output() leftHandToggle = new EventEmitter<void>();
+    @Output() rightHandToggle = new EventEmitter<void>();
+    @Output() jumpToMeasure = new EventEmitter<number>();
 
     /**
      * Handle restart button click
@@ -407,5 +543,37 @@ export class PlaybackControlsComponent {
      */
     onFullscreenToggle(): void {
         this.fullscreenToggle.emit();
+    }
+
+    /**
+     * Handle left hand toggle button click
+     */
+    onLeftHandToggle(): void {
+        this.leftHandToggle.emit();
+    }
+
+    /**
+     * Handle right hand toggle button click
+     */
+    onRightHandToggle(): void {
+        this.rightHandToggle.emit();
+    }
+
+    /**
+     * Handle previous measure button click
+     */
+    onPrevMeasure(): void {
+        if (this.currentMeasure > 1) {
+            this.jumpToMeasure.emit(this.currentMeasure - 1);
+        }
+    }
+
+    /**
+     * Handle next measure button click
+     */
+    onNextMeasure(): void {
+        if (this.currentMeasure < this.totalMeasures) {
+            this.jumpToMeasure.emit(this.currentMeasure + 1);
+        }
     }
 }

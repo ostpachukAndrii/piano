@@ -121,6 +121,11 @@ export class NoteheadRendererService {
     duration: number,
     stemLength: number = 35
   ): number {
+    // Whole notes (duration >= 4) should NEVER have stems
+    if (duration >= 4) {
+      return y; // Return original Y, no stem drawn
+    }
+
     const radii = this.getNoteheadRadii();
 
     // Stem X position: at left or right edge of notehead

@@ -570,7 +570,8 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
 
         const noteStep = this.midiToDiatonicStep(midi);
 
-        if (hand === 'right' || midi >= 60) {
+        // Use hand to determine staff - left hand notes go on bass staff even if MIDI >= 60
+        if (hand === 'right') {
             // Treble staff
             // Bottom line (E4, MIDI 64) at step 30, top line (F5, MIDI 77) at step 38
             const trebleTop = height * StaffMathService.TREBLE_TOP_RATIO;
