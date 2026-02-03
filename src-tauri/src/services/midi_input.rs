@@ -146,6 +146,14 @@ impl MidiInputService {
         }
     }
 
+    /// Clear the event buffer
+    pub fn clear_event_buffer(&mut self) {
+        if let Ok(mut buffer) = self.event_buffer.lock() {
+            buffer.clear();
+            tracing::debug!("Event buffer cleared");
+        }
+    }
+
     /// Check if currently connected
     pub fn is_connected(&self) -> bool {
         self.connection.is_some()

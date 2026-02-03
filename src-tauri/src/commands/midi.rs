@@ -9,18 +9,22 @@
 
 use crate::models::{MidiChord, MidiDeviceInfo};
 use crate::services::MidiInputService;
-use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, State};
 
 /// Managed state for MIDI service
 pub struct MidiState {
     pub service: Mutex<MidiInputService>,
+    /// Flag to signal polling thread to stop
+    pub stop_flag: Arc<AtomicBool>,
 }
 
 impl Default for MidiState {
     fn default() -> Self {
         Self {
             service: Mutex::new(MidiInputService::new()),
+            stop_flag: Arc::new(AtomicBool::new(false)),
         }
     }
 }
@@ -39,6 +43,14 @@ pub fn start_midi_listening(
     app: AppHandle,
 ) -> Result<(), String> {
     tracing::info!("start_midi_listening called with device_id: {}", device_id);
+
+    // Stop any existing polling thread first
+    state.stop_flag.store(true, Ordering::SeqCst);
+    // Give existing thread time to notice the flag
+    std::thread::sleep(std::time::Duration::from_millis(20));
+
+    // Reset the stop flag for the new thread
+    state.stop_flag.store(false, Ordering::SeqCst);
 
     // First connect to the device (briefly lock)
     {
@@ -64,13 +76,24 @@ pub fn start_midi_listening(
     // Create event processor using configuration
     let processor = crate::services::EventProcessor::from_config();
 
+    // Clone stop flag for the polling thread
+    let stop_flag = Arc::clone(&state.stop_flag);
+
     // Start a polling loop in a separate thread
     let app_handle = app.clone();
     std::thread::spawn(move || {
         use crate::services::midi::ProcessResult;
         use std::time::Duration;
 
+        tracing::info!("MIDI polling thread started");
+
         loop {
+            // Check if we should stop
+            if stop_flag.load(Ordering::SeqCst) {
+                tracing::info!("MIDI polling thread received stop signal, exiting");
+                break;
+            }
+
             std::thread::sleep(Duration::from_millis(10));
 
             // Process events from the shared buffer
@@ -105,6 +128,8 @@ pub fn start_midi_listening(
                 }
             }
         }
+
+        tracing::info!("MIDI polling thread terminated");
     });
 
     Ok(())
@@ -113,12 +138,21 @@ pub fn start_midi_listening(
 /// Stop listening to MIDI device
 #[tauri::command]
 pub fn stop_midi_listening(state: State<MidiState>) -> Result<(), String> {
+    tracing::info!("stop_midi_listening called");
+
+    // Signal the polling thread to stop
+    state.stop_flag.store(true, Ordering::SeqCst);
+
+    // Disconnect from the MIDI device and clear buffer
     let mut service = state
         .service
         .lock()
         .map_err(|_| "Failed to lock MIDI service")?;
 
     service.disconnect();
+    service.clear_event_buffer();
+
+    tracing::info!("MIDI listening stopped, polling thread signaled to terminate");
     Ok(())
 }
 

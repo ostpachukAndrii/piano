@@ -33,10 +33,13 @@ export class TauriBackendClient implements BackendClient {
 
   async startMidiListening(deviceId: string): Promise<void> {
     try {
-      await invoke('start_midi_listening', { device_id: deviceId });
+      // Tauri 2.0 uses camelCase in JS and converts to snake_case for Rust
+      await invoke('start_midi_listening', { deviceId });
     } catch (error) {
+      // Log the actual backend error for debugging
+      console.error('[TauriBackendClient] MIDI start error:', error);
       throw new BackendClientError(
-        'Failed to start MIDI listening',
+        `Failed to start MIDI listening: ${error}`,
         'MIDI_START_FAILED',
         error
       );
@@ -83,10 +86,12 @@ export class TauriBackendClient implements BackendClient {
 
   async loadLesson(lessonId: string): Promise<Lesson> {
     try {
-      return await invoke<Lesson>('load_lesson', { lesson_id: lessonId });
+      // Tauri 2.0 uses camelCase in JS and converts to snake_case for Rust
+      return await invoke<Lesson>('load_lesson', { lessonId });
     } catch (error) {
+      console.error('[TauriBackendClient] Lesson load error:', error);
       throw new BackendClientError(
-        `Failed to load lesson: ${lessonId}`,
+        `Failed to load lesson: ${lessonId}: ${error}`,
         'LESSON_LOAD_FAILED',
         error
       );
