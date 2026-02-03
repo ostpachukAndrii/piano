@@ -172,3 +172,87 @@ pub fn is_midi_connected(state: State<MidiState>) -> Result<bool, String> {
 fn emit_chord_event(app: &AppHandle, chord: MidiChord) {
     let _ = app.emit("midi_chord_detected", chord);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_midi_state_default() {
+        let state = MidiState::default();
+
+        // Service should be unlockable
+        let service = state.service.lock().unwrap();
+        assert!(!service.is_connected());
+
+        // Stop flag should be false initially
+        assert!(!state.stop_flag.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn test_midi_state_stop_flag_initially_false() {
+        let state = MidiState::default();
+        assert!(!state.stop_flag.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn test_midi_state_stop_flag_can_be_set() {
+        let state = MidiState::default();
+
+        state.stop_flag.store(true, Ordering::SeqCst);
+        assert!(state.stop_flag.load(Ordering::SeqCst));
+
+        state.stop_flag.store(false, Ordering::SeqCst);
+        assert!(!state.stop_flag.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn test_midi_state_stop_flag_shared_across_clones() {
+        let state = MidiState::default();
+        let flag_clone = Arc::clone(&state.stop_flag);
+
+        // Set via original
+        state.stop_flag.store(true, Ordering::SeqCst);
+
+        // Should be visible via clone
+        assert!(flag_clone.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn test_stop_flag_thread_safety() {
+        use std::thread;
+
+        let state = MidiState::default();
+        let flag = Arc::clone(&state.stop_flag);
+
+        // Spawn a thread that checks the flag
+        let handle = thread::spawn(move || {
+            let mut iterations = 0;
+            while !flag.load(Ordering::SeqCst) {
+                thread::sleep(std::time::Duration::from_millis(1));
+                iterations += 1;
+                if iterations > 100 {
+                    return false; // Timeout
+                }
+            }
+            true
+        });
+
+        // Give thread time to start
+        thread::sleep(std::time::Duration::from_millis(10));
+
+        // Signal stop
+        state.stop_flag.store(true, Ordering::SeqCst);
+
+        // Thread should have received the signal
+        let result = handle.join().unwrap();
+        assert!(result, "Thread should have received stop signal");
+    }
+
+    #[test]
+    fn test_get_midi_devices() {
+        // This should work on any system (might return empty list)
+        let result = get_midi_devices();
+        assert!(result.is_ok());
+    }
+}

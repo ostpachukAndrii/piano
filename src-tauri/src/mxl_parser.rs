@@ -344,12 +344,13 @@ fn extract_measures(score: &Node, settings: &GlobalSettings) -> Result<Vec<Measu
             // Sort by beat position
             notes.sort_by(|a, b| a.beat_position.partial_cmp(&b.beat_position).unwrap_or(std::cmp::Ordering::Equal));
 
-            // Extract just the Note objects
-            let sorted_notes: Vec<Note> = notes.into_iter().map(|tn| tn.note).collect();
+            // Filter out rests when there's a note at the same beat position for the same hand
+            // This handles multi-voice notation where one voice has notes and another has rests
+            let filtered_notes = filter_redundant_rests(notes);
 
             Measure {
                 number,
-                notes: sorted_notes,
+                notes: filtered_notes,
             }
         })
         .collect();
@@ -358,6 +359,43 @@ fn extract_measures(score: &Node, settings: &GlobalSettings) -> Result<Vec<Measu
     all_measures.sort_by_key(|m| m.number);
 
     Ok(all_measures)
+}
+
+/// Filter out redundant rests when notes exist at the same beat position for the same hand
+/// In multi-voice notation, one voice may have notes while another has rests at the same position
+/// We keep the note and remove the rest in such cases
+fn filter_redundant_rests(timed_notes: Vec<TimedNote>) -> Vec<Note> {
+    use std::collections::HashSet;
+
+    // Build a set of (beat_position, hand) where we have actual notes (not rests)
+    let note_positions: HashSet<(i32, String)> = timed_notes
+        .iter()
+        .filter_map(|tn| {
+            let (beat, hand) = match &tn.note {
+                Note::Single { start_beat, hand, .. } => (start_beat.unwrap_or(0.0), hand.clone()),
+                Note::Chord { start_beat, hand, .. } => (start_beat.unwrap_or(0.0), hand.clone()),
+                Note::Rest { .. } => return None, // Ignore rests when building position set
+            };
+            // Round to avoid floating point issues (use centiseconds of beat)
+            Some(((beat * 100.0) as i32, hand))
+        })
+        .collect();
+
+    // Filter: keep notes, and only keep rests if no note exists at same position/hand
+    timed_notes
+        .into_iter()
+        .filter(|tn| {
+            match &tn.note {
+                Note::Rest { start_beat, hand, .. } => {
+                    let beat_key = (start_beat.unwrap_or(0.0) * 100.0) as i32;
+                    // Keep rest only if no note exists at this position for this hand
+                    !note_positions.contains(&(beat_key, hand.clone()))
+                }
+                _ => true, // Always keep notes
+            }
+        })
+        .map(|tn| tn.note)
+        .collect()
 }
 
 /// Parse time signature string into (beats, beat_type)
@@ -657,6 +695,80 @@ mod tests {
     }
 
     #[test]
+    fn test_debug_measure_30() {
+        // Debug test to investigate notes/rests intersection in measure 30
+        let mxl_path = std::path::Path::new("../lessons/mad-world-piano.mxl");
+        if !mxl_path.exists() {
+            println!("Skipping test - MXL file not found");
+            return;
+        }
+
+        let lesson = MxlLesson::from_file(mxl_path).expect("Failed to load MXL");
+
+        // Find measure 30
+        let measure_30 = lesson.measures.iter().find(|m| m.number == 30);
+        if let Some(measure) = measure_30 {
+            println!("\n=== MEASURE 30 DEBUG ===");
+            println!("Total items: {}", measure.notes.len());
+
+            for (i, note) in measure.notes.iter().enumerate() {
+                match note {
+                    Note::Single { midi, duration_beats, hand, start_beat, accidental } => {
+                        println!(
+                            "[{}] Single: MIDI {} ({}) | dur={:.2} | hand={} | beat={:?} | acc={:?}",
+                            i, midi, midi_to_note_name(*midi), duration_beats, hand, start_beat, accidental
+                        );
+                    }
+                    Note::Chord { midi_set, duration_beats, hand, start_beat, .. } => {
+                        let names: Vec<String> = midi_set.iter()
+                            .map(|m| format!("{}", midi_to_note_name(*m)))
+                            .collect();
+                        println!(
+                            "[{}] Chord: [{}] | dur={:.2} | hand={} | beat={:?}",
+                            i, names.join(", "), duration_beats, hand, start_beat
+                        );
+                    }
+                    Note::Rest { duration_beats, hand, start_beat } => {
+                        println!(
+                            "[{}] REST: dur={:.2} | hand={} | beat={:?}",
+                            i, duration_beats, hand, start_beat
+                        );
+                    }
+                }
+            }
+
+            // Check for overlaps
+            println!("\n=== OVERLAP ANALYSIS ===");
+            let mut beat_map: std::collections::HashMap<String, Vec<(usize, &Note)>> = std::collections::HashMap::new();
+            for (i, note) in measure.notes.iter().enumerate() {
+                let (start_beat, hand) = match note {
+                    Note::Single { start_beat, hand, .. } => (start_beat.unwrap_or(0.0), hand.clone()),
+                    Note::Chord { start_beat, hand, .. } => (start_beat.unwrap_or(0.0), hand.clone()),
+                    Note::Rest { start_beat, hand, .. } => (start_beat.unwrap_or(0.0), hand.clone()),
+                };
+                let key = format!("{:.2}-{}", start_beat, hand);
+                beat_map.entry(key).or_default().push((i, note));
+            }
+
+            for (key, items) in &beat_map {
+                if items.len() > 1 {
+                    println!("OVERLAP at {}: {} items", key, items.len());
+                    for (idx, note) in items {
+                        let desc = match note {
+                            Note::Single { midi, .. } => format!("Single({})", midi_to_note_name(*midi)),
+                            Note::Chord { midi_set, .. } => format!("Chord({} notes)", midi_set.len()),
+                            Note::Rest { .. } => "REST".to_string(),
+                        };
+                        println!("  - [{}] {}", idx, desc);
+                    }
+                }
+            }
+        } else {
+            println!("Measure 30 not found!");
+        }
+    }
+
+    #[test]
     fn test_fifths_to_key_signature() {
         assert_eq!(fifths_to_key_signature(0, "major"), "C major");
         assert_eq!(fifths_to_key_signature(1, "major"), "G major");
@@ -669,6 +781,121 @@ mod tests {
         assert_eq!(parse_time_signature("4/4"), (4, 4));
         assert_eq!(parse_time_signature("3/4"), (3, 4));
         assert_eq!(parse_time_signature("6/8"), (6, 8));
+    }
+
+    #[test]
+    fn test_filter_redundant_rests_removes_overlapping_rests() {
+        // Create timed notes with overlapping rests and notes at same position
+        let timed_notes = vec![
+            TimedNote {
+                beat_position: 0.0,
+                note: Note::Rest {
+                    duration_beats: 1.0,
+                    hand: "right".to_string(),
+                    start_beat: Some(0.0),
+                },
+            },
+            TimedNote {
+                beat_position: 0.0,
+                note: Note::Single {
+                    midi: 60,
+                    duration_beats: 1.0,
+                    hand: "right".to_string(),
+                    accidental: None,
+                    start_beat: Some(0.0),
+                },
+            },
+            TimedNote {
+                beat_position: 1.0,
+                note: Note::Rest {
+                    duration_beats: 1.0,
+                    hand: "right".to_string(),
+                    start_beat: Some(1.0),
+                },
+            },
+        ];
+
+        let result = filter_redundant_rests(timed_notes);
+
+        // Should have 2 items: the note at beat 0.0 and rest at beat 1.0
+        // The rest at beat 0.0 should be filtered out
+        assert_eq!(result.len(), 2);
+
+        // First item should be the note
+        match &result[0] {
+            Note::Single { midi, .. } => assert_eq!(*midi, 60),
+            _ => panic!("Expected single note at position 0"),
+        }
+
+        // Second item should be the rest at beat 1.0
+        match &result[1] {
+            Note::Rest { start_beat, .. } => assert_eq!(*start_beat, Some(1.0)),
+            _ => panic!("Expected rest at position 1"),
+        }
+    }
+
+    #[test]
+    fn test_filter_redundant_rests_keeps_different_hands() {
+        // Create timed notes with rest and note at same position but different hands
+        let timed_notes = vec![
+            TimedNote {
+                beat_position: 0.0,
+                note: Note::Rest {
+                    duration_beats: 1.0,
+                    hand: "left".to_string(),
+                    start_beat: Some(0.0),
+                },
+            },
+            TimedNote {
+                beat_position: 0.0,
+                note: Note::Single {
+                    midi: 60,
+                    duration_beats: 1.0,
+                    hand: "right".to_string(),
+                    accidental: None,
+                    start_beat: Some(0.0),
+                },
+            },
+        ];
+
+        let result = filter_redundant_rests(timed_notes);
+
+        // Should keep both: left hand rest and right hand note
+        assert_eq!(result.len(), 2);
+    }
+
+    #[test]
+    fn test_filter_redundant_rests_handles_chords() {
+        // Create chord and rest at same position
+        let timed_notes = vec![
+            TimedNote {
+                beat_position: 0.0,
+                note: Note::Chord {
+                    midi_set: vec![60, 64, 67],
+                    duration_beats: 1.0,
+                    hand: "right".to_string(),
+                    chord_name: None,
+                    start_beat: Some(0.0),
+                },
+            },
+            TimedNote {
+                beat_position: 0.0,
+                note: Note::Rest {
+                    duration_beats: 1.0,
+                    hand: "right".to_string(),
+                    start_beat: Some(0.0),
+                },
+            },
+        ];
+
+        let result = filter_redundant_rests(timed_notes);
+
+        // Should only have the chord
+        assert_eq!(result.len(), 1);
+        match &result[0] {
+            Note::Chord { midi_set, .. } => assert_eq!(midi_set.len(), 3),
+            _ => panic!("Expected chord"),
+        }
     }
 
     #[test]
@@ -720,6 +947,821 @@ mod tests {
         match &lesson.measures[0].notes[0] {
             Note::Single { midi, .. } => assert_eq!(*midi, 60),
             _ => panic!("Expected single note"),
+        }
+    }
+
+    #[test]
+    fn test_multi_voice_with_backup_element() {
+        // Test parsing multi-voice notation where backup element rewinds time
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+      </attributes>
+      <!-- Voice 1: whole note -->
+      <note>
+        <pitch><step>C</step><octave>5</octave></pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <staff>1</staff>
+      </note>
+      <!-- Backup to start of measure -->
+      <backup><duration>4</duration></backup>
+      <!-- Voice 2: four quarter rests (should be filtered if notes exist) -->
+      <note>
+        <rest/>
+        <duration>1</duration>
+        <voice>2</voice>
+        <staff>1</staff>
+      </note>
+      <note>
+        <rest/>
+        <duration>1</duration>
+        <voice>2</voice>
+        <staff>1</staff>
+      </note>
+      <note>
+        <rest/>
+        <duration>1</duration>
+        <voice>2</voice>
+        <staff>1</staff>
+      </note>
+      <note>
+        <rest/>
+        <duration>1</duration>
+        <voice>2</voice>
+        <staff>1</staff>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        // The whole note at beat 0 should filter out the rest at beat 0
+        // Rests at beats 1, 2, 3 should remain
+        assert_eq!(lesson.measures.len(), 1);
+
+        let notes = &lesson.measures[0].notes;
+        // Should have: 1 note (C5) + 3 rests (at beats 1, 2, 3)
+        assert_eq!(notes.len(), 4);
+
+        // First should be the C5 note
+        match &notes[0] {
+            Note::Single { midi, start_beat, .. } => {
+                assert_eq!(*midi, 72); // C5
+                assert_eq!(*start_beat, Some(0.0));
+            }
+            _ => panic!("Expected single note at position 0"),
+        }
+    }
+
+    #[test]
+    fn test_chord_parsing() {
+        // Test parsing simultaneous notes marked with <chord> element
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes><divisions>1</divisions></attributes>
+      <!-- C major chord -->
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>1</duration>
+      </note>
+      <note>
+        <chord/>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>1</duration>
+      </note>
+      <note>
+        <chord/>
+        <pitch><step>G</step><octave>4</octave></pitch>
+        <duration>1</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        assert_eq!(lesson.measures.len(), 1);
+        assert_eq!(lesson.measures[0].notes.len(), 1);
+
+        match &lesson.measures[0].notes[0] {
+            Note::Chord { midi_set, start_beat, .. } => {
+                assert_eq!(midi_set.len(), 3);
+                assert!(midi_set.contains(&60)); // C4
+                assert!(midi_set.contains(&64)); // E4
+                assert!(midi_set.contains(&67)); // G4
+                assert_eq!(*start_beat, Some(0.0));
+            }
+            _ => panic!("Expected chord"),
+        }
+    }
+
+    #[test]
+    fn test_rest_parsing() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes><divisions>1</divisions></attributes>
+      <note>
+        <rest/>
+        <duration>2</duration>
+      </note>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>2</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        assert_eq!(lesson.measures[0].notes.len(), 2);
+
+        // First should be rest at beat 0
+        match &lesson.measures[0].notes[0] {
+            Note::Rest { duration_beats, start_beat, .. } => {
+                assert_eq!(*duration_beats, 2.0);
+                assert_eq!(*start_beat, Some(0.0));
+            }
+            _ => panic!("Expected rest at position 0"),
+        }
+
+        // Second should be note at beat 2
+        match &lesson.measures[0].notes[1] {
+            Note::Single { midi, start_beat, .. } => {
+                assert_eq!(*midi, 60);
+                assert_eq!(*start_beat, Some(2.0));
+            }
+            _ => panic!("Expected note at position 1"),
+        }
+    }
+
+    #[test]
+    fn test_accidentals_sharp() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes><divisions>1</divisions></attributes>
+      <note>
+        <pitch>
+          <step>F</step>
+          <alter>1</alter>
+          <octave>4</octave>
+        </pitch>
+        <duration>1</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        match &lesson.measures[0].notes[0] {
+            Note::Single { midi, .. } => {
+                assert_eq!(*midi, 66); // F#4 = 65 + 1
+            }
+            _ => panic!("Expected single note"),
+        }
+    }
+
+    #[test]
+    fn test_accidentals_flat() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes><divisions>1</divisions></attributes>
+      <note>
+        <pitch>
+          <step>B</step>
+          <alter>-1</alter>
+          <octave>4</octave>
+        </pitch>
+        <duration>1</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        match &lesson.measures[0].notes[0] {
+            Note::Single { midi, .. } => {
+                assert_eq!(*midi, 70); // Bb4 = 71 - 1
+            }
+            _ => panic!("Expected single note"),
+        }
+    }
+
+    #[test]
+    fn test_key_signature_g_major() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>1</fifths><mode>major</mode></key>
+      </attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>1</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        assert_eq!(lesson.settings.key_signature, "G major");
+    }
+
+    #[test]
+    fn test_key_signature_f_major() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>-1</fifths><mode>major</mode></key>
+      </attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>1</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        assert_eq!(lesson.settings.key_signature, "F major");
+    }
+
+    #[test]
+    fn test_key_signature_a_minor() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>0</fifths><mode>minor</mode></key>
+      </attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>1</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        assert_eq!(lesson.settings.key_signature, "A minor");
+    }
+
+    #[test]
+    fn test_time_signature_3_4() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <time><beats>3</beats><beat-type>4</beat-type></time>
+      </attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>1</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        assert_eq!(lesson.settings.time_signature, "3/4");
+    }
+
+    #[test]
+    fn test_time_signature_6_8() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>2</divisions>
+        <time><beats>6</beats><beat-type>8</beat-type></time>
+      </attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>1</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        assert_eq!(lesson.settings.time_signature, "6/8");
+    }
+
+    #[test]
+    fn test_two_staff_notation() {
+        // Test grand staff with treble and bass
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <staves>2</staves>
+      </attributes>
+      <!-- Right hand (staff 1) -->
+      <note>
+        <pitch><step>C</step><octave>5</octave></pitch>
+        <duration>4</duration>
+        <staff>1</staff>
+      </note>
+      <!-- Backup to play left hand -->
+      <backup><duration>4</duration></backup>
+      <!-- Left hand (staff 2) -->
+      <note>
+        <pitch><step>C</step><octave>3</octave></pitch>
+        <duration>4</duration>
+        <staff>2</staff>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        assert_eq!(lesson.measures.len(), 1);
+        assert_eq!(lesson.measures[0].notes.len(), 2);
+
+        // Check hands assignment
+        let notes = &lesson.measures[0].notes;
+
+        // Both notes should be at beat 0
+        let right_hand_note = notes.iter().find(|n| {
+            matches!(n, Note::Single { hand, .. } if hand == "right")
+        });
+        let left_hand_note = notes.iter().find(|n| {
+            matches!(n, Note::Single { hand, .. } if hand == "left")
+        });
+
+        assert!(right_hand_note.is_some(), "Should have right hand note");
+        assert!(left_hand_note.is_some(), "Should have left hand note");
+    }
+
+    #[test]
+    fn test_forward_element() {
+        // Test forward element which advances time without sound
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes><divisions>1</divisions></attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>1</duration>
+      </note>
+      <!-- Skip 2 beats -->
+      <forward><duration>2</duration></forward>
+      <note>
+        <pitch><step>G</step><octave>4</octave></pitch>
+        <duration>1</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        assert_eq!(lesson.measures[0].notes.len(), 2);
+
+        // First note at beat 0
+        match &lesson.measures[0].notes[0] {
+            Note::Single { midi, start_beat, .. } => {
+                assert_eq!(*midi, 60); // C4
+                assert_eq!(*start_beat, Some(0.0));
+            }
+            _ => panic!("Expected single note"),
+        }
+
+        // Second note at beat 3 (0 + 1 + 2 forward)
+        match &lesson.measures[0].notes[1] {
+            Note::Single { midi, start_beat, .. } => {
+                assert_eq!(*midi, 67); // G4
+                assert_eq!(*start_beat, Some(3.0));
+            }
+            _ => panic!("Expected single note"),
+        }
+    }
+
+    #[test]
+    fn test_multiple_measures() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes><divisions>1</divisions></attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>4</duration>
+      </note>
+    </measure>
+    <measure number="2">
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>4</duration>
+      </note>
+    </measure>
+    <measure number="3">
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>4</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        assert_eq!(lesson.measures.len(), 3);
+
+        // Check measure numbers are correct
+        assert_eq!(lesson.measures[0].number, 1);
+        assert_eq!(lesson.measures[1].number, 2);
+        assert_eq!(lesson.measures[2].number, 3);
+
+        // Check notes in each measure
+        match &lesson.measures[0].notes[0] {
+            Note::Single { midi, .. } => assert_eq!(*midi, 60), // C4
+            _ => panic!("Expected C4"),
+        }
+        match &lesson.measures[1].notes[0] {
+            Note::Single { midi, .. } => assert_eq!(*midi, 62), // D4
+            _ => panic!("Expected D4"),
+        }
+        match &lesson.measures[2].notes[0] {
+            Note::Single { midi, .. } => assert_eq!(*midi, 64), // E4
+            _ => panic!("Expected E4"),
+        }
+    }
+
+    #[test]
+    fn test_duration_divisions() {
+        // Test proper duration calculation with divisions
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>4</divisions>
+      </attributes>
+      <!-- Quarter note = divisions (4) -->
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>4</duration>
+      </note>
+      <!-- Eighth note = divisions/2 (2) -->
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>2</duration>
+      </note>
+      <!-- Sixteenth note = divisions/4 (1) -->
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>1</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        let notes = &lesson.measures[0].notes;
+        assert_eq!(notes.len(), 3);
+
+        // Quarter note = 1.0 beat
+        match &notes[0] {
+            Note::Single { duration_beats, start_beat, .. } => {
+                assert_eq!(*duration_beats, 1.0);
+                assert_eq!(*start_beat, Some(0.0));
+            }
+            _ => panic!("Expected note"),
+        }
+
+        // Eighth note = 0.5 beat
+        match &notes[1] {
+            Note::Single { duration_beats, start_beat, .. } => {
+                assert_eq!(*duration_beats, 0.5);
+                assert_eq!(*start_beat, Some(1.0));
+            }
+            _ => panic!("Expected note"),
+        }
+
+        // Sixteenth note = 0.25 beat
+        match &notes[2] {
+            Note::Single { duration_beats, start_beat, .. } => {
+                assert_eq!(*duration_beats, 0.25);
+                assert_eq!(*start_beat, Some(1.5));
+            }
+            _ => panic!("Expected note"),
+        }
+    }
+
+    #[test]
+    fn test_title_from_movement_title() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <movement-title>My Movement Title</movement-title>
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes><divisions>1</divisions></attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>1</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        assert_eq!(lesson.title, "My Movement Title");
+    }
+
+    #[test]
+    fn test_title_fallback_to_filename() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes><divisions>1</divisions></attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>1</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("my-cool-song.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        assert_eq!(lesson.title, "my cool song");
+    }
+
+    #[test]
+    fn test_description_from_creator() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <identification>
+    <creator type="composer">Johann Sebastian Bach</creator>
+  </identification>
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes><divisions>1</divisions></attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>1</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        assert!(lesson.description.is_some());
+        assert!(lesson.description.unwrap().contains("Johann Sebastian Bach"));
+    }
+
+    #[test]
+    fn test_total_beats_calculation() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes><divisions>1</divisions></attributes>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>2</duration>
+      </note>
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>2</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        // Two half notes = 4 beats total
+        assert_eq!(lesson.total_beats(), 4.0);
+    }
+
+    #[test]
+    fn test_measure_with_only_rests() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes><divisions>1</divisions></attributes>
+      <note>
+        <rest/>
+        <duration>4</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        assert_eq!(lesson.measures.len(), 1);
+        assert_eq!(lesson.measures[0].notes.len(), 1);
+
+        match &lesson.measures[0].notes[0] {
+            Note::Rest { duration_beats, .. } => {
+                assert_eq!(*duration_beats, 4.0);
+            }
+            _ => panic!("Expected rest"),
+        }
+    }
+
+    #[test]
+    fn test_octave_range() {
+        // Test various octaves are parsed correctly
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes><divisions>1</divisions></attributes>
+      <note>
+        <pitch><step>C</step><octave>1</octave></pitch>
+        <duration>1</duration>
+      </note>
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>1</duration>
+      </note>
+      <note>
+        <pitch><step>C</step><octave>7</octave></pitch>
+        <duration>1</duration>
+      </note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        let notes = &lesson.measures[0].notes;
+
+        // C1 = MIDI 24
+        match &notes[0] {
+            Note::Single { midi, .. } => assert_eq!(*midi, 24),
+            _ => panic!("Expected note"),
+        }
+
+        // C4 = MIDI 60 (middle C)
+        match &notes[1] {
+            Note::Single { midi, .. } => assert_eq!(*midi, 60),
+            _ => panic!("Expected note"),
+        }
+
+        // C7 = MIDI 96
+        match &notes[2] {
+            Note::Single { midi, .. } => assert_eq!(*midi, 96),
+            _ => panic!("Expected note"),
+        }
+    }
+
+    #[test]
+    fn test_all_pitch_steps() {
+        // Test all 7 pitch steps are parsed correctly
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1"><part-name>Piano</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes><divisions>1</divisions></attributes>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>1</duration></note>
+      <note><pitch><step>D</step><octave>4</octave></pitch><duration>1</duration></note>
+      <note><pitch><step>E</step><octave>4</octave></pitch><duration>1</duration></note>
+      <note><pitch><step>F</step><octave>4</octave></pitch><duration>1</duration></note>
+      <note><pitch><step>G</step><octave>4</octave></pitch><duration>1</duration></note>
+      <note><pitch><step>A</step><octave>4</octave></pitch><duration>1</duration></note>
+      <note><pitch><step>B</step><octave>4</octave></pitch><duration>1</duration></note>
+    </measure>
+  </part>
+</score-partwise>"#;
+
+        let path = Path::new("test.mxl");
+        let lesson = MxlLesson::from_xml(xml, path).unwrap();
+
+        let notes = &lesson.measures[0].notes;
+        let expected_midi = [60, 62, 64, 65, 67, 69, 71]; // C, D, E, F, G, A, B
+
+        for (i, expected) in expected_midi.iter().enumerate() {
+            match &notes[i] {
+                Note::Single { midi, .. } => assert_eq!(*midi, *expected, "Note {} mismatch", i),
+                _ => panic!("Expected note at position {}", i),
+            }
         }
     }
 }

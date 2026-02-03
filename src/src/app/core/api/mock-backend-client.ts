@@ -52,6 +52,11 @@ export class MockBackendClient implements BackendClient {
   }
 
   async startMidiListening(deviceId: string): Promise<void> {
+    // Validate device ID exists in mock devices
+    const device = this.mockDevices.find(d => d.id === deviceId);
+    if (!device) {
+      return Promise.reject(new Error(`Device not found: ${deviceId}`));
+    }
     this.midiConnected = true;
     console.log(`[Mock] Started listening to device: ${deviceId}`);
     return Promise.resolve();

@@ -194,3 +194,140 @@ fn test_c_scale_sequential_processing() {
         assert!(has_chord);
     }
 }
+
+// ============================================================================
+// Stop Flag Integration Tests
+// ============================================================================
+
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::thread;
+use std::time::Duration;
+
+#[test]
+fn test_stop_flag_terminates_polling_loop() {
+    let stop_flag = Arc::new(AtomicBool::new(false));
+    let stop_flag_clone = Arc::clone(&stop_flag);
+    let iterations = Arc::new(AtomicUsize::new(0));
+    let iterations_clone = Arc::clone(&iterations);
+
+    // Simulate a polling thread
+    let handle = thread::spawn(move || {
+        loop {
+            if stop_flag_clone.load(Ordering::SeqCst) {
+                break;
+            }
+            iterations_clone.fetch_add(1, Ordering::SeqCst);
+            thread::sleep(Duration::from_millis(5));
+        }
+    });
+
+    // Let the thread run a few iterations
+    thread::sleep(Duration::from_millis(50));
+
+    // Signal stop
+    stop_flag.store(true, Ordering::SeqCst);
+
+    // Wait for thread to finish
+    handle.join().unwrap();
+
+    // Thread should have run some iterations
+    let count = iterations.load(Ordering::SeqCst);
+    assert!(count > 0, "Thread should have run at least one iteration");
+    assert!(count < 100, "Thread should have stopped reasonably quickly");
+}
+
+#[test]
+fn test_stop_flag_reset_allows_new_polling() {
+    let stop_flag = Arc::new(AtomicBool::new(false));
+
+    // First polling session
+    let flag1 = Arc::clone(&stop_flag);
+    let handle1 = thread::spawn(move || {
+        let mut count = 0;
+        while !flag1.load(Ordering::SeqCst) && count < 10 {
+            count += 1;
+            thread::sleep(Duration::from_millis(5));
+        }
+        count
+    });
+
+    thread::sleep(Duration::from_millis(30));
+    stop_flag.store(true, Ordering::SeqCst);
+    let count1 = handle1.join().unwrap();
+
+    // Reset flag for new session
+    stop_flag.store(false, Ordering::SeqCst);
+
+    // Second polling session
+    let flag2 = Arc::clone(&stop_flag);
+    let handle2 = thread::spawn(move || {
+        let mut count = 0;
+        while !flag2.load(Ordering::SeqCst) && count < 10 {
+            count += 1;
+            thread::sleep(Duration::from_millis(5));
+        }
+        count
+    });
+
+    thread::sleep(Duration::from_millis(30));
+    stop_flag.store(true, Ordering::SeqCst);
+    let count2 = handle2.join().unwrap();
+
+    // Both sessions should have run
+    assert!(count1 > 0);
+    assert!(count2 > 0);
+}
+
+#[test]
+fn test_buffer_clear_on_stop() {
+    let buffer = Arc::new(Mutex::new(vec![
+        note_on(60, 100),
+        note_on(64, 100),
+        note_on(67, 100),
+    ]));
+
+    assert_eq!(buffer.lock().unwrap().len(), 3);
+
+    // Simulate stop behavior: clear buffer
+    buffer.lock().unwrap().clear();
+
+    assert!(buffer.lock().unwrap().is_empty());
+}
+
+#[test]
+fn test_event_processor_with_stop_flag_pattern() {
+    let processor = EventProcessor::new(50);
+    let buffer = Arc::new(Mutex::new(Vec::new()));
+    let stop_flag = Arc::new(AtomicBool::new(false));
+
+    let buffer_clone = Arc::clone(&buffer);
+    let stop_flag_clone = Arc::clone(&stop_flag);
+    let results_count = Arc::new(AtomicUsize::new(0));
+    let results_count_clone = Arc::clone(&results_count);
+
+    // Simulate polling thread
+    let handle = thread::spawn(move || {
+        while !stop_flag_clone.load(Ordering::SeqCst) {
+            if let Ok(results) = processor.process_buffer(&buffer_clone) {
+                results_count_clone.fetch_add(results.len(), Ordering::SeqCst);
+            }
+            thread::sleep(Duration::from_millis(10));
+        }
+    });
+
+    // Add some events
+    {
+        let mut buf = buffer.lock().unwrap();
+        buf.push(old_note_on(60, 100, 100));
+    }
+
+    // Let processor run
+    thread::sleep(Duration::from_millis(50));
+
+    // Stop
+    stop_flag.store(true, Ordering::SeqCst);
+    handle.join().unwrap();
+
+    // Should have processed events
+    assert!(results_count.load(Ordering::SeqCst) > 0);
+}

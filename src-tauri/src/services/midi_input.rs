@@ -222,6 +222,7 @@ impl Drop for MidiInputService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::MidiEvent;
 
     #[test]
     fn test_list_devices() {
@@ -233,6 +234,153 @@ mod tests {
     #[test]
     fn test_new_service() {
         let service = MidiInputService::new();
+        assert!(!service.is_connected());
+    }
+
+    #[test]
+    fn test_new_service_has_empty_buffer() {
+        let service = MidiInputService::new();
+        let buffer = service.get_event_buffer();
+        assert!(buffer.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_get_event_buffer_returns_shared_reference() {
+        let service = MidiInputService::new();
+        let buffer1 = service.get_event_buffer();
+        let buffer2 = service.get_event_buffer();
+
+        // Both should reference the same buffer
+        buffer1.lock().unwrap().push(MidiEvent::note_on(60, 100));
+        assert_eq!(buffer2.lock().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn test_clear_event_buffer() {
+        let mut service = MidiInputService::new();
+        let buffer = service.get_event_buffer();
+
+        // Add some events
+        {
+            let mut buf = buffer.lock().unwrap();
+            buf.push(MidiEvent::note_on(60, 100));
+            buf.push(MidiEvent::note_on(64, 100));
+            buf.push(MidiEvent::note_on(67, 100));
+        }
+
+        assert_eq!(buffer.lock().unwrap().len(), 3);
+
+        // Clear the buffer
+        service.clear_event_buffer();
+
+        assert!(buffer.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_clear_event_buffer_when_empty() {
+        let mut service = MidiInputService::new();
+
+        // Should not panic when clearing empty buffer
+        service.clear_event_buffer();
+
+        let buffer = service.get_event_buffer();
+        assert!(buffer.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_is_connected_initially_false() {
+        let service = MidiInputService::new();
+        assert!(!service.is_connected());
+    }
+
+    #[test]
+    fn test_disconnect_when_not_connected() {
+        let mut service = MidiInputService::new();
+
+        // Should not panic when disconnecting without connection
+        service.disconnect();
+
+        assert!(!service.is_connected());
+    }
+
+    #[test]
+    fn test_connect_with_invalid_device_id() {
+        let mut service = MidiInputService::new();
+
+        let result = service.connect("not-a-number");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid device ID"));
+    }
+
+    #[test]
+    fn test_connect_with_out_of_range_device_id() {
+        let mut service = MidiInputService::new();
+
+        // Use a very high device ID that won't exist
+        let result = service.connect("9999");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("not found"));
+    }
+
+    #[test]
+    fn test_process_events_with_empty_buffer() {
+        let mut service = MidiInputService::new();
+        let chords = service.process_events();
+        assert!(chords.is_empty());
+    }
+
+    #[test]
+    fn test_process_events_with_only_note_offs() {
+        let mut service = MidiInputService::new();
+        let buffer = service.get_event_buffer();
+
+        // Add only note-off events
+        {
+            let mut buf = buffer.lock().unwrap();
+            buf.push(MidiEvent::note_off(60));
+            buf.push(MidiEvent::note_off(64));
+        }
+
+        let chords = service.process_events();
+
+        // No chords should be produced from note-offs alone
+        assert!(chords.is_empty());
+        // Buffer should be cleared
+        assert!(buffer.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_set_chord_callback() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        let mut service = MidiInputService::new();
+        let call_count = Arc::new(AtomicUsize::new(0));
+        let call_count_clone = Arc::clone(&call_count);
+
+        service.set_chord_callback(move |_chord| {
+            call_count_clone.fetch_add(1, Ordering::SeqCst);
+        });
+
+        // Add old events that will trigger chord grouping
+        let buffer = service.get_event_buffer();
+        {
+            let mut buf = buffer.lock().unwrap();
+            buf.push(MidiEvent {
+                timestamp: Instant::now() - Duration::from_millis(100),
+                midi: 60,
+                velocity: 100,
+                is_note_on: true,
+            });
+        }
+
+        service.process_events();
+
+        assert_eq!(call_count.load(Ordering::SeqCst), 1);
+    }
+
+    #[test]
+    fn test_default_trait() {
+        let service = MidiInputService::default();
         assert!(!service.is_connected());
     }
 }
