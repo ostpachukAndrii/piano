@@ -8,6 +8,7 @@ import { TauriService } from './core/services/tauri.service';
 import { AchievementService } from './core/services/achievement.service';
 import { XPProgressBarComponent } from './shared/components/xp-progress-bar/xp-progress-bar.component';
 import { AchievementNotificationComponent } from './shared/components/achievement-notification/achievement-notification.component';
+import { ErrorDisplayComponent } from './shared/components/error-display/error-display.component';
 
 @Component({
   selector: 'app-root',
@@ -20,7 +21,8 @@ import { AchievementNotificationComponent } from './shared/components/achievemen
     MatButtonModule,
     MatIconModule,
     XPProgressBarComponent,
-    AchievementNotificationComponent
+    AchievementNotificationComponent,
+    ErrorDisplayComponent
   ],
   template: `
     <mat-toolbar color="primary" class="app-toolbar">
@@ -53,6 +55,9 @@ import { AchievementNotificationComponent } from './shared/components/achievemen
 
     <!-- Achievement Notifications -->
     <app-achievement-notification></app-achievement-notification>
+
+    <!-- Error Display -->
+    <app-error-display></app-error-display>
 
     <main class="app-content">
       <router-outlet></router-outlet>
