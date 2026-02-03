@@ -42,7 +42,8 @@
       "Bash(python3:*)",
       "Bash(copy \"lessons\\\\mad-world-piano.mxl\" \"lessons\\\\temp.zip\")",
       "Bash(type:*)",
-      "Bash(unzip:*)"
+      "Bash(unzip:*)",
+      "Bash(sort:*)"
     ]
   }
 }

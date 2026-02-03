@@ -19,6 +19,9 @@ import { StaffRendererService } from './staff-renderer.service';
 import { TimeSignatureRendererService } from './time-signature-renderer.service';
 import { StaffMathService } from './staff-math.service';
 import { BeamingService, BeamableNote, BeamGroupResult } from './beaming.service';
+import { LedgerLineRendererService } from './ledger-line-renderer.service';
+import { BarLineRendererService } from './bar-line-renderer.service';
+import { KeySignatureRendererService } from './key-signature-renderer.service';
 
 /**
  * Notation Stage Component (Zone B)
@@ -77,6 +80,9 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
     private timeSignatureRenderer = inject(TimeSignatureRendererService);
     private staffMath = inject(StaffMathService);
     private beamingService = inject(BeamingService);
+    private ledgerLineRenderer = inject(LedgerLineRendererService);
+    private barLineRenderer = inject(BarLineRendererService);
+    private keySignatureRenderer = inject(KeySignatureRendererService);
 
     // Inputs
     @Input() scrollingNotes: ScrollingNote[] = [];
@@ -297,55 +303,27 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
 
     /**
      * Draw bar lines at measure boundaries
+     * Delegates to BarLineRendererService for consistent rendering
      */
     drawBarLines(ctx: CanvasRenderingContext2D, height: number): void {
-        if (this.beatsPerMeasure <= 0) return;
-
-        const staffHeight = height * StaffMathService.STAFF_HEIGHT_RATIO;
-        const trebleTop = height * StaffMathService.TREBLE_TOP_RATIO;
-        const trebleBottom = trebleTop + staffHeight;
-        const bassTop = height * StaffMathService.BASS_TOP_RATIO;
-        const bassBottom = bassTop + staffHeight;
-
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-        ctx.lineWidth = 2;
-
-        // Calculate visible measure range
-        const startBeat = this.currentBeat - (this.playheadX / this.PIXELS_PER_BEAT);
-        const endBeat = this.currentBeat + ((this.stageWidth - this.playheadX) / this.PIXELS_PER_BEAT);
-
-        const startMeasure = Math.floor(startBeat / this.beatsPerMeasure);
-        const endMeasure = Math.ceil(endBeat / this.beatsPerMeasure);
-
-        for (let m = startMeasure; m <= endMeasure; m++) {
-            const measureBeat = m * this.beatsPerMeasure;
-            const x = this.beatToX(measureBeat);
-
-            if (x < -10 || x > this.stageWidth + 10) continue;
-
-            // Draw bar line for treble staff
-            ctx.beginPath();
-            ctx.moveTo(x, trebleTop);
-            ctx.lineTo(x, trebleBottom);
-            ctx.stroke();
-
-            // Draw bar line for bass staff
-            ctx.beginPath();
-            ctx.moveTo(x, bassTop);
-            ctx.lineTo(x, bassBottom);
-            ctx.stroke();
-        }
+        this.barLineRenderer.drawScrollingBarLines(
+            ctx,
+            height,
+            this.currentBeat,
+            this.beatsPerMeasure,
+            this.stageWidth,
+            this.playheadX,
+            this.PIXELS_PER_BEAT,
+            'rgba(255, 255, 255, 0.4)'
+        );
     }
 
     /**
      * Check if a beat position is on a bar line
+     * Delegates to BarLineRendererService
      */
     isOnBarLine(beat: number): boolean {
-        if (this.beatsPerMeasure <= 0) return false;
-        // Check if beat is exactly on a measure boundary (with small tolerance for float errors)
-        const tolerance = 0.001;
-        const remainder = beat % this.beatsPerMeasure;
-        return remainder < tolerance || (this.beatsPerMeasure - remainder) < tolerance;
+        return this.barLineRenderer.isOnBarLine(beat, this.beatsPerMeasure);
     }
 
     /**
@@ -549,7 +527,7 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
 
     /**
      * Draw ledger lines for notes above or below the staff
-     * Ledger lines are short horizontal lines that extend the staff for notes outside it
+     * Delegates to LedgerLineRendererService for consistent rendering
      */
     drawLedgerLines(
         ctx: CanvasRenderingContext2D,
@@ -558,80 +536,7 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
         hand: 'left' | 'right',
         height: number
     ): void {
-        const staffHeight = height * StaffMathService.STAFF_HEIGHT_RATIO;
-        const lineSpacing = staffHeight / 5;
-        const stepSpacing = lineSpacing / 2;
-        // Ledger line width should be ~1.6-1.8x notehead width for clear visibility
-        // Notehead width is 20px (radius 10), so 36px gives 8px overhang on each side
-        const ledgerLineWidth = 36;
-
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-        ctx.lineWidth = 1.5;
-
-        const noteStep = this.midiToDiatonicStep(midi);
-
-        // Use hand to determine staff - left hand notes go on bass staff even if MIDI >= 60
-        if (hand === 'right') {
-            // Treble staff
-            // Bottom line (E4, MIDI 64) at step 30, top line (F5, MIDI 77) at step 38
-            const trebleTop = height * StaffMathService.TREBLE_TOP_RATIO;
-            const trebleBottomLine = trebleTop + lineSpacing * 4;
-            const e4Step = this.midiToDiatonicStep(64); // E4 = bottom line
-            const f5Step = this.midiToDiatonicStep(77); // F5 = top line
-
-            // Ledger lines below staff (for notes at D4 and below)
-            // Lines appear at C4, A3, F3, etc. (every 2 steps below E4)
-            if (noteStep < e4Step) {
-                // Draw ledger lines from the first line below (D4 position) down to the note
-                for (let step = e4Step - 2; step >= noteStep; step -= 2) {
-                    const y = trebleBottomLine + ((e4Step - step) * stepSpacing);
-                    ctx.beginPath();
-                    ctx.moveTo(x - ledgerLineWidth / 2, y);
-                    ctx.lineTo(x + ledgerLineWidth / 2, y);
-                    ctx.stroke();
-                }
-            }
-
-            // Ledger lines above staff (for notes at G5 and above)
-            if (noteStep > f5Step) {
-                for (let step = f5Step + 2; step <= noteStep; step += 2) {
-                    const y = trebleTop - ((step - f5Step) * stepSpacing);
-                    ctx.beginPath();
-                    ctx.moveTo(x - ledgerLineWidth / 2, y);
-                    ctx.lineTo(x + ledgerLineWidth / 2, y);
-                    ctx.stroke();
-                }
-            }
-        } else {
-            // Bass staff
-            // Bottom line (G2, MIDI 43) at step 18, top line (A3, MIDI 57) at step 26
-            const bassTop = height * StaffMathService.BASS_TOP_RATIO;
-            const bassBottomLine = bassTop + lineSpacing * 4;
-            const g2Step = this.midiToDiatonicStep(43); // G2 = bottom line
-            const a3Step = this.midiToDiatonicStep(57); // A3 = top line
-
-            // Ledger lines below staff (for notes at F2 and below)
-            if (noteStep < g2Step) {
-                for (let step = g2Step - 2; step >= noteStep; step -= 2) {
-                    const y = bassBottomLine + ((g2Step - step) * stepSpacing);
-                    ctx.beginPath();
-                    ctx.moveTo(x - ledgerLineWidth / 2, y);
-                    ctx.lineTo(x + ledgerLineWidth / 2, y);
-                    ctx.stroke();
-                }
-            }
-
-            // Ledger lines above staff (for notes at B3 and above, including middle C)
-            if (noteStep > a3Step) {
-                for (let step = a3Step + 2; step <= noteStep; step += 2) {
-                    const y = bassTop - ((step - a3Step) * stepSpacing);
-                    ctx.beginPath();
-                    ctx.moveTo(x - ledgerLineWidth / 2, y);
-                    ctx.lineTo(x + ledgerLineWidth / 2, y);
-                    ctx.stroke();
-                }
-            }
-        }
+        this.ledgerLineRenderer.drawLedgerLines(ctx, x, midi, hand, height);
     }
 
     /**
@@ -807,6 +712,7 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
 
     /**
      * Draw ledger lines for wrong notes that are above or below the staff
+     * Delegates to LedgerLineRendererService
      */
     private drawLedgerLinesForWrongNote(
         ctx: CanvasRenderingContext2D,
@@ -814,65 +720,18 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
         y: number,
         hand: 'left' | 'right',
         height: number,
-        lineSpacing: number,
+        _lineSpacing: number,
         alpha: number
     ): void {
-        const staffHeight = height * StaffMathService.STAFF_HEIGHT_RATIO;
-        const ledgerWidth = lineSpacing * 1.5;
-
-        ctx.strokeStyle = `rgba(239, 68, 68, ${alpha * 0.7})`;
-        ctx.lineWidth = 1.5;
-
-        // Calculate midpoint between treble and bass staves
-        const trebleBottom = height * (StaffMathService.TREBLE_TOP_RATIO + StaffMathService.STAFF_HEIGHT_RATIO);
-        const midpoint = (trebleBottom + height * StaffMathService.BASS_TOP_RATIO) / 2;
-        if (hand === 'right' || y < midpoint) {
-            // Treble staff
-            const trebleTop = height * StaffMathService.TREBLE_TOP_RATIO;
-            const trebleBottom = trebleTop + staffHeight;
-
-            // Ledger lines above treble staff
-            if (y < trebleTop) {
-                for (let ly = trebleTop - lineSpacing; ly >= y - lineSpacing / 2; ly -= lineSpacing) {
-                    ctx.beginPath();
-                    ctx.moveTo(x - ledgerWidth, ly);
-                    ctx.lineTo(x + ledgerWidth, ly);
-                    ctx.stroke();
-                }
-            }
-            // Ledger lines below treble staff (middle C area)
-            if (y > trebleBottom) {
-                for (let ly = trebleBottom + lineSpacing; ly <= y + lineSpacing / 2; ly += lineSpacing) {
-                    ctx.beginPath();
-                    ctx.moveTo(x - ledgerWidth, ly);
-                    ctx.lineTo(x + ledgerWidth, ly);
-                    ctx.stroke();
-                }
-            }
-        } else {
-            // Bass staff
-            const bassTop = height * StaffMathService.BASS_TOP_RATIO;
-            const bassBottom = bassTop + staffHeight;
-
-            // Ledger lines above bass staff (middle C area)
-            if (y < bassTop) {
-                for (let ly = bassTop - lineSpacing; ly >= y - lineSpacing / 2; ly -= lineSpacing) {
-                    ctx.beginPath();
-                    ctx.moveTo(x - ledgerWidth, ly);
-                    ctx.lineTo(x + ledgerWidth, ly);
-                    ctx.stroke();
-                }
-            }
-            // Ledger lines below bass staff
-            if (y > bassBottom) {
-                for (let ly = bassBottom + lineSpacing; ly <= y + lineSpacing / 2; ly += lineSpacing) {
-                    ctx.beginPath();
-                    ctx.moveTo(x - ledgerWidth, ly);
-                    ctx.lineTo(x + ledgerWidth, ly);
-                    ctx.stroke();
-                }
-            }
-        }
+        this.ledgerLineRenderer.drawLedgerLinesForPosition(
+            ctx,
+            x,
+            y,
+            hand,
+            height,
+            'rgb(239, 68, 68)',
+            alpha * 0.7
+        );
     }
 
     /**
@@ -1034,75 +893,21 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
 
     /**
      * Draw key signature at the start of each staff
-     * Shows sharps or flats based on the key
+     * Delegates to KeySignatureRendererService for consistent rendering
      */
     private drawKeySignature(ctx: CanvasRenderingContext2D, height: number): void {
         if (!this.keySignature) return;
 
-        const staffHeight = height * StaffMathService.STAFF_HEIGHT_RATIO;
-        const lineSpacing = staffHeight / 5;
-        const stepSpacing = lineSpacing / 2;
-
         // Position key signature near the left edge (after where clef would be)
         const keySignatureX = 50;
-        const fontSize = 18;
 
-        ctx.font = `${fontSize}px Arial`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-
-        // Treble staff positions for sharps (F, C, G, D, A, E, B)
-        // These are line positions relative to the staff
-        const trebleSharpPositions = [
-            0,    // F (top line)
-            1.5,  // C (space below top)
-            -0.5, // G (above top line)
-            1,    // D (4th line)
-            2.5,  // A (2nd space)
-            0.5,  // E (top space)
-            2     // B (3rd line)
-        ];
-
-        // Treble staff positions for flats (B, E, A, D, G, C, F)
-        const trebleFlatPositions = [
-            2,    // B (3rd line)
-            0.5,  // E (top space)
-            2.5,  // A (2nd space)
-            1,    // D (4th line)
-            3,    // G (2nd line)
-            1.5,  // C (3rd space)
-            3.5   // F (bottom space)
-        ];
-
-        // Bass staff adjusts by +2 positions (one line down)
-        const bassOffset = 2;
-
-        const trebleTop = height * StaffMathService.TREBLE_TOP_RATIO;
-        const trebleMiddle = trebleTop + lineSpacing * 2; // Middle line (B4)
-        const bassTop = height * StaffMathService.BASS_TOP_RATIO;
-        const bassMiddle = bassTop + lineSpacing * 2; // Middle line (D3)
-
-        const accidentals = this.keySignature.accidentals;
-        const isSharp = accidentals > 0;
-        const count = Math.abs(accidentals);
-        const symbol = isSharp ? '♯' : '♭';
-        const positions = isSharp ? trebleSharpPositions : trebleFlatPositions;
-
-        // Draw on treble staff
-        for (let i = 0; i < count && i < positions.length; i++) {
-            const x = keySignatureX + i * 12;
-            const yOffset = positions[i] * stepSpacing;
-            const y = trebleMiddle - yOffset;
-            ctx.fillText(symbol, x, y);
-        }
-
-        // Draw on bass staff
-        for (let i = 0; i < count && i < positions.length; i++) {
-            const x = keySignatureX + i * 12;
-            const yOffset = (positions[i] + bassOffset) * stepSpacing;
-            const y = bassMiddle - yOffset;
-            ctx.fillText(symbol, x, y);
-        }
+        this.keySignatureRenderer.drawKeySignature(
+            ctx,
+            keySignatureX,
+            this.keySignature,
+            height,
+            'rgba(255, 255, 255, 0.9)',
+            18
+        );
     }
 }
