@@ -842,4 +842,188 @@ describe('ScrollingPlayerComponent', () => {
             expect(allSatisfied).toBe(true);
         });
     });
+
+    describe('Wrong Note Cleanup (Time-based)', () => {
+        // Tests for the feature where wrong note X indicators disappear after 1 second
+        // This improves UX when player is stuck on a note
+
+        beforeEach(() => {
+            component.lesson = mockLesson;
+            fixture.detectChanges();
+        });
+
+        it('should initialize with empty wrongNoteEvents', () => {
+            expect(component.wrongNoteEvents()).toEqual([]);
+        });
+
+        it('should remove wrong notes older than 1 second', () => {
+            // Set up wrong note events with various timestamps
+            const now = performance.now();
+            const oldWrongNote = {
+                midi: 61,
+                beat: 0,
+                timestamp: now - 1500 // 1.5 seconds ago (should be removed)
+            };
+            const recentWrongNote = {
+                midi: 63,
+                beat: 0,
+                timestamp: now - 500 // 0.5 seconds ago (should remain)
+            };
+
+            component.wrongNoteEvents.set([oldWrongNote, recentWrongNote]);
+
+            // Call cleanup via handleMidiInput (simulating MIDI input)
+            component['handleMidiInput']([]);
+
+            const remaining = component.wrongNoteEvents();
+            expect(remaining.length).toBe(1);
+            expect(remaining[0].midi).toBe(63); // Only recent note remains
+        });
+
+        it('should keep wrong notes younger than 1 second', () => {
+            const now = performance.now();
+            const recentWrongNotes = [
+                { midi: 61, beat: 0, timestamp: now - 100 },
+                { midi: 63, beat: 0, timestamp: now - 500 },
+                { midi: 65, beat: 0, timestamp: now - 900 }
+            ];
+
+            component.wrongNoteEvents.set(recentWrongNotes);
+
+            // Call cleanup
+            component['handleMidiInput']([]);
+
+            // All notes should remain (all under 1 second old)
+            expect(component.wrongNoteEvents().length).toBe(3);
+        });
+
+        it('should remove all wrong notes older than 1 second', () => {
+            const now = performance.now();
+            const oldWrongNotes = [
+                { midi: 61, beat: 0, timestamp: now - 1100 },
+                { midi: 63, beat: 0, timestamp: now - 2000 },
+                { midi: 65, beat: 0, timestamp: now - 5000 }
+            ];
+
+            component.wrongNoteEvents.set(oldWrongNotes);
+
+            // Call cleanup
+            component['handleMidiInput']([]);
+
+            // All notes should be removed (all over 1 second old)
+            expect(component.wrongNoteEvents().length).toBe(0);
+        });
+
+        it('should run cleanup even when player is paused', () => {
+            // Start and then stop to ensure we're paused
+            component.start();
+            component.stop();
+            expect(component.isPlaying()).toBe(false);
+
+            const now = performance.now();
+            const oldWrongNote = {
+                midi: 61,
+                beat: 0,
+                timestamp: now - 1500 // Should be removed
+            };
+
+            component.wrongNoteEvents.set([oldWrongNote]);
+
+            // Call handleMidiInput while paused - cleanup should still run
+            component['handleMidiInput']([60]);
+
+            expect(component.wrongNoteEvents().length).toBe(0);
+        });
+
+        it('should remove wrong notes that have scrolled off-screen', () => {
+            // Position-based cleanup: notes that are too far behind currentBeat
+            const now = performance.now();
+
+            // Set currentBeat far ahead
+            component.currentBeat.set(10);
+
+            const offscreenWrongNote = {
+                midi: 61,
+                beat: 0, // Far behind currentBeat (10)
+                timestamp: now - 100 // Recent but off-screen
+            };
+
+            component.wrongNoteEvents.set([offscreenWrongNote]);
+
+            // Call cleanup
+            component['handleMidiInput']([]);
+
+            // Note should be removed due to position (scrolled off-screen)
+            expect(component.wrongNoteEvents().length).toBe(0);
+        });
+
+        it('should keep wrong notes near current beat position', () => {
+            const now = performance.now();
+
+            // Set currentBeat to 1
+            component.currentBeat.set(1);
+
+            const nearbyWrongNote = {
+                midi: 61,
+                beat: 0.5, // Close to currentBeat (1)
+                timestamp: now - 100 // Recent
+            };
+
+            component.wrongNoteEvents.set([nearbyWrongNote]);
+
+            // Call cleanup
+            component['handleMidiInput']([]);
+
+            // Note should remain (nearby and recent)
+            expect(component.wrongNoteEvents().length).toBe(1);
+        });
+
+        it('should handle mixed cleanup scenarios (time and position)', () => {
+            const now = performance.now();
+            component.currentBeat.set(5);
+
+            const wrongNotes = [
+                { midi: 61, beat: 4.5, timestamp: now - 100 },   // Keep: nearby and recent
+                { midi: 62, beat: 4.8, timestamp: now - 1500 },  // Remove: too old
+                { midi: 63, beat: 0, timestamp: now - 100 },     // Remove: off-screen
+                { midi: 64, beat: 4.9, timestamp: now - 800 }    // Keep: nearby and recent
+            ];
+
+            component.wrongNoteEvents.set(wrongNotes);
+
+            // Call cleanup
+            component['handleMidiInput']([]);
+
+            const remaining = component.wrongNoteEvents();
+            expect(remaining.length).toBe(2);
+            expect(remaining.map(e => e.midi)).toContain(61);
+            expect(remaining.map(e => e.midi)).toContain(64);
+        });
+
+        it('should cleanup wrong notes on every MIDI input event', () => {
+            const now = performance.now();
+            const oldWrongNote = {
+                midi: 61,
+                beat: 0,
+                timestamp: now - 1500
+            };
+
+            component.wrongNoteEvents.set([oldWrongNote]);
+
+            // Simulate multiple MIDI input events (like repeatedly pressing a key)
+            component['handleMidiInput']([60]);
+            expect(component.wrongNoteEvents().length).toBe(0);
+
+            // Add another old wrong note
+            component.wrongNoteEvents.set([{
+                midi: 63,
+                beat: 0,
+                timestamp: performance.now() - 2000
+            }]);
+
+            // Another MIDI event should clean it up
+            component['handleMidiInput']([60]);
+            expect(component.wrongNoteEvents().length).toBe(0);
+        });
+    });
 });
