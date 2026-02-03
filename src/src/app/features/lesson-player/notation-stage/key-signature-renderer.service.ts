@@ -16,28 +16,32 @@ import { StaffMathService, KeySignature } from './staff-math.service';
 export class KeySignatureRendererService {
     private staffMath = inject(StaffMathService);
 
-    // Sharp symbol positions on treble staff (relative to middle line)
-    // Order: F, C, G, D, A, E, B
+    // Sharp symbol positions on treble staff (relative to middle line B4)
+    // Units: stepSpacing (= lineSpacing / 2), so 2 units = 1 line
+    // Positive = UP (toward top), Negative = DOWN (toward bottom)
+    // Order: F#, C#, G#, D#, A#, E#, B#
     private readonly TREBLE_SHARP_POSITIONS = [
-        0,    // F (top line = middle line)
-        1.5,  // C (space below top)
-        -0.5, // G (above top line)
-        1,    // D (4th line)
-        2.5,  // A (2nd space)
-        0.5,  // E (top space)
-        2     // B (3rd line)
+        4,    // F# on top line (F5) - 2 lines above middle
+        1,    // C# on 3rd space (C5) - half line above middle
+        -2,   // G# on 2nd line (G4) - 1 line below middle
+        2,    // D# on 4th line (D5) - 1 line above middle
+        -1,   // A# on 2nd space (A4) - half line below middle
+        3,    // E# on 4th space (E5) - 1.5 lines above middle
+        0     // B# on middle line (B4) - on middle line
     ];
 
-    // Flat symbol positions on treble staff (relative to middle line)
-    // Order: B, E, A, D, G, C, F
+    // Flat symbol positions on treble staff (relative to middle line B4)
+    // Units: stepSpacing (= lineSpacing / 2), so 2 units = 1 line
+    // Positive = UP (toward top), Negative = DOWN (toward bottom)
+    // Order: Bb, Eb, Ab, Db, Gb, Cb, Fb
     private readonly TREBLE_FLAT_POSITIONS = [
-        2,    // B (3rd line)
-        0.5,  // E (top space)
-        2.5,  // A (2nd space)
-        1,    // D (4th line)
-        3,    // G (2nd line)
-        1.5,  // C (3rd space)
-        3.5   // F (bottom space)
+        0,    // Bb on middle line (B4) - on middle line
+        3,    // Eb on 4th space (E5) - 1.5 lines above middle
+        -1,   // Ab on 2nd space (A4) - half line below middle
+        2,    // Db on 4th line (D5) - 1 line above middle
+        -2,   // Gb on 2nd line (G4) - 1 line below middle
+        1,    // Cb on 3rd space (C5) - half line above middle
+        -3    // Fb on 1st space (F4) - 1.5 lines below middle
     ];
 
     // Bass staff is offset by +2 positions (one line down) from treble
@@ -83,6 +87,10 @@ export class KeySignatureRendererService {
         const symbol = isSharp ? '♯' : '♭';
         const positions = isSharp ? this.TREBLE_SHARP_POSITIONS : this.TREBLE_FLAT_POSITIONS;
 
+        // Flat adjustment: the belly is at the bottom of the glyph, so shift UP slightly
+        // to make the belly touch the line/space (negative Y = up in canvas coords)
+        const flatAdjustment = isSharp ? 0 : -fontSize * 0.1;
+
         // Calculate middle line Y positions
         const trebleMiddle = layout.trebleTop + layout.lineSpacing * 2;
         const bassMiddle = layout.bassTop + layout.lineSpacing * 2;
@@ -91,7 +99,7 @@ export class KeySignatureRendererService {
         for (let i = 0; i < count && i < positions.length; i++) {
             const x = startX + i * this.ACCIDENTAL_SPACING;
             const yOffset = positions[i] * stepSpacing;
-            const y = trebleMiddle - yOffset;
+            const y = trebleMiddle - yOffset + flatAdjustment;
             ctx.fillText(symbol, x, y);
         }
 
@@ -99,7 +107,7 @@ export class KeySignatureRendererService {
         for (let i = 0; i < count && i < positions.length; i++) {
             const x = startX + i * this.ACCIDENTAL_SPACING;
             const yOffset = (positions[i] + this.BASS_OFFSET) * stepSpacing;
-            const y = bassMiddle - yOffset;
+            const y = bassMiddle - yOffset + flatAdjustment;
             ctx.fillText(symbol, x, y);
         }
 
@@ -138,6 +146,9 @@ export class KeySignatureRendererService {
         const symbol = isSharp ? '♯' : '♭';
         const basePositions = isSharp ? this.TREBLE_SHARP_POSITIONS : this.TREBLE_FLAT_POSITIONS;
 
+        // Flat adjustment: the belly is at the bottom of the glyph, so shift UP slightly
+        const flatAdjustment = isSharp ? 0 : -fontSize * 0.1;
+
         // Apply bass offset if needed
         const positions = clef === 'bass'
             ? basePositions.map(p => p + this.BASS_OFFSET)
@@ -148,7 +159,7 @@ export class KeySignatureRendererService {
         for (let i = 0; i < count && i < positions.length; i++) {
             const x = startX + i * this.ACCIDENTAL_SPACING;
             const yOffset = positions[i] * stepSpacing;
-            const y = staffMiddle - yOffset;
+            const y = staffMiddle - yOffset + flatAdjustment;
             ctx.fillText(symbol, x, y);
         }
 

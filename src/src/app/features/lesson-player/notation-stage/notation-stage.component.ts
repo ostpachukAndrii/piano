@@ -898,8 +898,9 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
     private drawKeySignature(ctx: CanvasRenderingContext2D, height: number): void {
         if (!this.keySignature) return;
 
-        // Position key signature near the left edge (after where clef would be)
-        const keySignatureX = 50;
+        // Position key signature after the clef (clef at X=30, ends ~X=55)
+        // Time signature is at X=110, so key signature must fit in between
+        const keySignatureX = 58;
 
         this.keySignatureRenderer.drawKeySignature(
             ctx,
