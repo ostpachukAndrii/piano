@@ -245,7 +245,7 @@ describe('MidiService', () => {
         timestamp_ms: 0
       };
 
-      mockBackend.simulateChord(chord.notes, chord.hand);
+      mockBackend.simulateChord(chord.notes, chord.hand as 'left' | 'right' | 'both');
 
       expect(service.activeNotes().size).toBe(3);
       expect(service.activeNotes().has(60)).toBe(true);

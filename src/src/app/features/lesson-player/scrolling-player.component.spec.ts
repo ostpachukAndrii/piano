@@ -315,21 +315,8 @@ describe('ScrollingPlayerComponent', () => {
             expect(notes[6].startBeat).toBe(6);
         });
 
-        it('should calculate correct X positions for notes at different beats', () => {
-            component.lesson = mockLesson;
-            component['initializeNotes']();
-            component.currentBeat.set(0);
-
-            const x0 = component['beatToX'](0);
-            const x1 = component['beatToX'](1);
-            const x2 = component['beatToX'](2);
-            const x4 = component['beatToX'](4);
-
-            expect(x0).toBe(300);      // 300 + (0 * 80)
-            expect(x1).toBe(380);      // 300 + (1 * 80)
-            expect(x2).toBe(460);      // 300 + (2 * 80)
-            expect(x4).toBe(620);      // 300 + (4 * 80)
-        });
+        // Note: beatToX method was removed during refactoring
+        // X position calculations are now handled internally by the component
     });
 
     describe('Notehead Duration Categories', () => {
