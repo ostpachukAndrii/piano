@@ -43,7 +43,8 @@
       "Bash(copy \"lessons\\\\mad-world-piano.mxl\" \"lessons\\\\temp.zip\")",
       "Bash(type:*)",
       "Bash(unzip:*)",
-      "Bash(sort:*)"
+      "Bash(sort:*)",
+      "Bash(npx ng test:*)"
     ]
   }
 }

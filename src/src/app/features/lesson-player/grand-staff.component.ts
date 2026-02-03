@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, OnChanges, SimpleChanges, computed, signal } from '@angular/core';
 import { LessonDTO, MeasureDTO } from '../../core/models/lesson.model';
-import { ChordNoteDTO, NoteDTO, RestNoteDTO, SingleNoteDTO, isChordNote, isRestNote, isSingleNote } from '../../core/models/note.model';
+import { ChordNoteDTO, NoteDTO, RestNoteDTO, SingleNoteDTO, getStartBeat, isChordNote, isRestNote, isSingleNote } from '../../core/models/note.model';
 import { StaffComponent, StaffNote } from '../../shared/components/staff/staff.component';
 
 /**
@@ -169,7 +169,7 @@ export class GrandStaffComponent implements OnChanges {
             beatOffset: 0
         };
         let globalIdx = 0;
-        let globalBeatPosition = 0;
+        let measureOffset = 0; // Cumulative beats from previous measures
         let measuresInCurrentLine = 0;
 
         for (let measureIdx = 0; measureIdx < this.lesson.measures.length; measureIdx++) {
@@ -193,10 +193,14 @@ export class GrandStaffComponent implements OnChanges {
                     treble: [],
                     bass: [],
                     startIdx: globalIdx,
-                    beatOffset: globalBeatPosition
+                    beatOffset: measureOffset
                 };
                 measuresInCurrentLine = 0;
             }
+
+            // Track fallback position for notes without start_beat (YAML lessons)
+            let fallbackBeatPosition = measureOffset;
+            let maxBeatInMeasure = measureOffset;
 
             // Add all notes from this measure to current line
             for (let noteIdx = 0; noteIdx < noteCount; noteIdx++) {
@@ -205,6 +209,24 @@ export class GrandStaffComponent implements OnChanges {
 
                 if (staffNote) {
                     staffNote.measureEnd = noteIdx === noteCount - 1;
+
+                    // Use start_beat from note data if available (MXL files)
+                    // This allows simultaneous notes (same beat) to have same position
+                    // Falls back to sequential calculation (YAML lessons)
+                    const noteStartBeat = getStartBeat(note);
+                    let beatPosition: number;
+
+                    if (noteStartBeat !== undefined) {
+                        // MXL file: start_beat is relative to measure, add offset
+                        beatPosition = measureOffset + noteStartBeat;
+                    } else {
+                        // YAML lesson: no start_beat, use sequential calculation
+                        beatPosition = fallbackBeatPosition;
+                        fallbackBeatPosition += staffNote.durationValue ?? 1;
+                    }
+
+                    staffNote.beatPosition = beatPosition;
+                    maxBeatInMeasure = Math.max(maxBeatInMeasure, beatPosition + (staffNote.durationValue ?? 1));
 
                     const isTreble = this.isTrebleNote(note, staffNote);
                     const isBass = this.isBassNote(note, staffNote);
@@ -228,13 +250,13 @@ export class GrandStaffComponent implements OnChanges {
                         hidden: !isBass && !isLeftHandRest,
                         isRest: isLeftHandRest // Only show rest if it's left-hand
                     });
-
-                    // Track beat position
-                    globalBeatPosition += staffNote.durationValue ?? 1;
                 }
 
                 globalIdx++;
             }
+
+            // Update measure offset for next measure
+            measureOffset = maxBeatInMeasure;
 
             // Count this measure
             measuresInCurrentLine++;

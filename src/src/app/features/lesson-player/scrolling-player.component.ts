@@ -1584,6 +1584,39 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     }
 
     /**
+     * Get ALL notes at the current beat position, regardless of state
+     * Used for wait mode to check if all notes at this beat are satisfied
+     * Includes both hit and unhit notes at the current beat position
+     */
+    private getAllNotesAtCurrentBeat(): ScrollingNote[] {
+        const current = this.currentBeat();
+        const notes: ScrollingNote[] = [];
+        let targetBeat: number | null = null;
+
+        for (const note of this.scrollingNotes) {
+            // Skip rests - they don't require user input
+            if (note.isRest) continue;
+
+            // Skip disabled hand notes
+            if (!this.isHandEnabled(note)) continue;
+
+            // Check if note is at or near the current playhead position
+            if (note.startBeat <= current + this.HIT_WINDOW_BEATS &&
+                note.startBeat >= current - this.HIT_WINDOW_BEATS) {
+                // Track the first note's beat position
+                if (targetBeat === null) {
+                    targetBeat = note.startBeat;
+                }
+                // Include all notes at the same beat position
+                if (Math.abs(note.startBeat - targetBeat) < 0.01) {
+                    notes.push(note);
+                }
+            }
+        }
+        return notes;
+    }
+
+    /**
      * Get the next note to show in hints (the one AFTER the active note)
      * This lets the player prepare for what's coming next
      * Skips rests and disabled hand notes
@@ -1795,10 +1828,24 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         this.previousActiveNotes = [...activeNotes];
 
         // Handle wait mode when paused - check if we should resume
+        // For two-hand scenarios: require SIMULTANEOUS playing (both hands held at same time)
+        // Resume only when ALL notes at the current beat position are currently being held
         if (!this.isPlaying() && this.playMode() === 'wait') {
-            const activeNote = this.getActiveNote();
-            if (activeNote && this.checkNoteHitWithLegato(activeNote, activeNotes, newlyPressedNotes)) {
-                this.start();
+            // Get ALL notes at the current beat position (both hands, regardless of state)
+            const allNotesAtBeat = this.getAllNotesAtCurrentBeat();
+
+            if (allNotesAtBeat.length > 0) {
+                // Check if ALL notes at this beat position are currently being held
+                // Simultaneous requirement: ALL MIDI values must be held at the same time
+                // Previously hit notes don't count - user must hold all notes simultaneously
+                const allNotesHeld = allNotesAtBeat.every(note => {
+                    // Check if ALL of this note's MIDI values are currently being held
+                    return note.midi.every(midi => activeNotes.includes(midi));
+                });
+
+                if (allNotesHeld) {
+                    this.start();
+                }
             }
         }
 

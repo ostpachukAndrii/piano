@@ -370,7 +370,6 @@ export class StaffComponent implements AfterViewInit, OnChanges {
     private buildBeamGroups(): BeamGroupResult[] {
         // Convert StaffNote[] to BeamableNote[], excluding hidden notes
         const beamableNotes: BeamableNote[] = [];
-        let beatPosition = 0;
         const hand = this.clef === 'treble' ? 'right' : 'left';
 
         for (let i = 0; i < this.notes.length; i++) {
@@ -378,33 +377,25 @@ export class StaffComponent implements AfterViewInit, OnChanges {
             const durationBeats = note.durationValue ?? this.durationToBeats(note.duration);
 
             // Skip hidden notes from beaming (they're placeholder notes on the other staff)
-            // But still track beat position for proper timing
             if (note.hidden) {
-                beatPosition += durationBeats;
-                if (note.measureEnd) {
-                    // Measure boundaries still apply
-                }
                 continue;
             }
 
             const midiValues = note.isRest ? [] :
                 (Array.isArray(note.midi) ? note.midi : [note.midi]);
 
+            // Use stored beatPosition for correct beaming (matches scroll view behavior)
+            // Falls back to 0 if not set (shouldn't happen with GrandStaffComponent)
+            const startPosition = note.beatPosition ?? 0;
+
             beamableNotes.push({
                 midi: midiValues,
-                startPosition: beatPosition,
+                startPosition,
                 durationBeats,
                 hand: hand as 'left' | 'right',
                 isRest: note.isRest,
                 originalNote: { note, originalIndex: i } // Track original index
             });
-
-            beatPosition += durationBeats;
-
-            // Reset beat position at measure end
-            if (note.measureEnd) {
-                // Keep accumulating for beam grouping (measures are handled by BeamingService)
-            }
         }
 
         // Get beam groups from service
@@ -753,4 +744,5 @@ export interface StaffNote {
     isRest?: boolean;
     measureEnd?: boolean;
     hidden?: boolean; // If true, note position is reserved but nothing is drawn
+    beatPosition?: number; // Actual beat position for correct beaming (set by GrandStaffComponent)
 }
