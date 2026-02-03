@@ -1817,6 +1817,9 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     // Implements the "Consumption Algorithm" for intelligent note repetition handling
 
     private handleMidiInput(activeNotes: number[]) {
+        // Cleanup old wrong notes (runs even when paused for time-based cleanup)
+        this.cleanupOffscreenWrongNotes();
+
         // Detect released notes (were in previous, not in current)
         const releasedNotes = this.previousActiveNotes.filter(n => !activeNotes.includes(n));
         const newlyPressedNotes = activeNotes.filter(n => !this.previousActiveNotes.includes(n));
@@ -2054,26 +2057,32 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     }
 
     /**
-     * Cleanup wrong note events that have scrolled off-screen (Feature 2: Ghost Note cleanup)
-     * Removes events where X position < -50 (off left edge)
+     * Cleanup wrong note events based on time (1 second) or position (off-screen)
+     * Wrong notes should disappear after 1 second for better UX
      */
     private cleanupOffscreenWrongNotes(): void {
         const currentBeat = this.currentBeat();
+        const now = performance.now();
         const pixelsPerBeat = 120; // Same as NotationStageComponent.PIXELS_PER_BEAT
         const playheadX = 300; // Same as NotationStageComponent default
 
-        // Calculate the beat threshold for off-screen (X < -50)
-        // X = playheadX + (eventBeat - currentBeat) * pixelsPerBeat
-        // -50 = 300 + (eventBeat - currentBeat) * 80
-        // -350 = (eventBeat - currentBeat) * 80
-        // eventBeat - currentBeat = -4.375
-        // eventBeat < currentBeat - 4.375
-        const offscreenThresholdBeats = (playheadX + 50) / pixelsPerBeat; // ~4.375 beats behind
+        // Time-based cleanup: wrong notes disappear after 1 second
+        const maxWrongNoteAgeMs = 1000;
+
+        // Position-based cleanup: off-screen threshold
+        const offscreenThresholdBeats = (playheadX + 50) / pixelsPerBeat;
 
         this.wrongNoteEvents.update(events =>
             events.filter(event => {
+                // Remove if older than 1 second
+                const ageMs = now - event.timestamp;
+                if (ageMs > maxWrongNoteAgeMs) return false;
+
+                // Remove if scrolled off-screen
                 const beatsBehind = currentBeat - event.beat;
-                return beatsBehind < offscreenThresholdBeats;
+                if (beatsBehind >= offscreenThresholdBeats) return false;
+
+                return true;
             })
         );
     }
