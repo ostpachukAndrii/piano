@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { signal } from '@angular/core';
-import { MidiService } from './midi.service.migrated';
+import { MidiService } from './midi.service';
 import { BACKEND_CLIENT, BackendClient, MockBackendClient } from '../api';
 import { MidiDevice, MidiChord } from '../models/midi-event.model';
 

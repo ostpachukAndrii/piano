@@ -1,17 +1,21 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal, OnDestroy } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MidiChord, MidiDevice, midiToNoteName } from '../models/midi-event.model';
-import { TauriService } from './tauri.service';
+import { BACKEND_CLIENT } from '../api';
 
 /**
  * MIDI service for handling keyboard input
- * Connects to Rust backend for native MIDI access via Tauri
+ * Uses BackendClient abstraction for testability
  */
 @Injectable({
     providedIn: 'root'
 })
-export class MidiService {
+export class MidiService implements OnDestroy {
     private snackBar = inject(MatSnackBar);
+    private backend = inject(BACKEND_CLIENT);
+
+    // Cleanup functions for event listeners
+    private cleanupFunctions: Array<() => void> = [];
 
     // Reactive state
     private readonly _devices = signal<MidiDevice[]>([]);
@@ -36,47 +40,46 @@ export class MidiService {
         return Array.from(notes).map(midiToNoteName);
     });
 
-    constructor(private tauri: TauriService) {
+    constructor() {
         this.setupEventListeners();
     }
 
     /**
-     * Set up Tauri event listeners for MIDI events
+     * Clean up event listeners on service destruction
      */
-    private async setupEventListeners(): Promise<void> {
-        if (!this.tauri.isTauri()) {
-            console.log('[MidiService] Not in Tauri environment, skipping event setup');
-            return;
-        }
+    ngOnDestroy(): void {
+        this.cleanupFunctions.forEach(cleanup => cleanup());
+        this.cleanupFunctions = [];
+    }
 
-        // Listen for chord detected events from Rust backend
-        // Event: midi_chord_detected with MidiChord payload
-        await this.tauri.listen<MidiChord>('midi_chord_detected', (chord) => {
+    /**
+     * Set up backend event listeners for MIDI events
+     */
+    private setupEventListeners(): void {
+        // Listen for chord detected events
+        const chordCleanup = this.backend.onMidiChordDetected((chord) => {
             this.handleChordDetected(chord);
         });
+        this.cleanupFunctions.push(chordCleanup);
 
-        // Listen for note-off events from Rust backend
-        // Event: midi_note_off with note number payload
-        await this.tauri.listen<number>('midi_note_off', (note) => {
+        // Listen for note-off events
+        const noteOffCleanup = this.backend.onMidiNoteOff((note) => {
             this.handleNoteOff(note);
         });
-
-        console.log('[MidiService] Event listeners set up');
+        this.cleanupFunctions.push(noteOffCleanup);
     }
 
     /**
      * Handle chord detected event from backend (note on)
      */
     private handleChordDetected(chord: MidiChord): void {
-        // Add the chord notes to active notes (don't replace, add to existing)
+        // Add the chord notes to active notes
         const currentNotes = new Set(this._activeNotes());
         for (const note of chord.notes) {
             currentNotes.add(note);
         }
         this._activeNotes.set(currentNotes);
         this._lastChord.set(chord);
-
-        console.log(`[MIDI] Note On: ${chord.notes.map(midiToNoteName).join('+')} (${chord.hand} hand)`);
     }
 
     /**
@@ -86,40 +89,39 @@ export class MidiService {
         const currentNotes = new Set(this._activeNotes());
         currentNotes.delete(note);
         this._activeNotes.set(currentNotes);
-
-        console.log(`[MIDI] Note Off: ${midiToNoteName(note)}`);
     }
 
     /**
      * List available MIDI devices
-     * Calls: src-tauri/src/commands/midi.rs::get_midi_devices
      */
     async listDevices(): Promise<void> {
         try {
-            const devices = await this.tauri.invoke<MidiDevice[]>('get_midi_devices');
+            const devices = await this.backend.listMidiDevices();
             this._devices.set(devices);
-            console.log(`[MidiService] Found ${devices.length} MIDI devices`);
+            this._error.set(null);
         } catch (err) {
-            this._error.set(`Failed to list MIDI devices: ${err}`);
+            const message = `Failed to list MIDI devices: ${err}`;
+            this._error.set(message);
             console.error('[MidiService]', err);
+            throw err;
         }
     }
 
     /**
      * Connect to a MIDI device
-     * Calls: src-tauri/src/commands/midi.rs::start_midi_listening
      */
     async connect(deviceId: string, showNotification = true): Promise<void> {
         try {
-            await this.tauri.invoke('start_midi_listening', { deviceId });
+            await this.backend.startMidiListening(deviceId);
             const device = this._devices().find(d => d.id === deviceId);
+
             if (device) {
                 this._selectedDevice.set(device);
                 this._connected.set(true);
-                console.log(`[MidiService] Connected to ${device.name}`);
+                this._error.set(null);
 
                 if (showNotification) {
-                    this.snackBar.open(`🎹 Connected to ${device.name}`, 'Dismiss', {
+                    this.snackBar.open(`Connected to ${device.name}`, 'Dismiss', {
                         duration: 3000,
                         horizontalPosition: 'center',
                         verticalPosition: 'bottom',
@@ -128,17 +130,20 @@ export class MidiService {
                 }
             }
         } catch (err) {
-            this._error.set(`Failed to connect: ${err}`);
+            const message = `Failed to connect: ${err}`;
+            this._error.set(message);
             console.error('[MidiService]', err);
 
             if (showNotification) {
-                this.snackBar.open(`❌ Failed to connect to MIDI device`, 'Dismiss', {
+                this.snackBar.open(`Failed to connect to MIDI device`, 'Dismiss', {
                     duration: 4000,
                     horizontalPosition: 'center',
                     verticalPosition: 'bottom',
                     panelClass: ['error-snackbar']
                 });
             }
+
+            throw err;
         }
     }
 
@@ -148,12 +153,13 @@ export class MidiService {
     async disconnect(showNotification = true): Promise<void> {
         try {
             const deviceName = this._selectedDevice()?.name || 'MIDI device';
-            await this.tauri.invoke('stop_midi_listening');
+            await this.backend.stopMidiListening();
+
             this._selectedDevice.set(null);
             this._connected.set(false);
             this._activeNotes.set(new Set());
             this._lastChord.set(null);
-            console.log('[MidiService] Disconnected');
+            this._error.set(null);
 
             if (showNotification) {
                 this.snackBar.open(`Disconnected from ${deviceName}`, 'OK', {
@@ -164,6 +170,7 @@ export class MidiService {
             }
         } catch (err) {
             console.error('[MidiService] Disconnect error:', err);
+            throw err;
         }
     }
 
@@ -188,5 +195,12 @@ export class MidiService {
      */
     isNoteActive(midi: number): boolean {
         return this._activeNotes().has(midi);
+    }
+
+    /**
+     * Clear error state
+     */
+    clearError(): void {
+        this._error.set(null);
     }
 }
