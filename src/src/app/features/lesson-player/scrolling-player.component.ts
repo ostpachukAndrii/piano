@@ -29,7 +29,7 @@ import { EvaluationService } from '../../core/services/evaluation.service';
 import { MidiService } from '../../core/services/midi.service';
 import { PianoSoundService } from '../../core/services/piano-sound.service';
 import { SoundService } from '../../core/services/sound.service';
-import { KeyboardRange, KeySignature, ScrollingNote, WrongNoteEvent } from './models/scrolling-note.model';
+import { KeyboardRange, KeySignature, PracticeLoopRange, ScrollingNote, WrongNoteEvent } from './models/scrolling-note.model';
 import { ExtendedStats } from './lesson-completion-dialog.component';
 import { NotationStageComponent } from './notation-stage/notation-stage.component';
 import { PlaybackControlsComponent } from './playback-controls/playback-controls.component';
@@ -70,6 +70,7 @@ import { VirtualKeyboardComponent } from './virtual-keyboard/virtual-keyboard.co
                 [rightHandEnabled]="rightHandEnabled()"
                 [currentMeasure]="currentMeasure()"
                 [totalMeasures]="totalMeasures"
+                [loopRange]="loopRange()"
                 (playToggle)="onPause()"
                 (autoPlayToggle)="onAutoPlayToggle()"
                 (computerSoundToggle)="onComputerSoundToggle()"
@@ -81,7 +82,14 @@ import { VirtualKeyboardComponent } from './virtual-keyboard/virtual-keyboard.co
                 (fullscreenToggle)="onFullscreenToggle()"
                 (leftHandToggle)="onLeftHandToggle()"
                 (rightHandToggle)="onRightHandToggle()"
-                (jumpToMeasure)="jumpToMeasure($event)">
+                (jumpToMeasure)="jumpToMeasure($event)"
+                (setLoopStart)="setLoopStart($event)"
+                (setLoopEnd)="setLoopEnd($event)"
+                (incrementLoopStart)="incrementLoopStart()"
+                (decrementLoopStart)="decrementLoopStart()"
+                (incrementLoopEnd)="incrementLoopEnd()"
+                (decrementLoopEnd)="decrementLoopEnd()"
+                (clearLoop)="clearLoop()">
             </app-playback-controls>
         </div>
 
@@ -97,7 +105,8 @@ import { VirtualKeyboardComponent } from './virtual-keyboard/virtual-keyboard.co
                 [totalBeats]="totalBeats"
                 [wrongNoteEvents]="wrongNoteEvents()"
                 [keySignature]="keySignature()"
-                [timeSignature]="lesson?.time_signature ?? null">
+                [timeSignature]="lesson?.time_signature ?? null"
+                [loopRange]="loopRange()">
             </app-notation-stage>
         </div>
 
@@ -647,6 +656,26 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     // Wrong note events for visual feedback on stage (persist until replay)
     wrongNoteEvents = signal<WrongNoteEvent[]>([]);
 
+    // Practice loop range for focused measure practice
+    loopRange = signal<PracticeLoopRange | null>(null);
+
+    // Computed: is loop active
+    isLoopActive = computed(() => this.loopRange() !== null);
+
+    // Computed: loop start beat position
+    private loopStartBeat = computed(() => {
+        const range = this.loopRange();
+        if (!range) return 0;
+        return (range.startMeasure - 1) * this.beatsPerMeasure;
+    });
+
+    // Computed: loop end beat position
+    private loopEndBeat = computed(() => {
+        const range = this.loopRange();
+        if (!range) return this._totalBeats;
+        return range.endMeasure * this.beatsPerMeasure;
+    });
+
     // Parsed key signature for notation display
     keySignature = computed<KeySignature | null>(() => {
         if (!this.lesson?.key_signature) return null;
@@ -1056,9 +1085,10 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         this.isAutoPlaying.set(false);
         this.pianoService.stopAll();
 
-        // Reset beat position to start
-        this.currentBeat.set(0);
-        this.progressPercent.set(0);
+        // Reset beat position - to loop start if loop is active, otherwise to beginning
+        const startBeat = this.isLoopActive() ? this.loopStartBeat() : 0;
+        this.currentBeat.set(startBeat);
+        this.progressPercent.set(this._totalBeats > 0 ? (startBeat / this._totalBeats) * 100 : 0);
 
         // Reset all notes to upcoming state
         for (const note of this.scrollingNotes) {
@@ -1181,6 +1211,237 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
 
         // Start playback from the new position
         this.start();
+    }
+
+    /**
+     * Set the start measure for practice loop
+     * If end is already set and start > end, swap them
+     */
+    setLoopStart(measure: number): void {
+        const currentRange = this.loopRange();
+        const clampedMeasure = Math.max(1, Math.min(measure, this.totalMeasures));
+
+        if (currentRange && clampedMeasure > currentRange.endMeasure) {
+            // Swap: start becomes end, new value becomes start
+            this.loopRange.set({
+                startMeasure: currentRange.endMeasure,
+                endMeasure: clampedMeasure
+            });
+        } else if (currentRange) {
+            this.loopRange.set({
+                ...currentRange,
+                startMeasure: clampedMeasure
+            });
+        } else {
+            // First click - set both start and end to same measure
+            this.loopRange.set({
+                startMeasure: clampedMeasure,
+                endMeasure: clampedMeasure
+            });
+            // Jump to loop start when first creating a loop
+            this.jumpToLoopStart();
+        }
+
+        console.log('[ScrollingPlayer] Loop start set:', this.loopRange());
+    }
+
+    /**
+     * Set the end measure for practice loop
+     * If start is already set and end < start, swap them
+     */
+    setLoopEnd(measure: number): void {
+        const currentRange = this.loopRange();
+        const clampedMeasure = Math.max(1, Math.min(measure, this.totalMeasures));
+
+        if (currentRange && clampedMeasure < currentRange.startMeasure) {
+            // Swap: end becomes start, new value becomes end
+            this.loopRange.set({
+                startMeasure: clampedMeasure,
+                endMeasure: currentRange.startMeasure
+            });
+        } else if (currentRange) {
+            this.loopRange.set({
+                ...currentRange,
+                endMeasure: clampedMeasure
+            });
+        } else {
+            // First click - set both start and end to same measure
+            this.loopRange.set({
+                startMeasure: clampedMeasure,
+                endMeasure: clampedMeasure
+            });
+            // Jump to loop start when first creating a loop
+            this.jumpToLoopStart();
+        }
+
+        console.log('[ScrollingPlayer] Loop end set:', this.loopRange());
+    }
+
+    /**
+     * Clear the practice loop - return to full lesson playback
+     */
+    clearLoop(): void {
+        this.loopRange.set(null);
+        console.log('[ScrollingPlayer] Loop cleared');
+    }
+
+    /**
+     * Increment the loop start measure
+     */
+    incrementLoopStart(): void {
+        const range = this.loopRange();
+        if (!range) return;
+
+        const newStart = Math.min(range.startMeasure + 1, range.endMeasure);
+        this.loopRange.set({
+            ...range,
+            startMeasure: newStart
+        });
+        console.log('[ScrollingPlayer] Loop start incremented to:', newStart);
+        this.jumpToLoopStartIfOutside();
+    }
+
+    /**
+     * Decrement the loop start measure
+     */
+    decrementLoopStart(): void {
+        const range = this.loopRange();
+        if (!range) return;
+
+        const newStart = Math.max(range.startMeasure - 1, 1);
+        this.loopRange.set({
+            ...range,
+            startMeasure: newStart
+        });
+        console.log('[ScrollingPlayer] Loop start decremented to:', newStart);
+        // When decreasing start, jump to new start so user can practice from there
+        this.jumpToLoopStart();
+    }
+
+    /**
+     * Increment the loop end measure
+     */
+    incrementLoopEnd(): void {
+        const range = this.loopRange();
+        if (!range) return;
+
+        const newEnd = Math.min(range.endMeasure + 1, this.totalMeasures);
+        this.loopRange.set({
+            ...range,
+            endMeasure: newEnd
+        });
+        console.log('[ScrollingPlayer] Loop end incremented to:', newEnd);
+        // Don't jump when increasing end - user might want to continue from current position
+    }
+
+    /**
+     * Decrement the loop end measure
+     */
+    decrementLoopEnd(): void {
+        const range = this.loopRange();
+        if (!range) return;
+
+        const newEnd = Math.max(range.endMeasure - 1, range.startMeasure);
+        this.loopRange.set({
+            ...range,
+            endMeasure: newEnd
+        });
+        console.log('[ScrollingPlayer] Loop end decremented to:', newEnd);
+        this.jumpToLoopStartIfOutside();
+    }
+
+    /**
+     * Jump to the loop start position
+     */
+    private jumpToLoopStart(): void {
+        const range = this.loopRange();
+        if (!range) return;
+
+        const startBeat = (range.startMeasure - 1) * this.beatsPerMeasure;
+
+        // Stop playback
+        if (this.isPlaying()) {
+            this.stop();
+        }
+
+        // Set position to loop start
+        this.currentBeat.set(startBeat);
+        this.progressPercent.set(this._totalBeats > 0 ? (startBeat / this._totalBeats) * 100 : 0);
+
+        // Reset notes in the loop range
+        const endBeat = range.endMeasure * this.beatsPerMeasure;
+        this.resetNotesInRange(startBeat, endBeat);
+
+        console.log('[ScrollingPlayer] Jumped to loop start at beat:', startBeat);
+    }
+
+    /**
+     * Jump to loop start only if current position is outside the loop range
+     */
+    private jumpToLoopStartIfOutside(): void {
+        const range = this.loopRange();
+        if (!range) return;
+
+        const startBeat = (range.startMeasure - 1) * this.beatsPerMeasure;
+        const endBeat = range.endMeasure * this.beatsPerMeasure;
+        const currentBeat = this.currentBeat();
+
+        // If current position is outside the loop range, jump to start
+        if (currentBeat < startBeat || currentBeat >= endBeat) {
+            this.jumpToLoopStart();
+        }
+    }
+
+    /**
+     * Reset notes within a beat range to 'upcoming' state
+     * Used when looping back to practice the same section
+     */
+    private resetNotesInRange(startBeat: number, endBeat: number): void {
+        for (const note of this.scrollingNotes) {
+            // Reset notes that start within the range
+            if (note.startBeat >= startBeat && note.startBeat < endBeat) {
+                note.state = 'upcoming';
+                note.timingFeedback = undefined;
+                note.hitBeat = undefined;
+                note.releasedEarly = undefined;
+                note.wasReplayed = undefined;
+                note.heldDurationMs = undefined;
+                note.expectedDurationMs = undefined;
+                note.pressedAtMs = undefined;
+            }
+        }
+
+        // Clear tracking state
+        this.heldNotesMap.clear();
+        this.noteTimingMap.clear();
+        this.wrongNoteEvents.set([]);
+
+        // Trigger change detection
+        this._scrollingNotes.set([...this.scrollingNotes]);
+    }
+
+    /**
+     * Handle looping when reaching end of range
+     * Returns the new beat position (loops back to start if needed)
+     */
+    private handleLoopBoundary(newBeat: number): number {
+        const range = this.loopRange();
+        if (!range) return newBeat;
+
+        const endBeat = this.loopEndBeat();
+        const startBeat = this.loopStartBeat();
+
+        if (newBeat >= endBeat) {
+            // Loop back to start
+            console.log('[ScrollingPlayer] Looping back to measure', range.startMeasure);
+
+            // Reset notes in the loop range to 'upcoming' state
+            this.resetNotesInRange(startBeat, endBeat);
+
+            return startBeat;
+        }
+
+        return newBeat;
     }
 
     onTempoChange(percent: number) {
@@ -1322,6 +1583,11 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         // Allow scrolling past the end so last note visually scrolls off
         let newBeat = Math.min(this.currentBeat() + beatDelta, this._totalBeats + this.COMPLETION_BUFFER_BEATS);
 
+        // Handle loop boundary (if loop is active)
+        if (this.isLoopActive()) {
+            newBeat = this.handleLoopBoundary(newBeat);
+        }
+
         if (this._frameCount % 60 === 0) {
             console.log('[ScrollingPlayer] gameLoop frame', this._frameCount,
                 'currentBeat:', this.currentBeat(),
@@ -1442,7 +1708,8 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
                 'remaining:', (completionTargetBeat - newBeat).toFixed(2), 'beats');
         }
 
-        if (newBeat >= completionTargetBeat) {
+        // Skip completion check when loop is active (loop handles its own reset)
+        if (!this.isLoopActive() && newBeat >= completionTargetBeat) {
             console.log('[ScrollingPlayer] COMPLETION TRIGGERED - newBeat:', newBeat,
                 'completionTarget:', completionTargetBeat,
                 'allNotesCompleteBeat:', this.allNotesCompleteBeat);

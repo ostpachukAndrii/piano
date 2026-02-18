@@ -5,6 +5,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { PracticeLoopRange } from '../models/scrolling-note.model';
 
 /**
  * Playback Controls Component (Zone A)
@@ -119,9 +120,81 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                 </button>
             </div>
 
+            <!-- Loop Controls -->
+            <div class="loop-section">
+                @if (loopRange) {
+                    <!-- Loop Start Controls -->
+                    <button mat-icon-button
+                            (click)="onDecrementLoopStart()"
+                            [disabled]="loopRange.startMeasure <= 1"
+                            class="loop-adjust-btn"
+                            aria-label="Decrease loop start"
+                            matTooltip="Decrease start measure">
+                        <mat-icon>remove</mat-icon>
+                    </button>
+                    <span class="loop-number">{{ loopRange.startMeasure }}</span>
+                    <button mat-icon-button
+                            (click)="onIncrementLoopStart()"
+                            [disabled]="loopRange.startMeasure >= loopRange.endMeasure"
+                            class="loop-adjust-btn"
+                            aria-label="Increase loop start"
+                            matTooltip="Increase start measure">
+                        <mat-icon>add</mat-icon>
+                    </button>
+
+                    <span class="loop-display"
+                          [class.active]="loopRange"
+                          matTooltip="Loop: measures {{ loopRange.startMeasure }}-{{ loopRange.endMeasure }}">
+                        <mat-icon class="loop-icon">loop</mat-icon>
+                    </span>
+
+                    <!-- Loop End Controls -->
+                    <button mat-icon-button
+                            (click)="onDecrementLoopEnd()"
+                            [disabled]="loopRange.endMeasure <= loopRange.startMeasure"
+                            class="loop-adjust-btn"
+                            aria-label="Decrease loop end"
+                            matTooltip="Decrease end measure">
+                        <mat-icon>remove</mat-icon>
+                    </button>
+                    <span class="loop-number">{{ loopRange.endMeasure }}</span>
+                    <button mat-icon-button
+                            (click)="onIncrementLoopEnd()"
+                            [disabled]="loopRange.endMeasure >= totalMeasures"
+                            class="loop-adjust-btn"
+                            aria-label="Increase loop end"
+                            matTooltip="Increase end measure">
+                        <mat-icon>add</mat-icon>
+                    </button>
+
+                    <button mat-icon-button
+                            (click)="onClearLoop()"
+                            class="loop-clear-btn"
+                            aria-label="Clear loop"
+                            matTooltip="Clear loop (play full lesson)">
+                        <mat-icon>close</mat-icon>
+                    </button>
+                } @else {
+                    <!-- No loop set - show single button to create loop -->
+                    <button mat-icon-button
+                            (click)="onSetLoopStart()"
+                            class="loop-btn"
+                            aria-label="Set loop"
+                            matTooltip="Set practice loop at current measure">
+                        <mat-icon>loop</mat-icon>
+                    </button>
+                }
+            </div>
+
             <div class="progress-section">
                 <div class="progress-container">
                     <div class="progress-track">
+                        @if (loopRange) {
+                            <div class="loop-range-indicator"
+                                 [style.left.%]="getLoopStartPercent()"
+                                 [style.width.%]="getLoopWidthPercent()">
+                            </div>
+                        }
                         <div class="progress-fill" [style.width.%]="progressPercent"></div>
                         <div class="progress-indicator" [style.left.%]="progressPercent">
                             <div class="indicator-dot"></div>
@@ -450,6 +523,111 @@ import { MatTooltipModule } from '@angular/material/tooltip';
             text-align: center;
             white-space: nowrap;
         }
+
+        .loop-section {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            margin-left: 4px;
+            padding-left: 8px;
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .loop-btn {
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.2s ease;
+
+            &:hover {
+                color: #06b6d4;
+            }
+
+            &.active {
+                color: #06b6d4;
+                background: rgba(6, 182, 212, 0.15);
+            }
+        }
+
+        .loop-adjust-btn {
+            color: rgba(255, 255, 255, 0.6);
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            transition: all 0.2s ease;
+
+            mat-icon {
+                font-size: 18px;
+                width: 18px;
+                height: 18px;
+            }
+
+            &:hover:not(:disabled) {
+                color: #06b6d4;
+            }
+
+            &:disabled {
+                color: rgba(255, 255, 255, 0.2);
+            }
+        }
+
+        .loop-number {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #06b6d4;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .loop-display {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+            padding: 4px 6px;
+            border-radius: 4px;
+            text-align: center;
+            transition: all 0.2s ease;
+
+            .loop-icon {
+                font-size: 16px;
+                width: 16px;
+                height: 16px;
+            }
+
+            &.active {
+                color: #06b6d4;
+
+                .loop-icon {
+                    animation: spin 2s linear infinite;
+                }
+            }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .loop-clear-btn {
+            color: rgba(255, 255, 255, 0.5);
+            transition: all 0.2s ease;
+
+            &:hover {
+                color: #ef4444;
+            }
+        }
+
+        .loop-range-indicator {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            background: rgba(6, 182, 212, 0.3);
+            border-left: 2px solid rgba(6, 182, 212, 0.8);
+            border-right: 2px solid rgba(6, 182, 212, 0.8);
+            border-radius: 6px;
+            z-index: 1;
+        }
     `]
 })
 export class PlaybackControlsComponent {
@@ -467,6 +645,7 @@ export class PlaybackControlsComponent {
     @Input() rightHandEnabled = true;
     @Input() currentMeasure = 1;
     @Input() totalMeasures = 1;
+    @Input() loopRange: PracticeLoopRange | null = null;
 
     // Outputs
     @Output() playToggle = new EventEmitter<void>();
@@ -481,6 +660,13 @@ export class PlaybackControlsComponent {
     @Output() leftHandToggle = new EventEmitter<void>();
     @Output() rightHandToggle = new EventEmitter<void>();
     @Output() jumpToMeasure = new EventEmitter<number>();
+    @Output() setLoopStart = new EventEmitter<number>();
+    @Output() setLoopEnd = new EventEmitter<number>();
+    @Output() incrementLoopStart = new EventEmitter<void>();
+    @Output() decrementLoopStart = new EventEmitter<void>();
+    @Output() incrementLoopEnd = new EventEmitter<void>();
+    @Output() decrementLoopEnd = new EventEmitter<void>();
+    @Output() clearLoop = new EventEmitter<void>();
 
     /**
      * Handle restart button click
@@ -575,5 +761,72 @@ export class PlaybackControlsComponent {
         if (this.currentMeasure < this.totalMeasures) {
             this.jumpToMeasure.emit(this.currentMeasure + 1);
         }
+    }
+
+    /**
+     * Handle set loop start button click
+     */
+    onSetLoopStart(): void {
+        this.setLoopStart.emit(this.currentMeasure);
+    }
+
+    /**
+     * Handle set loop end button click
+     */
+    onSetLoopEnd(): void {
+        this.setLoopEnd.emit(this.currentMeasure);
+    }
+
+    /**
+     * Handle clear loop button click
+     */
+    onClearLoop(): void {
+        this.clearLoop.emit();
+    }
+
+    /**
+     * Handle increment loop start button click
+     */
+    onIncrementLoopStart(): void {
+        this.incrementLoopStart.emit();
+    }
+
+    /**
+     * Handle decrement loop start button click
+     */
+    onDecrementLoopStart(): void {
+        this.decrementLoopStart.emit();
+    }
+
+    /**
+     * Handle increment loop end button click
+     */
+    onIncrementLoopEnd(): void {
+        this.incrementLoopEnd.emit();
+    }
+
+    /**
+     * Handle decrement loop end button click
+     */
+    onDecrementLoopEnd(): void {
+        this.decrementLoopEnd.emit();
+    }
+
+    /**
+     * Get the start position of the loop range as a percentage
+     */
+    getLoopStartPercent(): number {
+        if (!this.loopRange || this.totalMeasures <= 0) return 0;
+        return ((this.loopRange.startMeasure - 1) / this.totalMeasures) * 100;
+    }
+
+    /**
+     * Get the width of the loop range as a percentage
+     */
+    getLoopWidthPercent(): number {
+        if (!this.loopRange || this.totalMeasures <= 0) return 0;
+        const start = (this.loopRange.startMeasure - 1) / this.totalMeasures;
+        const end = this.loopRange.endMeasure / this.totalMeasures;
+        return (end - start) * 100;
     }
 }

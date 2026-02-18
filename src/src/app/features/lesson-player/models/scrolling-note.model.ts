@@ -92,6 +92,17 @@ export interface WrongNoteEvent {
 }
 
 /**
+ * Represents a range of measures for focused practice
+ * When set, playback will loop within this range
+ */
+export interface PracticeLoopRange {
+    /** Start measure (1-indexed, inclusive) */
+    startMeasure: number;
+    /** End measure (1-indexed, inclusive) */
+    endMeasure: number;
+}
+
+/**
  * A group of notes that should be beamed together
  * Only for notes with duration < 1 beat (8th, 16th, etc.)
  */

@@ -10,6 +10,8 @@
 
 import {
   BackendClient,
+  BluetoothDeviceInfo,
+  BluetoothStatus,
   Lesson,
   LessonMetadata,
   MidiChord,
@@ -18,13 +20,22 @@ import {
 
 export class MockBackendClient implements BackendClient {
   private midiConnected = false;
+  private bluetoothConnected = false;
+  private bluetoothStatus: BluetoothStatus = 'Disconnected';
   private chordCallbacks: Array<(chord: MidiChord) => void> = [];
   private noteOffCallbacks: Array<(midi: number) => void> = [];
+  private bluetoothStatusCallbacks: Array<(status: BluetoothStatus) => void> = [];
 
   // Mock MIDI Devices
   private mockDevices: MidiDeviceInfo[] = [
     { id: '1', name: 'Mock Piano Keyboard', is_connected: false },
     { id: '2', name: 'Mock MIDI Controller', is_connected: false },
+  ];
+
+  // Mock Bluetooth Devices
+  private mockBluetoothDevices: BluetoothDeviceInfo[] = [
+    { id: 'bt-1', name: 'Mock Bluetooth Piano', is_midi_device: true, rssi: -50 },
+    { id: 'bt-2', name: 'Mock BT Headphones', is_midi_device: false, rssi: -65 },
   ];
 
   // Mock Lessons
@@ -70,6 +81,66 @@ export class MockBackendClient implements BackendClient {
 
   async isMidiConnected(): Promise<boolean> {
     return Promise.resolve(this.midiConnected);
+  }
+
+  // Bluetooth MIDI Commands
+
+  async initBluetooth(): Promise<void> {
+    console.log('[Mock] Bluetooth initialized');
+    return Promise.resolve();
+  }
+
+  async scanBluetoothDevices(timeoutSecs?: number): Promise<BluetoothDeviceInfo[]> {
+    console.log(`[Mock] Scanning Bluetooth devices for ${timeoutSecs ?? 5} seconds`);
+    this.bluetoothStatus = 'Scanning';
+    this.bluetoothStatusCallbacks.forEach(cb => cb(this.bluetoothStatus));
+
+    // Simulate scanning delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    this.bluetoothStatus = 'Disconnected';
+    this.bluetoothStatusCallbacks.forEach(cb => cb(this.bluetoothStatus));
+
+    return Promise.resolve([...this.mockBluetoothDevices]);
+  }
+
+  async connectBluetoothMidi(deviceId: string): Promise<void> {
+    const device = this.mockBluetoothDevices.find(d => d.id === deviceId);
+    if (!device) {
+      return Promise.reject(new Error(`Bluetooth device not found: ${deviceId}`));
+    }
+    if (!device.is_midi_device) {
+      return Promise.reject(new Error(`Device ${deviceId} is not a MIDI device`));
+    }
+
+    this.bluetoothStatus = 'Connecting';
+    this.bluetoothStatusCallbacks.forEach(cb => cb(this.bluetoothStatus));
+
+    // Simulate connection delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    this.bluetoothConnected = true;
+    this.bluetoothStatus = 'Connected';
+    this.bluetoothStatusCallbacks.forEach(cb => cb(this.bluetoothStatus));
+
+    console.log(`[Mock] Connected to Bluetooth device: ${deviceId}`);
+    return Promise.resolve();
+  }
+
+  async disconnectBluetooth(): Promise<void> {
+    this.bluetoothConnected = false;
+    this.bluetoothStatus = 'Disconnected';
+    this.bluetoothStatusCallbacks.forEach(cb => cb(this.bluetoothStatus));
+    console.log('[Mock] Disconnected from Bluetooth');
+    return Promise.resolve();
+  }
+
+  async getBluetoothStatus(): Promise<BluetoothStatus> {
+    return Promise.resolve(this.bluetoothStatus);
+  }
+
+  async isBluetoothConnected(): Promise<boolean> {
+    return Promise.resolve(this.bluetoothConnected);
   }
 
   // Lesson Commands
@@ -130,6 +201,16 @@ export class MockBackendClient implements BackendClient {
     };
   }
 
+  onBluetoothStatusChanged(callback: (status: BluetoothStatus) => void): () => void {
+    this.bluetoothStatusCallbacks.push(callback);
+    return () => {
+      const index = this.bluetoothStatusCallbacks.indexOf(callback);
+      if (index > -1) {
+        this.bluetoothStatusCallbacks.splice(index, 1);
+      }
+    };
+  }
+
   // Test Helpers (only available in mock)
 
   /**
@@ -164,12 +245,19 @@ export class MockBackendClient implements BackendClient {
    */
   reset() {
     this.midiConnected = false;
+    this.bluetoothConnected = false;
+    this.bluetoothStatus = 'Disconnected';
     this.chordCallbacks = [];
     this.noteOffCallbacks = [];
+    this.bluetoothStatusCallbacks = [];
     this.mockLessons = [];
     this.mockDevices = [
       { id: '1', name: 'Mock Piano Keyboard', is_connected: false },
       { id: '2', name: 'Mock MIDI Controller', is_connected: false },
+    ];
+    this.mockBluetoothDevices = [
+      { id: 'bt-1', name: 'Mock Bluetooth Piano', is_midi_device: true, rssi: -50 },
+      { id: 'bt-2', name: 'Mock BT Headphones', is_midi_device: false, rssi: -65 },
     ];
   }
 }

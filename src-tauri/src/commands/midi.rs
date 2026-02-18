@@ -42,25 +42,31 @@ pub fn start_midi_listening(
     state: State<MidiState>,
     app: AppHandle,
 ) -> Result<(), String> {
-    tracing::info!("start_midi_listening called with device_id: {}", device_id);
+    tracing::info!("=== START_MIDI_LISTENING COMMAND BEGIN ===");
+    tracing::info!("device_id: {}", device_id);
 
     // Stop any existing polling thread first
+    tracing::info!("Stopping any existing polling thread...");
     state.stop_flag.store(true, Ordering::SeqCst);
     // Give existing thread time to notice the flag
     std::thread::sleep(std::time::Duration::from_millis(20));
 
     // Reset the stop flag for the new thread
     state.stop_flag.store(false, Ordering::SeqCst);
+    tracing::info!("Stop flag reset, ready for new connection");
 
     // First connect to the device (briefly lock)
+    tracing::info!("Acquiring MIDI service lock...");
     {
         let mut service = state
             .service
             .lock()
             .map_err(|_| "Failed to lock MIDI service")?;
+        tracing::info!("Lock acquired, calling service.connect()...");
         service.connect(&device_id)?;
-        tracing::info!("Successfully connected to MIDI device");
+        tracing::info!("service.connect() returned successfully!");
     }
+    tracing::info!("MIDI service lock released");
 
     // Get a clone of the event buffer and start time from the service
     let event_buffer = {
@@ -85,7 +91,11 @@ pub fn start_midi_listening(
         use crate::services::midi::ProcessResult;
         use std::time::Duration;
 
-        tracing::info!("MIDI polling thread started");
+        tracing::info!("=== MIDI POLLING THREAD STARTED ===");
+        tracing::info!("Waiting for MIDI events from the device...");
+
+        let mut iteration = 0u64;
+        let mut last_log = std::time::Instant::now();
 
         loop {
             // Check if we should stop
@@ -95,30 +105,46 @@ pub fn start_midi_listening(
             }
 
             std::thread::sleep(Duration::from_millis(10));
+            iteration += 1;
+
+            // Log every 5 seconds to show the thread is alive
+            if last_log.elapsed() >= Duration::from_secs(5) {
+                tracing::debug!("Polling thread alive, iteration {}, checking for events...", iteration);
+                last_log = std::time::Instant::now();
+            }
 
             // Process events from the shared buffer
             match processor.process_buffer(&event_buffer) {
                 Ok(results) => {
                     for result in results {
                         match result {
-                            ProcessResult::NoEvents | ProcessResult::WaitingForWindow => {
-                                // Nothing to emit
+                            ProcessResult::NoEvents => {
+                                // Nothing to emit (don't log to avoid spam)
+                            }
+                            ProcessResult::WaitingForWindow => {
+                                tracing::debug!("Waiting for chord window to complete");
                             }
                             ProcessResult::NoteOffsReady(notes) => {
                                 // Emit note-off events
                                 for midi in notes {
-                                    let _ = app_handle.emit("midi_note_off", midi);
-                                    tracing::debug!("Emitted note_off: {}", midi);
+                                    tracing::info!(">>> Emitting note_off event: midi={}", midi);
+                                    let result = app_handle.emit("midi_note_off", midi);
+                                    if let Err(e) = result {
+                                        tracing::error!("Failed to emit note_off: {}", e);
+                                    }
                                 }
                             }
                             ProcessResult::ChordReady(chord) => {
                                 // Emit chord to frontend
                                 tracing::info!(
-                                    "Emitted chord: {:?} (hand: {}) to frontend",
+                                    ">>> Emitting chord event: notes={:?} hand={}",
                                     chord.notes,
                                     chord.hand
                                 );
-                                let _ = app_handle.emit("midi_chord_detected", &chord);
+                                let result = app_handle.emit("midi_chord_detected", &chord);
+                                if let Err(e) = result {
+                                    tracing::error!("Failed to emit chord: {}", e);
+                                }
                             }
                         }
                     }
@@ -132,6 +158,8 @@ pub fn start_midi_listening(
         tracing::info!("MIDI polling thread terminated");
     });
 
+    tracing::info!("=== START_MIDI_LISTENING COMMAND COMPLETED ===");
+    tracing::info!("Polling thread spawned, MIDI connection should be active");
     Ok(())
 }
 

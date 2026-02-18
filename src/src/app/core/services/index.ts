@@ -5,6 +5,7 @@
 export * from './evaluation.service';
 export * from './lesson.service';
 export * from './midi.service';
+export * from './bluetooth-midi.service';
 export * from './tauri.service';
 export * from './piano-sound.service';
 export * from './playback.service';

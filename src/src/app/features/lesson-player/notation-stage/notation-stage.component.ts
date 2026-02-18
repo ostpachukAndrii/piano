@@ -10,7 +10,7 @@ import {
     signal,
     inject,
 } from '@angular/core';
-import { BeamGroup, KeySignature, NoteState, ScrollingNote, TimingFeedback, WrongNoteEvent } from '../models/scrolling-note.model';
+import { BeamGroup, KeySignature, NoteState, PracticeLoopRange, ScrollingNote, TimingFeedback, WrongNoteEvent } from '../models/scrolling-note.model';
 import { ClefRendererService } from './clef-renderer.service';
 import { NoteheadRendererService } from './notehead-renderer.service';
 import { RestRendererService } from './rest-renderer.service';
@@ -100,6 +100,7 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
     @Input() totalBeats = 0; // Total beats in the piece
     @Input() wrongNoteEvents: WrongNoteEvent[] = []; // Wrong notes to display
     @Input() keySignature: KeySignature | null = null; // Key signature for accidentals
+    @Input() loopRange: PracticeLoopRange | null = null; // Practice loop range for visual overlay
 
     // Canvas context
     private ctx: CanvasRenderingContext2D | null = null;
@@ -169,6 +170,9 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
 
         // Draw bar lines
         this.drawBarLines(ctx, height);
+
+        // Draw loop range overlay (before notes so it appears behind)
+        this.drawLoopRangeOverlay(ctx, height);
 
         // Clear beamed notes tracking for this frame
         this.beamedNoteIds.clear();
@@ -615,6 +619,55 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
 
         ctx.fillStyle = gradient;
         ctx.fillRect(this.playheadX - 30, 0, 60, height);
+    }
+
+    /**
+     * Draw a subtle overlay highlighting the loop range
+     * Called before drawing notes so it appears behind them
+     */
+    drawLoopRangeOverlay(ctx: CanvasRenderingContext2D, height: number): void {
+        if (!this.loopRange) return;
+
+        const startBeat = (this.loopRange.startMeasure - 1) * this.beatsPerMeasure;
+        const endBeat = this.loopRange.endMeasure * this.beatsPerMeasure;
+
+        const startX = this.beatToX(startBeat);
+        const endX = this.beatToX(endBeat);
+
+        // Only draw if visible on screen
+        if (endX < 0 || startX > this.stageWidth) return;
+
+        const visibleStartX = Math.max(0, startX);
+        const visibleEndX = Math.min(this.stageWidth, endX);
+
+        ctx.save();
+
+        // Draw subtle cyan tint over the loop region
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.08)';
+        ctx.fillRect(visibleStartX, 0, visibleEndX - visibleStartX, height);
+
+        // Draw loop boundary markers
+        ctx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+
+        // Start boundary
+        if (startX >= 0 && startX <= this.stageWidth) {
+            ctx.beginPath();
+            ctx.moveTo(startX, 0);
+            ctx.lineTo(startX, height);
+            ctx.stroke();
+        }
+
+        // End boundary
+        if (endX >= 0 && endX <= this.stageWidth) {
+            ctx.beginPath();
+            ctx.moveTo(endX, 0);
+            ctx.lineTo(endX, height);
+            ctx.stroke();
+        }
+
+        ctx.restore();
     }
 
     /**

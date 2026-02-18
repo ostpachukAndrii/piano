@@ -5,6 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MidiService } from '../../core/services/midi.service';
 import { TauriService } from '../../core/services/tauri.service';
 
@@ -17,7 +18,8 @@ import { TauriService } from '../../core/services/tauri.service';
         MatButtonModule,
         MatIconModule,
         MatListModule,
-        MatDividerModule
+        MatDividerModule,
+        MatProgressSpinnerModule
     ],
     template: `
     <div class="settings-container">
@@ -77,6 +79,67 @@ import { TauriService } from '../../core/services/tauri.service';
             <p *ngIf="!hasDevices()" class="no-devices">
               No MIDI devices found. Connect a keyboard and scan again.
             </p>
+
+            <!-- Bluetooth MIDI Info -->
+            <div class="bluetooth-info">
+              <mat-icon>bluetooth</mat-icon>
+              <span>Bluetooth MIDI devices also appear here after pairing in Windows Settings</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-divider></mat-divider>
+
+      <!-- Bluetooth MIDI Setup Guide -->
+      <mat-card class="settings-card bluetooth-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar class="bluetooth-icon">bluetooth</mat-icon>
+          <mat-card-title>Bluetooth MIDI Setup</mat-card-title>
+          <mat-card-subtitle>Connect your piano wirelessly</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+          <div class="bluetooth-guide">
+            <p class="guide-intro">
+              To connect a Bluetooth MIDI device (like Roland FP-E50), pair it through Windows first:
+            </p>
+
+            <ol class="setup-steps">
+              <li>
+                <mat-icon>settings_bluetooth</mat-icon>
+                <div>
+                  <strong>Enable Bluetooth on your piano</strong>
+                  <p>Check your piano's settings menu for Bluetooth MIDI option</p>
+                </div>
+              </li>
+              <li>
+                <mat-icon>settings</mat-icon>
+                <div>
+                  <strong>Open Windows Settings</strong>
+                  <p>Go to <em>Settings → Bluetooth & devices → Add device</em></p>
+                </div>
+              </li>
+              <li>
+                <mat-icon>add_circle</mat-icon>
+                <div>
+                  <strong>Pair your device</strong>
+                  <p>Select your piano (e.g., "FP-E50 MIDI") from the list</p>
+                </div>
+              </li>
+              <li>
+                <mat-icon>refresh</mat-icon>
+                <div>
+                  <strong>Scan for devices above</strong>
+                  <p>After pairing, click "Scan for Devices" - your piano will appear in the MIDI devices list</p>
+                </div>
+              </li>
+            </ol>
+
+            <div class="bluetooth-tips">
+              <mat-icon>lightbulb</mat-icon>
+              <span>Once paired in Windows, your Bluetooth MIDI device works just like a USB device!</span>
+            </div>
           </div>
         </mat-card-content>
       </mat-card>
@@ -90,7 +153,7 @@ import { TauriService } from '../../core/services/tauri.service';
           <mat-card-title>Active Notes</mat-card-title>
           <mat-card-subtitle>Notes currently pressed</mat-card-subtitle>
         </mat-card-header>
-        
+
         <mat-card-content>
           <div class="active-notes" *ngIf="activeNoteNames().length > 0">
             <span class="note-badge" *ngFor="let note of activeNoteNames()">
@@ -137,6 +200,12 @@ import { TauriService } from '../../core/services/tauri.service';
         width: 32px;
         height: 32px;
         color: #3f51b5;
+      }
+    }
+
+    .bluetooth-card {
+      mat-icon[mat-card-avatar].bluetooth-icon {
+        color: #2196f3;
       }
     }
 
@@ -210,8 +279,124 @@ import { TauriService } from '../../core/services/tauri.service';
       }
     }
 
+    .bluetooth-connected {
+      background: #e3f2fd;
+      border-color: #2196f3;
+
+      .device-info .success-icon {
+        color: #2196f3;
+      }
+
+      .device-info .device-status {
+        color: #1976d2;
+      }
+    }
+
     .scan-button {
       margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      mat-spinner {
+        margin-right: 8px;
+      }
+    }
+
+    .midi-badge {
+      background: #4caf50;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      margin-left: 8px;
+      font-weight: 500;
+    }
+
+    .midi-device {
+      background: #f1f8e9;
+    }
+
+    .bluetooth-tips {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #1976d2;
+      padding: 0.75rem;
+      background: #e3f2fd;
+      border-radius: 4px;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    .bluetooth-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #1976d2;
+      padding: 0.75rem;
+      background: #e3f2fd;
+      border-radius: 4px;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+
+    .bluetooth-guide {
+      .guide-intro {
+        margin-bottom: 1rem;
+        color: #333;
+      }
+
+      .setup-steps {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 1rem 0;
+
+        li {
+          display: flex;
+          align-items: flex-start;
+          gap: 1rem;
+          padding: 0.75rem;
+          border-radius: 8px;
+          margin-bottom: 0.5rem;
+          background: #f5f5f5;
+
+          mat-icon {
+            color: #2196f3;
+            margin-top: 2px;
+          }
+
+          strong {
+            display: block;
+            margin-bottom: 0.25rem;
+          }
+
+          p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+          }
+
+          em {
+            background: #e3f2fd;
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            font-style: normal;
+          }
+        }
+      }
     }
 
     mat-divider {
@@ -225,7 +410,7 @@ export class SettingsComponent implements OnInit {
     private midiService = inject(MidiService);
     private tauriService = inject(TauriService);
 
-    // Expose signals
+    // MIDI signals (includes both USB and Bluetooth MIDI devices)
     devices = this.midiService.devices;
     hasDevices = this.midiService.hasDevices;
     connected = this.midiService.connected;
@@ -241,6 +426,7 @@ export class SettingsComponent implements OnInit {
         }
     }
 
+    // USB MIDI methods
     async refreshDevices(): Promise<void> {
         await this.midiService.listDevices();
     }

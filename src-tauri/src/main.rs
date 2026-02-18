@@ -19,13 +19,24 @@ fn main() {
     tauri::Builder::default()
         .manage(commands::midi::MidiState::default())
         .manage(commands::evaluation::EvaluationState::default())
+        .manage(commands::bluetooth::BluetoothState::default())
         .invoke_handler(tauri::generate_handler![
+            // Lesson commands
             commands::lesson::load_lesson,
             commands::lesson::list_lessons,
+            // USB MIDI commands
             commands::midi::get_midi_devices,
             commands::midi::start_midi_listening,
             commands::midi::stop_midi_listening,
             commands::midi::is_midi_connected,
+            // Bluetooth MIDI commands
+            commands::bluetooth::init_bluetooth,
+            commands::bluetooth::scan_bluetooth_devices,
+            commands::bluetooth::connect_bluetooth_midi,
+            commands::bluetooth::disconnect_bluetooth,
+            commands::bluetooth::get_bluetooth_status,
+            commands::bluetooth::is_bluetooth_connected,
+            // Evaluation commands
             commands::evaluation::check_note,
             commands::evaluation::check_pitch,
             commands::evaluation::get_stats,

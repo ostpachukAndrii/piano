@@ -44,7 +44,8 @@
       "Bash(type:*)",
       "Bash(unzip:*)",
       "Bash(sort:*)",
-      "Bash(npx ng test:*)"
+      "Bash(npx ng test:*)",
+      "Bash(cargo tauri dev:*)"
     ]
   }
 }

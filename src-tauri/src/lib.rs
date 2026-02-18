@@ -17,8 +17,9 @@ pub use lesson_parser::YamlLesson;
 pub use models::{GlobalSettings, Measure, MidiChord, MidiDeviceInfo, MidiEvent, Note};
 pub use mxl_parser::MxlLesson;
 pub use services::{
-    EvaluationResult, EvaluationService, FeedbackType, LessonParser, MidiInputService,
-    PlaybackManager, StatisticsService,
+    BluetoothDeviceInfo, BluetoothMidiService, BluetoothStatus, EvaluationResult,
+    EvaluationService, FeedbackType, LessonParser, MidiInputService, PlaybackManager,
+    StatisticsService,
 };
 
 // Re-export MIDI commands
@@ -29,4 +30,10 @@ pub use commands::midi::{
 // Re-export Evaluation commands
 pub use commands::evaluation::{
     check_note, check_pitch, get_stats, reset_stats, EvaluationState, SessionStats,
+};
+
+// Re-export Bluetooth commands
+pub use commands::bluetooth::{
+    connect_bluetooth_midi, disconnect_bluetooth, get_bluetooth_status, init_bluetooth,
+    is_bluetooth_connected, scan_bluetooth_devices, BluetoothState,
 };

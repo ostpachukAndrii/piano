@@ -16,6 +16,20 @@ export interface MidiDeviceInfo {
   is_connected: boolean;
 }
 
+export interface BluetoothDeviceInfo {
+  id: string;
+  name: string;
+  is_midi_device: boolean;
+  rssi?: number;
+}
+
+export type BluetoothStatus =
+  | 'Disconnected'
+  | 'Scanning'
+  | 'Connecting'
+  | 'Connected'
+  | { Error: string };
+
 export interface MidiChord {
   notes: number[];
   hand: string;
@@ -81,11 +95,19 @@ export type LessonMode =
  * All backend communication should go through this interface
  */
 export interface BackendClient {
-  // MIDI Commands
+  // USB MIDI Commands
   listMidiDevices(): Promise<MidiDeviceInfo[]>;
   startMidiListening(deviceId: string): Promise<void>;
   stopMidiListening(): Promise<void>;
   isMidiConnected(): Promise<boolean>;
+
+  // Bluetooth MIDI Commands
+  initBluetooth(): Promise<void>;
+  scanBluetoothDevices(timeoutSecs?: number): Promise<BluetoothDeviceInfo[]>;
+  connectBluetoothMidi(deviceId: string): Promise<void>;
+  disconnectBluetooth(): Promise<void>;
+  getBluetoothStatus(): Promise<BluetoothStatus>;
+  isBluetoothConnected(): Promise<boolean>;
 
   // Lesson Commands
   listLessons(): Promise<LessonMetadata[]>;
@@ -94,6 +116,7 @@ export interface BackendClient {
   // Event Listeners (returns cleanup function)
   onMidiChordDetected(callback: (chord: MidiChord) => void): () => void;
   onMidiNoteOff(callback: (midi: number) => void): () => void;
+  onBluetoothStatusChanged(callback: (status: BluetoothStatus) => void): () => void;
 }
 
 /**

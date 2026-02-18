@@ -26,8 +26,12 @@ sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite"] }
 # Async runtime
 tokio = { version = "1.35", features = ["full"] }
 
-# MIDI
-midir = "0.9"
+# MIDI - using winrt backend for Windows Bluetooth MIDI support
+midir = { version = "0.9", features = ["winrt"] }
+
+# Bluetooth MIDI
+btleplug = "0.11"
+futures = "0.3"
 
 # Error handling
 thiserror = "1.0"

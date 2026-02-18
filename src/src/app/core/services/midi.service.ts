@@ -56,17 +56,23 @@ export class MidiService implements OnDestroy {
      * Set up backend event listeners for MIDI events
      */
     private setupEventListeners(): void {
+        console.log('[MidiService] Setting up event listeners...');
+
         // Listen for chord detected events
         const chordCleanup = this.backend.onMidiChordDetected((chord) => {
+            console.log('[MidiService] >>> Received chord event:', chord);
             this.handleChordDetected(chord);
         });
         this.cleanupFunctions.push(chordCleanup);
 
         // Listen for note-off events
         const noteOffCleanup = this.backend.onMidiNoteOff((note) => {
+            console.log('[MidiService] >>> Received note-off:', note);
             this.handleNoteOff(note);
         });
         this.cleanupFunctions.push(noteOffCleanup);
+
+        console.log('[MidiService] Event listeners set up');
     }
 
     /**
@@ -111,8 +117,11 @@ export class MidiService implements OnDestroy {
      * Connect to a MIDI device
      */
     async connect(deviceId: string, showNotification = true): Promise<void> {
+        console.log('[MidiService] connect() called with deviceId:', deviceId);
         try {
+            console.log('[MidiService] Calling backend.startMidiListening...');
             await this.backend.startMidiListening(deviceId);
+            console.log('[MidiService] backend.startMidiListening returned successfully');
             const device = this._devices().find(d => d.id === deviceId);
 
             if (device) {

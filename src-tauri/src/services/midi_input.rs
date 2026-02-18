@@ -52,10 +52,20 @@ impl MidiInputService {
 
     /// List available MIDI input devices
     pub fn list_devices() -> Result<Vec<MidiDeviceInfo>, String> {
-        let midi_in = MidiInput::new("Piano Lesson App - Device List")
-            .map_err(|e| format!("Failed to create MIDI input: {}", e))?;
+        tracing::info!("=== LIST MIDI DEVICES START ===");
 
+        tracing::info!("Creating MIDI input instance...");
+        let midi_in = MidiInput::new("Piano Lesson App - Device List")
+            .map_err(|e| {
+                tracing::error!("Failed to create MIDI input: {}", e);
+                format!("Failed to create MIDI input: {}", e)
+            })?;
+        tracing::info!("MIDI input instance created successfully");
+
+        tracing::info!("Getting available ports...");
         let ports = midi_in.ports();
+        tracing::info!("Found {} MIDI input ports", ports.len());
+
         let devices: Vec<MidiDeviceInfo> = ports
             .iter()
             .enumerate()
@@ -63,6 +73,7 @@ impl MidiInputService {
                 let name = midi_in
                     .port_name(port)
                     .unwrap_or_else(|_| format!("Unknown Device {}", idx));
+                tracing::info!("  Port {}: \"{}\"", idx, name);
                 MidiDeviceInfo {
                     id: idx.to_string(),
                     name,
@@ -71,18 +82,35 @@ impl MidiInputService {
             })
             .collect();
 
+        tracing::info!("=== LIST MIDI DEVICES END: {} devices found ===", devices.len());
         Ok(devices)
     }
 
     /// Connect to a MIDI device by ID
     pub fn connect(&mut self, device_id: &str) -> Result<(), String> {
-        // Disconnect existing connection
-        self.disconnect();
+        tracing::info!("=== USB MIDI CONNECT START ===");
+        tracing::info!("Requested device_id: {}", device_id);
 
+        // Disconnect existing connection
+        tracing::info!("Step 1/6: Disconnecting any existing connection...");
+        self.disconnect();
+        tracing::info!("Step 1/6: Done disconnecting");
+
+        tracing::info!("Step 2/6: Creating MIDI input instance...");
         let midi_in = MidiInput::new("Piano Lesson App")
             .map_err(|e| format!("Failed to create MIDI input: {}", e))?;
+        tracing::info!("Step 2/6: MIDI input created successfully");
 
+        tracing::info!("Step 3/6: Getting available ports...");
         let ports = midi_in.ports();
+        tracing::info!("Step 3/6: Found {} ports", ports.len());
+
+        // Log all available ports
+        for (idx, port) in ports.iter().enumerate() {
+            let name = midi_in.port_name(port).unwrap_or_else(|_| "Unknown".to_string());
+            tracing::info!("  Port {}: {}", idx, name);
+        }
+
         let port_idx: usize = device_id
             .parse()
             .map_err(|_| format!("Invalid device ID: {}", device_id))?;
@@ -100,9 +128,13 @@ impl MidiInputService {
             .port_name(port)
             .unwrap_or_else(|_| "Unknown".to_string());
 
+        tracing::info!("Step 4/6: Selected port {} ({})", port_idx, port_name);
+
         // Create callback for MIDI events
+        tracing::info!("Step 5/6: Setting up MIDI callback...");
         let event_buffer = Arc::clone(&self.event_buffer);
 
+        tracing::info!("Step 6/6: Connecting to MIDI port (this may block on Bluetooth devices)...");
         let connection = midi_in
             .connect(
                 port,
@@ -114,15 +146,24 @@ impl MidiInputService {
                         let midi_note = message[1];
                         let velocity = message[2];
 
+                        tracing::debug!("MIDI raw: status=0x{:02X} note={} vel={}", status, midi_note, velocity);
+
                         let event = match status {
-                            0x90 if velocity > 0 => Some(MidiEvent::note_on(midi_note, velocity)),
-                            0x90 | 0x80 => Some(MidiEvent::note_off(midi_note)),
+                            0x90 if velocity > 0 => {
+                                tracing::info!(">>> NOTE ON: midi={} velocity={}", midi_note, velocity);
+                                Some(MidiEvent::note_on(midi_note, velocity))
+                            }
+                            0x90 | 0x80 => {
+                                tracing::debug!(">>> NOTE OFF: midi={}", midi_note);
+                                Some(MidiEvent::note_off(midi_note))
+                            }
                             _ => None,
                         };
 
                         if let Some(evt) = event {
                             if let Ok(mut buffer) = event_buffer.lock() {
                                 buffer.push(evt);
+                                tracing::debug!("Event added to buffer, buffer size: {}", buffer.len());
                             }
                         }
                     }
@@ -134,6 +175,7 @@ impl MidiInputService {
         self.connection = Some(connection);
         self.start_time = Instant::now();
 
+        tracing::info!("=== USB MIDI CONNECT SUCCESS ===");
         tracing::info!("Connected to MIDI device: {}", port_name);
         Ok(())
     }
