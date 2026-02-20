@@ -84,7 +84,7 @@ export class EvaluationService {
      * Check pitch only (for Waiting mode)
      * Ignores timing and duration
      */
-    async checkPitch(playedMidi: number, expectedMidi: number): Promise<EvaluationResult> {
+    async checkPitch(playedMidi: number, expectedMidi: number, options?: { skipSound?: boolean }): Promise<EvaluationResult> {
         this._isEvaluating.set(true);
         try {
             const result = await this.tauri.invoke<EvaluationResult>('check_pitch', {
@@ -102,21 +102,26 @@ export class EvaluationService {
             // Track achievements and play sounds
             if (result.pitch_correct && isPerfect) {
                 this.achievementService.onPerfectNote();
-                // Play actual piano note for correct notes (satisfying feedback)
-                this.pianoService.playNote(playedMidi, 100, 0.5);
+                if (!options?.skipSound) {
+                    this.pianoService.playNote(playedMidi, 100, 0.5);
+                }
             } else if (result.pitch_correct) {
-                // Play piano note for correct notes
-                this.pianoService.playNote(playedMidi, 80, 0.4);
+                if (!options?.skipSound) {
+                    this.pianoService.playNote(playedMidi, 80, 0.4);
+                }
             } else {
                 this.achievementService.onWrongNote();
-                // For wrong notes, play a subtle error sound (not the harsh beep)
-                this.soundService.play('wrongNote');
+                if (!options?.skipSound) {
+                    this.soundService.play('wrongNote');
+                }
             }
 
-            // Play combo sound for streaks (keep this celebratory sound)
-            const streak = this.currentStreak();
-            if (streak >= 10 && streak % 5 === 0) {
-                this.soundService.play('combo');
+            // Play combo sound for streaks (only when sounds aren't suppressed)
+            if (!options?.skipSound) {
+                const streak = this.currentStreak();
+                if (streak >= 10 && streak % 5 === 0) {
+                    this.soundService.play('combo');
+                }
             }
 
             return result;

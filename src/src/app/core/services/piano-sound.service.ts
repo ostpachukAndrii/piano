@@ -139,22 +139,25 @@ export class PianoSoundService {
     // Pianos have very fast attack, initial brightness spike, then gradual decay
     // Attack: 1-3ms (percussive strike)
     // Decay: Varies by register (lower notes decay slower)
-    // Sustain: Pianos don't truly sustain - continuous exponential decay
-    // Release: Natural resonance fadeout
+    // Sustain: Long slow decay while key is held (real pianos sustain 5-15+ seconds)
+    // Release: Damper hits string on key release (handled by stopNote)
 
     const attackTime = 0.002;  // 2ms attack (hammer strike)
     // Lower notes decay slower, higher notes decay faster
     const decayTime = 0.08 + (60 - midi) * 0.003;
-    const sustainLevel = 0.5;  // Initial sustain level
-    const sustainDecay = 0.15; // Continuous slow decay during sustain
-    const releaseTime = 0.4;   // 400ms release
+    const sustainLevel = 0.6;  // Sustain level after initial decay
 
-    // Piano envelope: instant attack, bright initial tone, then decay
+    // Sustain duration varies by register: lower notes ring longer
+    // Bass (midi 36): ~12s, Middle C (midi 60): ~8s, High C (midi 84): ~4s
+    const sustainDuration = Math.max(4, 12 - (midi - 36) * 0.12);
+    const sustainFloor = 0.08; // Barely audible floor after full sustain
+
+    // Piano envelope: instant attack, bright initial tone, then long sustain decay
     envelopeGain.gain.setValueAtTime(0, now);
     envelopeGain.gain.linearRampToValueAtTime(1.2, now + attackTime); // Initial brightness spike
     envelopeGain.gain.exponentialRampToValueAtTime(sustainLevel, now + attackTime + decayTime);
-    // Continuous slow decay during sustain (mimics string energy loss)
-    envelopeGain.gain.exponentialRampToValueAtTime(sustainDecay, now + attackTime + decayTime + 2.0);
+    // Long gradual decay while key is held (mimics string energy loss)
+    envelopeGain.gain.exponentialRampToValueAtTime(sustainFloor, now + attackTime + decayTime + sustainDuration);
 
     // Store active note for later release
     this.activeNotes.set(midi, { oscillators, gain: envelopeGain });

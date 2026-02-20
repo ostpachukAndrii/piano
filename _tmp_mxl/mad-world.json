@@ -1,0 +1,3249 @@
+{
+  "title": "Mad World",
+  "tempo": 92,
+  "time_signature": "4/4",
+  "key_signature": "Ab major",
+  "total_beats": 306.5,
+  "total_seconds": 200,
+  "measure_count": 36,
+  "measures": [
+    {
+      "number": 1,
+      "notes": [
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "G#4"
+        },
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "C5"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1,
+          "_name": "G4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "F4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "F3"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G4"
+        },
+        {
+          "midi": 63,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "D#4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 62,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "D4"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "notes": [
+        {
+          "type": "rest",
+          "duration": 2,
+          "hand": "right",
+          "start_beat": 0
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "A#3"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 2
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "A#3"
+        },
+        {
+          "type": "rest",
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "G#4"
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "notes": [
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "G#4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "F3"
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "C5"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1,
+          "_name": "G4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "F4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "F3"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G4"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "G#4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "A#4"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "notes": [
+        {
+          "midi": 70,
+          "duration": 4,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "A#4"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "A#3"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "A#3"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "notes": [
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "F3"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1,
+          "_name": "F4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "F4"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "G#4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "F3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "F4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "F4"
+        }
+      ]
+    },
+    {
+      "number": 6,
+      "notes": [
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "C5"
+        },
+        {
+          "midi": 56,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "G#3"
+        },
+        {
+          "midi": 72,
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "C5"
+        },
+        {
+          "midi_set": [
+            60,
+            63
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "C4",
+            "D#4"
+          ]
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "C5"
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "C5"
+        },
+        {
+          "midi": 56,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "G#3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G#4"
+        },
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 3
+        },
+        {
+          "midi_set": [
+            60,
+            63
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "C4",
+            "D#4"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 7,
+      "notes": [
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "A#4"
+        },
+        {
+          "midi": 51,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "D#3"
+        },
+        {
+          "midi": 70,
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "A#4"
+        },
+        {
+          "midi_set": [
+            55,
+            58
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G3",
+            "A#3"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "A#4"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "A#4"
+        },
+        {
+          "midi": 51,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "D#3"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G4"
+        },
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 3
+        },
+        {
+          "midi_set": [
+            55,
+            58
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G3",
+            "A#3"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 8,
+      "notes": [
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "A#4"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "A#3"
+        },
+        {
+          "midi": 70,
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "A#4"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "A#4"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "A#4"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "A#3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "G4"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "F4"
+        }
+      ]
+    },
+    {
+      "number": 9,
+      "notes": [
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "F3"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1,
+          "_name": "F4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "F4"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "G#4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "F3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "F4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "F4"
+        }
+      ]
+    },
+    {
+      "number": 10,
+      "notes": [
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "C5"
+        },
+        {
+          "midi": 56,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "G#3"
+        },
+        {
+          "midi": 72,
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "C5"
+        },
+        {
+          "midi_set": [
+            60,
+            63
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "C4",
+            "D#4"
+          ]
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "C5"
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "C5"
+        },
+        {
+          "midi": 56,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "G#3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G#4"
+        },
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 3
+        },
+        {
+          "midi_set": [
+            60,
+            63
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "C4",
+            "D#4"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 11,
+      "notes": [
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "A#4"
+        },
+        {
+          "midi": 51,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "D#3"
+        },
+        {
+          "midi": 70,
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "A#4"
+        },
+        {
+          "midi_set": [
+            55,
+            58
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G3",
+            "A#3"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "A#4"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "A#4"
+        },
+        {
+          "midi": 51,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "D#3"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G4"
+        },
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 3
+        },
+        {
+          "midi_set": [
+            55,
+            58
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G3",
+            "A#3"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 12,
+      "notes": [
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "A#4"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "A#3"
+        },
+        {
+          "midi": 70,
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "A#4"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "A#4"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "A#4"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "A#3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "G4"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "F4"
+        }
+      ]
+    },
+    {
+      "number": 13,
+      "notes": [
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "F3"
+        },
+        {
+          "type": "rest",
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "F4"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "G#4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "F3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "F4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "F4"
+        }
+      ]
+    },
+    {
+      "number": 14,
+      "notes": [
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "C5"
+        },
+        {
+          "midi": 56,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "G#3"
+        },
+        {
+          "midi": 72,
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "C5"
+        },
+        {
+          "midi_set": [
+            60,
+            63
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "C4",
+            "D#4"
+          ]
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "C5"
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "C5"
+        },
+        {
+          "midi": 56,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "G#3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G#4"
+        },
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 3
+        },
+        {
+          "midi_set": [
+            60,
+            63
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "C4",
+            "D#4"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 15,
+      "notes": [
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "A#4"
+        },
+        {
+          "midi": 51,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "D#3"
+        },
+        {
+          "midi": 70,
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "A#4"
+        },
+        {
+          "midi_set": [
+            55,
+            58
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G3",
+            "A#3"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "A#4"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "A#4"
+        },
+        {
+          "midi": 51,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "D#3"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G4"
+        },
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 3
+        },
+        {
+          "midi_set": [
+            55,
+            58
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G3",
+            "A#3"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 16,
+      "notes": [
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "A#4"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "A#3"
+        },
+        {
+          "midi": 70,
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "A#4"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "A#4"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "A#4"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "A#3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "G4"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "F4"
+        }
+      ]
+    },
+    {
+      "number": 17,
+      "notes": [
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "F3"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1,
+          "_name": "F4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "F4"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "G#4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "F3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "F4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "F4"
+        }
+      ]
+    },
+    {
+      "number": 18,
+      "notes": [
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "C5"
+        },
+        {
+          "midi": 56,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "G#3"
+        },
+        {
+          "midi": 72,
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "C5"
+        },
+        {
+          "midi_set": [
+            60,
+            63
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "C4",
+            "D#4"
+          ]
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "C5"
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "C5"
+        },
+        {
+          "midi": 56,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "G#3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G#4"
+        },
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 3
+        },
+        {
+          "midi_set": [
+            60,
+            63
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "C4",
+            "D#4"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 19,
+      "notes": [
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "A#4"
+        },
+        {
+          "midi": 51,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "D#3"
+        },
+        {
+          "midi": 70,
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "A#4"
+        },
+        {
+          "midi_set": [
+            55,
+            58
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G3",
+            "A#3"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "A#4"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "A#4"
+        },
+        {
+          "midi": 51,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "D#3"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G4"
+        },
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 3
+        },
+        {
+          "midi_set": [
+            55,
+            58
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G3",
+            "A#3"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 20,
+      "notes": [
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "A#4"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "A#3"
+        },
+        {
+          "midi": 70,
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "A#4"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "A#4"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "A#4"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "A#3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "G4"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "F4"
+        }
+      ]
+    },
+    {
+      "number": 21,
+      "notes": [
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 0
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "F3"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1,
+          "_name": "F4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "F4"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "G#4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "F3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "C5"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "C5"
+        }
+      ]
+    },
+    {
+      "number": 22,
+      "notes": [
+        {
+          "midi": 74,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "D5"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "A#3"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "A#4"
+        },
+        {
+          "type": "rest",
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "A#4"
+        },
+        {
+          "midi": 74,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "D5"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "A#3"
+        },
+        {
+          "midi": 74,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "D5"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "A#4"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "A#4"
+        }
+      ]
+    },
+    {
+      "number": 23,
+      "notes": [
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "F4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "F3"
+        },
+        {
+          "type": "rest",
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0.5
+        },
+        {
+          "type": "rest",
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "F4"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "G#4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "F3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "C5"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "C5"
+        }
+      ]
+    },
+    {
+      "number": 24,
+      "notes": [
+        {
+          "midi": 74,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "D5"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "A#3"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "A#4"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1,
+          "_name": "A#4"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "A#4"
+        },
+        {
+          "midi": 74,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "D5"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "A#3"
+        },
+        {
+          "midi": 74,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "D5"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "A#4"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "A#4"
+        }
+      ]
+    },
+    {
+      "number": 25,
+      "notes": [
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "F4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "F3"
+        },
+        {
+          "type": "rest",
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0.5
+        },
+        {
+          "type": "rest",
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "F4"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "G#4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "F3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "C5"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "C5"
+        }
+      ]
+    },
+    {
+      "number": 26,
+      "notes": [
+        {
+          "midi": 74,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "D5"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "A#3"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "A#4"
+        },
+        {
+          "type": "rest",
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "A#4"
+        },
+        {
+          "midi": 74,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "D5"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "A#3"
+        },
+        {
+          "midi": 74,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "D5"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "A#4"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "A#4"
+        }
+      ]
+    },
+    {
+      "number": 27,
+      "notes": [
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "F4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "F3"
+        },
+        {
+          "type": "rest",
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0.5
+        },
+        {
+          "type": "rest",
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "F4"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "G#4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "F3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "C5"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "C5"
+        }
+      ]
+    },
+    {
+      "number": 28,
+      "notes": [
+        {
+          "midi": 74,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "D5"
+        },
+        {
+          "midi_set": [
+            58,
+            62
+          ],
+          "duration": 4,
+          "hand": "left",
+          "start_beat": 0,
+          "_names": [
+            "A#3",
+            "D4"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "A#4"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1,
+          "_name": "A#4"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "A#4"
+        },
+        {
+          "midi": 74,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "D5"
+        },
+        {
+          "midi": 74,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "D5"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "A#4"
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "A#4"
+        }
+      ]
+    },
+    {
+      "number": 29,
+      "notes": [
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "G#4"
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "C5"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "F3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 72,
+          "duration": 1.5,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "C5"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1,
+          "_name": "G4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "G4"
+        },
+        {
+          "midi": 68,
+          "duration": 2,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "G#4"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "F4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "F3"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "F4"
+        },
+        {
+          "midi": 63,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "D#4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 62,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "D4"
+        }
+      ]
+    },
+    {
+      "number": 30,
+      "notes": [
+        {
+          "midi": 62,
+          "duration": 3,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "D4"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "A#3"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 2
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "A#3"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "G4"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "G#4"
+        }
+      ]
+    },
+    {
+      "number": 31,
+      "notes": [
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "G#4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "F3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 72,
+          "duration": 1.5,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "C5"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1,
+          "_name": "G4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "G4"
+        },
+        {
+          "midi": 68,
+          "duration": 1.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "G#4"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "F4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "F3"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "F4"
+        },
+        {
+          "midi": 63,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "D#4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 70,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "A#4"
+        },
+        {
+          "midi": 62,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "D4"
+        }
+      ]
+    },
+    {
+      "number": 32,
+      "notes": [
+        {
+          "midi": 70,
+          "duration": 4,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "A#4"
+        },
+        {
+          "midi": 62,
+          "duration": 4,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "D4"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "A#3"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "A#3"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 33,
+      "notes": [
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "G#4"
+        },
+        {
+          "midi": 72,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "C5"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "F3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 72,
+          "duration": 1.5,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "C5"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1,
+          "_name": "G4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "G4"
+        },
+        {
+          "midi": 68,
+          "duration": 2,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "G#4"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_name": "F4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "F3"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "F4"
+        },
+        {
+          "midi": 63,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "D#4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 62,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "D4"
+        }
+      ]
+    },
+    {
+      "number": 34,
+      "notes": [
+        {
+          "midi": 62,
+          "duration": 4,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "D4"
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "A#3"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "type": "rest",
+          "duration": 1,
+          "hand": "right",
+          "start_beat": 2
+        },
+        {
+          "midi": 58,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "A#3"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "G4"
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_name": "G#4"
+        }
+      ]
+    },
+    {
+      "number": 35,
+      "notes": [
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0,
+          "_name": "G#4"
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 0,
+          "_name": "F3"
+        },
+        {
+          "midi": 68,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 0.5,
+          "_name": "G#4"
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1,
+          "_name": "G4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 1,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi": 67,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 1.5,
+          "_name": "G4"
+        },
+        {
+          "midi_set": [
+            60,
+            65,
+            68
+          ],
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2,
+          "_names": [
+            "C4",
+            "F4",
+            "G#4"
+          ]
+        },
+        {
+          "midi": 53,
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 2,
+          "_name": "F3"
+        },
+        {
+          "midi": 65,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 2.5,
+          "_name": "F4"
+        },
+        {
+          "midi": 63,
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3,
+          "_name": "D#4"
+        },
+        {
+          "midi_set": [
+            56,
+            60
+          ],
+          "duration": 1,
+          "hand": "left",
+          "start_beat": 3,
+          "_names": [
+            "G#3",
+            "C4"
+          ]
+        },
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 0.5,
+          "hand": "right",
+          "start_beat": 3.5,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 36,
+      "notes": [
+        {
+          "midi_set": [
+            62,
+            65
+          ],
+          "duration": 4,
+          "hand": "right",
+          "start_beat": 0,
+          "_names": [
+            "D4",
+            "F4"
+          ]
+        },
+        {
+          "midi_set": [
+            46,
+            58
+          ],
+          "duration": 4,
+          "hand": "left",
+          "start_beat": 0,
+          "_names": [
+            "A#2",
+            "A#3"
+          ]
+        }
+      ]
+    }
+  ]
+}

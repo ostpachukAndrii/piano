@@ -45,7 +45,22 @@
       "Bash(unzip:*)",
       "Bash(sort:*)",
       "Bash(npx ng test:*)",
-      "Bash(cargo tauri dev:*)"
+      "Bash(cargo tauri dev:*)",
+      "Bash(git -C \"g:\\\\Rust run\\\\roland\" ls-files)",
+      "Bash(npx playwright install chromium)",
+      "Bash(npx playwright test:*)",
+      "Bash(dir:*)",
+      "Bash(node -e:*)",
+      "Bash(printf:*)",
+      "Bash(node:*)",
+      "Bash(/usr/bin/ls:*)",
+      "Bash(/bin/ls:*)",
+      "Bash(exit:*)",
+      "Bash(bash --norc --noprofile -c \"echo hello\")",
+      "Bash(bash -c:*)",
+      "Bash(git show:*)",
+      "Bash(timeout 30 npx ng serve:*)",
+      "Bash(npm run e2e:*)"
     ]
   }
 }

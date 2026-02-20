@@ -114,50 +114,52 @@ export interface CompletionDialogData {
   `,
   styles: [`
     .completion-dialog {
-      padding: 2rem;
+      padding: 1.5rem;
       text-align: center;
-      min-width: 400px;
+      min-width: 350px;
+      max-height: 85vh;
+      overflow-y: auto;
     }
 
     .dialog-header {
-      margin-bottom: 2rem;
-    }
-
-    .trophy-icon {
-      font-size: 64px;
-      width: 64px;
-      height: 64px;
-      color: #ffd700;
       margin-bottom: 1rem;
     }
 
+    .trophy-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      color: #ffd700;
+      margin-bottom: 0.5rem;
+    }
+
     h2 {
-      margin: 0 0 0.5rem 0;
-      font-size: 2rem;
+      margin: 0 0 0.25rem 0;
+      font-size: 1.5rem;
       color: #333;
     }
 
     .lesson-title {
       color: #666;
-      font-size: 1.1rem;
+      font-size: 1rem;
       margin: 0;
     }
 
     .stats-container {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-      margin-bottom: 2rem;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
     }
 
     .stat-card {
       background: #f5f5f5;
-      padding: 1.5rem;
+      padding: 1rem;
       border-radius: 12px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.25rem;
       transition: transform 0.2s;
     }
 
@@ -166,9 +168,9 @@ export interface CompletionDialogData {
     }
 
     .stat-card mat-icon {
-      font-size: 32px;
-      width: 32px;
-      height: 32px;
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
       color: #3f51b5;
     }
 
@@ -187,13 +189,13 @@ export interface CompletionDialogData {
     }
 
     .stat-value {
-      font-size: 2rem;
+      font-size: 1.75rem;
       font-weight: 700;
       color: #333;
     }
 
     .stat-label {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: #666;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -202,18 +204,18 @@ export interface CompletionDialogData {
     .stat-detail {
       font-size: 0.8rem;
       color: #888;
-      margin-top: 0.25rem;
+      margin-top: 0.15rem;
     }
 
     .performance-message {
-      margin-bottom: 2rem;
-      padding: 1rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem;
       border-radius: 8px;
     }
 
     .performance-message p {
       margin: 0;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       font-weight: 500;
     }
 
@@ -223,8 +225,8 @@ export interface CompletionDialogData {
     .needs-work { color: #f44336; }
 
     .breakdown-section {
-      margin-bottom: 1.5rem;
-      padding: 1rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem;
       background: #fafafa;
       border-radius: 8px;
     }
@@ -287,12 +289,12 @@ export interface CompletionDialogData {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.75rem 1rem;
+      padding: 0.5rem 0.75rem;
       background: #e3f2fd;
       border-radius: 8px;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
       color: #1565c0;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       text-align: left;
     }
 

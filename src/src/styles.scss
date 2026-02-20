@@ -3,6 +3,46 @@
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
+/* ===== Fullscreen mode: show ONLY the scrolling player ===== */
+:root:fullscreen .app-toolbar,
+:root:fullscreen app-xp-progress-bar,
+:root:fullscreen app-achievement-notification,
+:root:fullscreen app-error-display {
+    display: none !important;
+}
+
+:root:fullscreen .app-content {
+    min-height: 100vh !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+:root:fullscreen app-lesson-player .lesson-player {
+    padding: 0 !important;
+    padding-bottom: 0 !important;
+    margin: 0 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+}
+
+:root:fullscreen app-lesson-header,
+:root:fullscreen app-mode-selector,
+:root:fullscreen app-debug-panel,
+:root:fullscreen app-measures-preview,
+:root:fullscreen app-playback-bar,
+:root:fullscreen .staff-card {
+    display: none !important;
+}
+
+:root:fullscreen .scrolling-player-container {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
 /* Ensure completion dialog appears above fullscreen content and is clickable */
 .completion-dialog-backdrop {
     z-index: 2147483646 !important; /* Maximum safe z-index */
@@ -70,14 +110,7 @@ button[mat-button] {
     user-select: none !important;
 }
 
-/* Debug - make buttons visually obvious */
 .completion-dialog .actions button {
     pointer-events: auto !important;
     cursor: pointer !important;
-    outline: 2px solid rgba(255, 0, 0, 0.3) !important; /* Temporary debug outline */
-}
-
-.completion-dialog .actions button:hover {
-    outline: 2px solid rgba(255, 0, 0, 0.8) !important;
-    transform: scale(1.05);
 }

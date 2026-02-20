@@ -325,11 +325,16 @@ export class LessonPlayerComponent implements OnInit, OnDestroy {
     }
 
     constructor() {
-        // React to MIDI input and evaluate notes
+        // React to MIDI input and evaluate notes (classic view only)
+        // In scrolling view, the scrolling player handles its own evaluation
+        // with {skipSound: true} to avoid killing sustained notes.
         effect(() => {
             const active = this.activeNotesArray();
             const expected = this.expectedNotes();
             const toRelease = this.notesToRelease();
+
+            // Skip evaluation in scrolling view — handled by scrolling-player
+            if (this.playerView() !== 'classic') return;
 
             if (this.waitingForRelease()) {
                 const allReleased = [...toRelease].every(note => !active.includes(note));
@@ -509,9 +514,10 @@ export class LessonPlayerComponent implements OnInit, OnDestroy {
                 stats: this.evaluationService.stats(),
                 extendedStats: extendedStats
             },
-            disableClose: false,
-            width: '500px',
+            disableClose: true,
+            width: '420px',
             maxWidth: '90vw',
+            maxHeight: '90vh',
             panelClass: ['completion-dialog-fullscreen', 'force-clickable'],
             hasBackdrop: true,
             backdropClass: 'completion-dialog-backdrop',
@@ -524,7 +530,7 @@ export class LessonPlayerComponent implements OnInit, OnDestroy {
 
             if (result === 'replay') {
                 this.replayLesson();
-            } else {
+            } else if (result === 'back') {
                 if (document.fullscreenElement) {
                     try {
                         await document.exitFullscreen();

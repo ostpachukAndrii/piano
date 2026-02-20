@@ -73,16 +73,38 @@ import { PracticeLoopRange } from '../models/scrolling-note.model';
 
             <div class="hand-separator"></div>
 
-            <!-- Left hand toggle button -->
-            <button mat-icon-button
-                    (click)="onLeftHandToggle()"
-                    class="hand-btn"
-                    [class.active]="leftHandEnabled"
-                    [class.disabled]="!leftHandEnabled"
-                    aria-label="Left Hand"
-                    matTooltip="Toggle left hand (bass)">
-                <span class="hand-label">L</span>
-            </button>
+            <!-- Left hand with progressive level controls -->
+            <div class="hand-progressive-group">
+                <button mat-icon-button
+                        (click)="onLeftHandLevelDown()"
+                        [disabled]="leftHandLevel <= 0"
+                        class="level-btn"
+                        aria-label="Decrease left hand level"
+                        matTooltip="Auto-play one more pattern">
+                    <mat-icon>remove</mat-icon>
+                </button>
+                <button mat-icon-button
+                        (click)="onLeftHandToggle()"
+                        class="hand-btn"
+                        [class.active]="leftHandEnabled && leftHandLevel >= maxLeftHandLevel"
+                        [class.partial]="leftHandEnabled && leftHandLevel > 0 && leftHandLevel < maxLeftHandLevel"
+                        [class.disabled]="!leftHandEnabled || leftHandLevel === 0"
+                        aria-label="Left Hand"
+                        [matTooltip]="maxLeftHandLevel > 0 ? 'Left hand: ' + leftHandLevel + '/' + maxLeftHandLevel + ' patterns' : 'Toggle left hand (bass)'">
+                    <span class="hand-label">L</span>
+                    @if (maxLeftHandLevel > 0) {
+                        <span class="level-indicator">{{ leftHandLevel }}</span>
+                    }
+                </button>
+                <button mat-icon-button
+                        (click)="onLeftHandLevelUp()"
+                        [disabled]="leftHandLevel >= maxLeftHandLevel"
+                        class="level-btn"
+                        aria-label="Increase left hand level"
+                        matTooltip="Play one more pattern yourself">
+                    <mat-icon>add</mat-icon>
+                </button>
+            </div>
 
             <!-- Right hand toggle button -->
             <button mat-icon-button
@@ -475,6 +497,15 @@ import { PracticeLoopRange } from '../models/scrolling-note.model';
                 }
             }
 
+            &.partial {
+                color: #f59e0b;
+                background: rgba(245, 158, 11, 0.15);
+
+                .hand-label {
+                    text-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+                }
+            }
+
             &.disabled {
                 color: rgba(255, 255, 255, 0.3);
                 background: rgba(255, 255, 255, 0.05);
@@ -482,6 +513,44 @@ import { PracticeLoopRange } from '../models/scrolling-note.model';
                 .hand-label {
                     text-decoration: line-through;
                 }
+            }
+
+            .level-indicator {
+                font-size: 9px;
+                font-weight: 700;
+                color: inherit;
+                position: absolute;
+                bottom: 0;
+                right: 2px;
+                line-height: 1;
+            }
+        }
+
+        .hand-progressive-group {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .level-btn {
+            color: rgba(255, 255, 255, 0.5);
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            transition: all 0.2s ease;
+
+            mat-icon {
+                font-size: 16px;
+                width: 16px;
+                height: 16px;
+            }
+
+            &:hover:not(:disabled) {
+                color: #22c55e;
+            }
+
+            &:disabled {
+                color: rgba(255, 255, 255, 0.15);
             }
         }
 
@@ -642,6 +711,8 @@ export class PlaybackControlsComponent {
     @Input() soundEffectsEnabled = true;
     @Input() isFullscreen = false;
     @Input() leftHandEnabled = true;
+    @Input() leftHandLevel = 0;
+    @Input() maxLeftHandLevel = 0;
     @Input() rightHandEnabled = true;
     @Input() currentMeasure = 1;
     @Input() totalMeasures = 1;
@@ -658,6 +729,8 @@ export class PlaybackControlsComponent {
     @Output() modeChange = new EventEmitter<'flow' | 'wait'>();
     @Output() fullscreenToggle = new EventEmitter<void>();
     @Output() leftHandToggle = new EventEmitter<void>();
+    @Output() leftHandLevelUp = new EventEmitter<void>();
+    @Output() leftHandLevelDown = new EventEmitter<void>();
     @Output() rightHandToggle = new EventEmitter<void>();
     @Output() jumpToMeasure = new EventEmitter<number>();
     @Output() setLoopStart = new EventEmitter<number>();
@@ -736,6 +809,20 @@ export class PlaybackControlsComponent {
      */
     onLeftHandToggle(): void {
         this.leftHandToggle.emit();
+    }
+
+    /**
+     * Increase left-hand progressive level
+     */
+    onLeftHandLevelUp(): void {
+        this.leftHandLevelUp.emit();
+    }
+
+    /**
+     * Decrease left-hand progressive level
+     */
+    onLeftHandLevelDown(): void {
+        this.leftHandLevelDown.emit();
     }
 
     /**

@@ -30,8 +30,6 @@ import { BeamingService, BeamableNote, BeamGroupResult } from '../../../features
     template: `
         <canvas
             #staffCanvas
-            [width]="width"
-            [height]="height"
             class="staff-canvas"
         >
         </canvas>
@@ -97,6 +95,16 @@ export class StaffComponent implements AfterViewInit, OnChanges {
 
     private render() {
         if (!this.ctx) return;
+
+        // Set canvas dimensions before drawing to prevent Angular's
+        // DOM [width]/[height] binding update from clearing the canvas
+        // after we've rendered (browser clears canvas on dimension change).
+        const canvas = this.canvas.nativeElement;
+        if (canvas.width !== this.width || canvas.height !== this.height) {
+            canvas.width = this.width;
+            canvas.height = this.height;
+            this.ctx = canvas.getContext('2d')!;
+        }
 
         this.clearCanvas();
         this.drawStaffLines();

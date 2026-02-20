@@ -120,6 +120,20 @@ export interface BeamGroup {
 }
 
 /**
+ * A unique left-hand chord/note pattern extracted from a song.
+ * Patterns are sorted by frequency (most common first) so users
+ * learn the most-practiced chord first.
+ */
+export interface LeftHandPattern {
+    /** Sorted MIDI note numbers defining this pattern (e.g., [56, 60]) */
+    midi: number[];
+    /** How many times this pattern appears in the song */
+    count: number;
+    /** Human-readable label (e.g., "Ab+C") */
+    label: string;
+}
+
+/**
  * Key signature information parsed from lesson settings
  */
 export interface KeySignature {

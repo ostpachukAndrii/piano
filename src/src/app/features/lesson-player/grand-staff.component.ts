@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, SimpleChanges, computed, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, SimpleChanges, computed, signal } from '@angular/core';
 import { LessonDTO, MeasureDTO } from '../../core/models/lesson.model';
 import { ChordNoteDTO, NoteDTO, RestNoteDTO, SingleNoteDTO, getStartBeat, isChordNote, isRestNote, isSingleNote } from '../../core/models/note.model';
 import { StaffComponent, StaffNote } from '../../shared/components/staff/staff.component';
@@ -31,7 +31,7 @@ interface StaffLine {
                 <div class="staff-line-pair">
                     <!-- Treble Staff -->
                     <app-staff
-                        [width]="staffWidth"
+                        [width]="staffWidth()"
                         [height]="staffHeight"
                         [notes]="line.trebleNotes"
                         [activeNotes]="trebleActiveNotes()"
@@ -49,7 +49,7 @@ interface StaffLine {
 
                     <!-- Bass Staff (close to treble) -->
                     <app-staff
-                        [width]="staffWidth"
+                        [width]="staffWidth()"
                         [height]="staffHeight"
                         [notes]="line.bassNotes"
                         [activeNotes]="bassActiveNotes()"
@@ -74,17 +74,23 @@ interface StaffLine {
         </div>
     `,
     styles: [`
+        :host {
+            display: block;
+            width: 100%;
+        }
+
         .grand-staff {
             padding: 0.5rem;
             background: #fafafa;
             border-radius: 8px;
             position: relative;
-            overflow-x: auto;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .staff-line-pair {
             margin-bottom: 0;
-            min-width: 900px;
+            width: 100%;
         }
 
         .staff-line-pair app-staff:last-of-type {
@@ -99,10 +105,15 @@ interface StaffLine {
 
         app-staff {
             display: block;
+            width: 100%;
+        }
+
+        app-staff canvas {
+            width: 100%;
         }
     `]
 })
-export class GrandStaffComponent implements OnChanges {
+export class GrandStaffComponent implements OnChanges, AfterViewInit, OnDestroy {
     @Input() lesson: LessonDTO | null = null;
     @Input() activeNotes: number[] = [];
     @Input() currentMeasureIndex = 0;
@@ -112,8 +123,32 @@ export class GrandStaffComponent implements OnChanges {
     @Input() highlightNoteIndex = -1; // Only highlight note at this global index
     @Input() isPlaying = false;
 
-    staffWidth = 900;
+    staffWidth = signal(900);
     staffHeight = 80;
+    private resizeObserver: ResizeObserver | null = null;
+    private el = new ElementRef<HTMLElement>(null!);
+
+    constructor(el: ElementRef<HTMLElement>) {
+        this.el = el;
+    }
+
+    ngAfterViewInit() {
+        this.updateWidth();
+        this.resizeObserver = new ResizeObserver(() => this.updateWidth());
+        this.resizeObserver.observe(this.el.nativeElement);
+    }
+
+    ngOnDestroy() {
+        this.resizeObserver?.disconnect();
+    }
+
+    private updateWidth() {
+        const containerWidth = this.el.nativeElement.offsetWidth;
+        if (containerWidth > 0) {
+            // Subtract padding (0.5rem * 2 ≈ 16px)
+            this.staffWidth.set(Math.max(600, containerWidth - 16));
+        }
+    }
     measuresPerLine = 4; // Fixed number of measures per line for even bars
 
     // Signals for reactive updates

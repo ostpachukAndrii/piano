@@ -101,6 +101,8 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
     @Input() wrongNoteEvents: WrongNoteEvent[] = []; // Wrong notes to display
     @Input() keySignature: KeySignature | null = null; // Key signature for accidentals
     @Input() loopRange: PracticeLoopRange | null = null; // Practice loop range for visual overlay
+    @Input() currentActiveBeat: number | null = null; // Beat of the latest active note group
+    @Input() autoPlayPatternKeys: Set<string> = new Set(); // Auto-played LH patterns (greyed out)
 
     // Canvas context
     private ctx: CanvasRenderingContext2D | null = null;
@@ -360,15 +362,20 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
             const noteId = this.getNoteId(note);
             const isBeamed = this.beamedNoteIds.has(noteId);
 
-            // For beamed notes, use the pre-calculated X position from the beam group
-            // For other notes: active notes go at playhead, others use bar line offset
+            // For beamed notes, use the pre-calculated X position from the beam group.
+            // For other notes: only the CURRENT active group renders at the playhead.
+            // Older active notes (from overlapping hit windows) use their natural position
+            // so the cursor shows only one note group at a time.
+            const isCurrentActive = note.state === 'active' &&
+                this.currentActiveBeat !== null &&
+                Math.abs(note.startBeat - this.currentActiveBeat) < 0.01;
             let x: number;
             if (isBeamed && beamXPositions.has(noteId)) {
                 x = beamXPositions.get(noteId)!;
             } else {
-                x = note.state === 'active'
-                    ? this.playheadX  // Active: exactly at playhead line
-                    : this.getNoteX(note.startBeat); // Others: with bar line offset
+                x = isCurrentActive
+                    ? this.playheadX  // Current active group: at playhead line
+                    : this.getNoteX(note.startBeat); // Others: at their natural position
             }
 
             // Skip notes far off screen
@@ -376,6 +383,14 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
 
             // Determine color based on state
             const color = this.STATE_COLORS[note.state];
+
+            // Check if this is an auto-played left-hand note (greyed out)
+            const isAutoPlay = note.hand === 'left' && !note.isRest &&
+                this.autoPlayPatternKeys.size > 0 &&
+                this.autoPlayPatternKeys.has([...note.midi].sort((a, b) => a - b).join(','));
+            if (isAutoPlay) {
+                ctx.globalAlpha = 0.2;
+            }
 
             // Handle rests separately from notes
             if (note.isRest) {
@@ -418,7 +433,7 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
             if (endX > x && note.state !== 'missed') {
                 ctx.strokeStyle = color;
                 ctx.lineWidth = 4;
-                ctx.globalAlpha = 0.3;
+                ctx.globalAlpha = isAutoPlay ? 0.1 : 0.3;
                 for (const midi of note.midi) {
                     const y = this.midiToY(midi, note.hand, height);
                     ctx.beginPath();
@@ -426,7 +441,7 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
                     ctx.lineTo(Math.min(endX, this.stageWidth), y);
                     ctx.stroke();
                 }
-                ctx.globalAlpha = 1;
+                ctx.globalAlpha = isAutoPlay ? 0.2 : 1;
             }
 
             // Draw timing feedback indicators
@@ -437,6 +452,11 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
             // Draw early release indicator on the duration tail
             if (note.releasedEarly && note.state === 'hit') {
                 this.drawEarlyReleaseIndicator(ctx, note, height);
+            }
+
+            // Reset alpha after drawing auto-play notes
+            if (isAutoPlay) {
+                ctx.globalAlpha = 1;
             }
         }
     }
@@ -863,8 +883,11 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
                 const note = original.note;
                 notes.push(note);
 
-                // Calculate X position (active notes at playhead, others with bar line offset)
-                const x = note.state === 'active'
+                // Calculate X position — only the current active group at the playhead
+                const isCurrentActive = note.state === 'active' &&
+                    this.currentActiveBeat !== null &&
+                    Math.abs(note.startBeat - this.currentActiveBeat) < 0.01;
+                const x = isCurrentActive
                     ? this.playheadX
                     : this.getNoteX(note.startBeat);
                 xPositions.push(x);

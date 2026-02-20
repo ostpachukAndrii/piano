@@ -29,7 +29,7 @@ import { EvaluationService } from '../../core/services/evaluation.service';
 import { MidiService } from '../../core/services/midi.service';
 import { PianoSoundService } from '../../core/services/piano-sound.service';
 import { SoundService } from '../../core/services/sound.service';
-import { KeyboardRange, KeySignature, PracticeLoopRange, ScrollingNote, WrongNoteEvent } from './models/scrolling-note.model';
+import { KeyboardRange, KeySignature, LeftHandPattern, PracticeLoopRange, ScrollingNote, WrongNoteEvent } from './models/scrolling-note.model';
 import { ExtendedStats } from './lesson-completion-dialog.component';
 import { NotationStageComponent } from './notation-stage/notation-stage.component';
 import { PlaybackControlsComponent } from './playback-controls/playback-controls.component';
@@ -67,6 +67,8 @@ import { VirtualKeyboardComponent } from './virtual-keyboard/virtual-keyboard.co
                 [soundEffectsEnabled]="soundEffectsEnabled()"
                 [isFullscreen]="isFullscreen()"
                 [leftHandEnabled]="leftHandEnabled()"
+                [leftHandLevel]="leftHandLevel()"
+                [maxLeftHandLevel]="maxLeftHandLevel()"
                 [rightHandEnabled]="rightHandEnabled()"
                 [currentMeasure]="currentMeasure()"
                 [totalMeasures]="totalMeasures"
@@ -81,6 +83,8 @@ import { VirtualKeyboardComponent } from './virtual-keyboard/virtual-keyboard.co
                 (modeChange)="onModeChange($event)"
                 (fullscreenToggle)="onFullscreenToggle()"
                 (leftHandToggle)="onLeftHandToggle()"
+                (leftHandLevelUp)="onLeftHandLevelUp()"
+                (leftHandLevelDown)="onLeftHandLevelDown()"
                 (rightHandToggle)="onRightHandToggle()"
                 (jumpToMeasure)="jumpToMeasure($event)"
                 (setLoopStart)="setLoopStart($event)"
@@ -106,7 +110,9 @@ import { VirtualKeyboardComponent } from './virtual-keyboard/virtual-keyboard.co
                 [wrongNoteEvents]="wrongNoteEvents()"
                 [keySignature]="keySignature()"
                 [timeSignature]="lesson?.time_signature ?? null"
-                [loopRange]="loopRange()">
+                [loopRange]="loopRange()"
+                [currentActiveBeat]="currentActiveBeat()"
+                [autoPlayPatternKeys]="autoPlayLeftHandKeys()">
             </app-notation-stage>
         </div>
 
@@ -578,6 +584,32 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     leftHandEnabled = signal(true); // Left hand (bass) enabled
     rightHandEnabled = signal(true); // Right hand (treble) enabled
 
+    // Progressive left-hand practice
+    leftHandPatterns = signal<LeftHandPattern[]>([]);
+    leftHandLevel = signal(0); // 0=all auto-played, max=all user-played
+    maxLeftHandLevel = computed(() => this.leftHandPatterns().length);
+    enabledLeftHandPatternKeys = computed(() => {
+        const patterns = this.leftHandPatterns();
+        const level = this.leftHandLevel();
+        const keys = new Set<string>();
+        for (let i = 0; i < level && i < patterns.length; i++) {
+            keys.add(patterns[i].midi.join(','));
+        }
+        return keys;
+    });
+    // Pattern keys for auto-played (greyed-out) LH notes — passed to notation-stage
+    autoPlayLeftHandKeys = computed(() => {
+        const level = this.leftHandLevel();
+        const max = this.maxLeftHandLevel();
+        if (!this.leftHandEnabled() || level >= max) return new Set<string>();
+        const all = this.leftHandPatterns();
+        const keys = new Set<string>();
+        for (let i = level; i < all.length; i++) {
+            keys.add(all[i].midi.join(','));
+        }
+        return keys;
+    });
+
     // Scrolling notes state - using signal for change detection
     private _scrollingNotes = signal<ScrollingNote[]>([]);
     scrollingNotesArray = computed(() => this._scrollingNotes());
@@ -650,6 +682,9 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     // Keyboard state - signals for child component
     keyboardRange = signal<KeyboardRange>({ min: 48, max: 72 });
     hintNotes = signal<number[]>([]);
+    // The beat position of the latest active note group — used by the notation stage
+    // to decide which notes to render at the playhead (vs. at their natural position)
+    currentActiveBeat = signal<number | null>(null);
     correctNotes = signal<number[]>([]);
     wrongNotes = signal<number[]>([]);
 
@@ -942,6 +977,51 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         this._totalBeats = maxBeat;
         this.currentBeat.set(0);
         this.progressPercent.set(0);
+
+        // Extract unique left-hand patterns for progressive practice
+        this.extractLeftHandPatterns();
+    }
+
+    /**
+     * Extract unique left-hand chord/note patterns, sorted by frequency.
+     * Called once after notes are initialized.
+     */
+    private extractLeftHandPatterns(): void {
+        const NOTE_NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+        const frequencyMap = new Map<string, { midi: number[]; count: number }>();
+
+        for (const note of this.scrollingNotes) {
+            if (note.hand !== 'left' || note.isRest) continue;
+            const sorted = [...note.midi].sort((a, b) => a - b);
+            const key = sorted.join(',');
+            const existing = frequencyMap.get(key);
+            if (existing) {
+                existing.count++;
+            } else {
+                frequencyMap.set(key, { midi: sorted, count: 1 });
+            }
+        }
+
+        const patterns: LeftHandPattern[] = Array.from(frequencyMap.values())
+            .sort((a, b) => b.count - a.count)
+            .map(p => ({
+                midi: p.midi,
+                count: p.count,
+                label: p.midi.map(m => {
+                    const name = NOTE_NAMES[m % 12];
+                    const octave = Math.floor(m / 12) - 1;
+                    return `${name}${octave}`;
+                }).join('+')
+            }));
+
+        this.leftHandPatterns.set(patterns);
+
+        // Default: max level (backward compatible — user plays everything)
+        if (this.leftHandEnabled()) {
+            this.leftHandLevel.set(patterns.length);
+        }
+
+        console.log('[ScrollingPlayer] Left-hand patterns:', patterns.length, patterns);
     }
 
     private updateKeyboardRange() {
@@ -1011,6 +1091,10 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
         }
+        // Clear the active beat so the cursor doesn't show stale note positions
+        // (e.g. after stopping from a loop range, the notation stage would otherwise
+        // keep rendering notes at the old active beat on empty bars).
+        this.currentActiveBeat.set(null);
     }
 
     toggle() {
@@ -1025,9 +1109,6 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         console.log('[ScrollingPlayer] Pause button clicked');
         this.toggle();
         this.paused.emit();
-
-        // Show debug info on pause
-        this.showDebugInfo();
     }
 
     /**
@@ -1498,11 +1579,9 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
      */
     async onFullscreenToggle() {
         try {
-            const element = this.elementRef.nativeElement as HTMLElement;
-
             if (!document.fullscreenElement) {
-                // Enter fullscreen
-                await element.requestFullscreen();
+                // Fullscreen the document root so CDK overlays (dialogs) stay visible
+                await document.documentElement.requestFullscreen();
                 this.isFullscreen.set(true);
             } else {
                 // Exit fullscreen
@@ -1515,12 +1594,48 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     }
 
     /**
-     * Toggle left hand (bass) playback
-     * When disabled, left hand notes are auto-completed (skipped)
+     * Toggle left hand (bass) playback.
+     * OFF → level=0, ON → level=max.
      */
     onLeftHandToggle() {
-        this.leftHandEnabled.set(!this.leftHandEnabled());
-        console.log('[ScrollingPlayer] Left hand toggled:', this.leftHandEnabled());
+        const wasEnabled = this.leftHandEnabled();
+        this.leftHandEnabled.set(!wasEnabled);
+        if (!wasEnabled) {
+            this.leftHandLevel.set(this.maxLeftHandLevel());
+        } else {
+            this.leftHandLevel.set(0);
+        }
+        console.log('[ScrollingPlayer] Left hand toggled:', this.leftHandEnabled(),
+            'level:', this.leftHandLevel());
+    }
+
+    /**
+     * Increment progressive left-hand level (user plays one more pattern)
+     */
+    onLeftHandLevelUp() {
+        const current = this.leftHandLevel();
+        const max = this.maxLeftHandLevel();
+        if (current < max) {
+            this.leftHandLevel.set(current + 1);
+            if (!this.leftHandEnabled()) {
+                this.leftHandEnabled.set(true);
+            }
+            console.log('[ScrollingPlayer] LH level up:', this.leftHandLevel(), '/', max);
+        }
+    }
+
+    /**
+     * Decrement progressive left-hand level (auto-play one more pattern)
+     */
+    onLeftHandLevelDown() {
+        const current = this.leftHandLevel();
+        if (current > 0) {
+            this.leftHandLevel.set(current - 1);
+            if (current - 1 === 0) {
+                this.leftHandEnabled.set(false);
+            }
+            console.log('[ScrollingPlayer] LH level down:', this.leftHandLevel());
+        }
     }
 
     /**
@@ -1580,8 +1695,15 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         const bpm = (this.lesson?.tempo || 120) * (this.tempoPercent() / 100);
         const beatsPerSecond = bpm / 60;
         const beatDelta = beatsPerSecond * deltaTime;
-        // Allow scrolling past the end so last note visually scrolls off
-        let newBeat = Math.min(this.currentBeat() + beatDelta, this._totalBeats + this.COMPLETION_BUFFER_BEATS);
+        // Allow scrolling past the end so last note visually scrolls off.
+        // Always scroll at least to the end of the last bar + buffer.
+        // If notes complete after the last bar (e.g. missed notes with late window),
+        // extend the cap to accommodate.
+        const endOfSongBeat = this._totalBeats + this.COMPLETION_BUFFER_BEATS;
+        const maxBeat = this.allNotesCompleteBeat !== null
+            ? Math.max(this.allNotesCompleteBeat + this.COMPLETION_BUFFER_BEATS, endOfSongBeat)
+            : endOfSongBeat;
+        let newBeat = Math.min(this.currentBeat() + beatDelta, maxBeat);
 
         // Handle loop boundary (if loop is active)
         if (this.isLoopActive()) {
@@ -1659,21 +1781,30 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         // Remove events that have scrolled off the left edge of the screen
         this.cleanupOffscreenWrongNotes();
 
-        // Update keyboard hints
-        // In Wait Mode: show ALL active notes at the current position (both hands)
-        // In Flow Mode: show the next upcoming note (what's coming)
-        if (this.playMode() === 'wait') {
-            const activeNotes = this.getActiveNotes();
-            if (activeNotes.length > 0) {
-                this.updateHintsForNotes(activeNotes);
-            } else {
-                this.clearHints();
+        // Determine the latest active beat — the note group the user should play NOW.
+        // In flow mode, multiple note groups can be 'active' simultaneously due to
+        // overlapping hit windows. We pick the LATEST one (highest startBeat) so the
+        // cursor/hints only show the current note, not previous overlapping ones.
+        let latestActiveBeat: number | null = null;
+        for (const note of this.scrollingNotes) {
+            if (note.state === 'active' && !note.isRest && this.isHandEnabled(note)) {
+                if (latestActiveBeat === null || note.startBeat > latestActiveBeat) {
+                    latestActiveBeat = note.startBeat;
+                }
             }
+        }
+        this.currentActiveBeat.set(latestActiveBeat);
+
+        // Update keyboard hints — show only the LATEST active note group.
+        if (this.currentBeat() < 0 || latestActiveBeat === null) {
+            this.clearHints();
         } else {
-            // Flow mode: show next note to prepare
-            const hintNote = this.getNextNoteForHints();
-            if (hintNote) {
-                this.updateHints(hintNote);
+            const latestNotes = this.scrollingNotes.filter(
+                n => n.state === 'active' && !n.isRest && this.isHandEnabled(n) &&
+                     Math.abs(n.startBeat - latestActiveBeat!) < 0.01
+            );
+            if (latestNotes.length > 0) {
+                this.updateHintsForNotes(latestNotes);
             } else {
                 this.clearHints();
             }
@@ -1693,12 +1824,10 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
                 'Will complete at beat:', (newBeat + this.COMPLETION_BUFFER_BEATS).toFixed(2));
         }
 
-        // Check completion - use the beat when all notes became complete + buffer
-        // This ensures we always scroll for the full buffer duration, regardless of
-        // whether the last note was hit early, on time, or at the end of its duration
-        const completionTargetBeat = this.allNotesCompleteBeat !== null
-            ? this.allNotesCompleteBeat + this.COMPLETION_BUFFER_BEATS
-            : this._totalBeats + this.COMPLETION_BUFFER_BEATS;
+        // Check completion - always wait until the end of the last bar + buffer.
+        // Even if all notes are hit early, keep scrolling to the end of the measure.
+        // completionTargetBeat matches maxBeat so the beat cap and trigger are consistent.
+        const completionTargetBeat = maxBeat;
 
         // Debug: Log progress toward completion every 60 frames after all notes complete
         if (this.allNotesCompleteBeat !== null && this._frameCount % 60 === 0) {
@@ -1715,10 +1844,9 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
                 'allNotesCompleteBeat:', this.allNotesCompleteBeat);
             this.stop();
 
-            // Show completion dialog in fullscreen - don't exit fullscreen yet
-            // Fullscreen will be exited only if user clicks "Back to Lessons"
+            // Stay in fullscreen — dialog will overlay since we fullscreen
+            // document.documentElement (not a child element), keeping CDK overlay visible.
             setTimeout(() => {
-                console.log('[ScrollingPlayer] Emitting completion event (staying in fullscreen)');
                 this.completed.emit(this.calculateExtendedStats());
             }, 500);
             return;
@@ -1809,11 +1937,20 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     }
 
     /**
-     * Check if a note's hand is enabled
+     * Check if a note should be played by the user (not auto-completed).
+     * For left-hand notes in progressive mode, checks whether this specific
+     * pattern is enabled at the current level.
      */
     private isHandEnabled(note: ScrollingNote): boolean {
-        if (note.hand === 'left') return this.leftHandEnabled();
         if (note.hand === 'right') return this.rightHandEnabled();
+        if (note.hand === 'left') {
+            if (!this.leftHandEnabled()) return false;
+            const level = this.leftHandLevel();
+            if (level === 0) return false;
+            if (level >= this.maxLeftHandLevel()) return true;
+            const key = [...note.midi].sort((a, b) => a - b).join(',');
+            return this.enabledLeftHandPatternKeys().has(key);
+        }
         return true;
     }
 
@@ -1921,13 +2058,10 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         const current = this.currentBeat();
         const isAutoPlay = this.isAutoPlaying();
 
-        // Check which hands are enabled
-        const leftEnabled = this.leftHandEnabled();
-        const rightEnabled = this.rightHandEnabled();
-
         // Special handling for rests and disabled hands: automatically mark as 'hit' when playhead approaches
         // Rests don't require user input - they're just silence that takes up time
         // Disabled hand notes are also auto-completed to allow single-hand practice
+        // Uses isHandEnabled() which respects progressive left-hand level
         // IMPORTANT: Auto-complete at the SAME timing as note activation (HIT_WINDOW_BEATS before startBeat)
         // This ensures disabled hand notes are completed before they would become "active" and block progress
         for (const note of this.scrollingNotes) {
@@ -1938,10 +2072,8 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
                     continue;
                 }
 
-                // Auto-complete notes from disabled hands
-                const isDisabledHand = (note.hand === 'left' && !leftEnabled) ||
-                                       (note.hand === 'right' && !rightEnabled);
-                if (isDisabledHand) {
+                // Auto-complete notes from disabled hands (or non-enabled progressive patterns)
+                if (!this.isHandEnabled(note)) {
                     note.state = 'hit';
                     note.timingFeedback = 'perfect';
                     // Record timing data for auto-completed note
@@ -1961,9 +2093,7 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
             if (note.isRest) continue;
 
             // Skip disabled hand notes - they're auto-completed above
-            const isDisabledHand = (note.hand === 'left' && !leftEnabled) ||
-                                   (note.hand === 'right' && !rightEnabled);
-            if (isDisabledHand) continue;
+            if (!this.isHandEnabled(note)) continue;
 
             if (note.state === 'active') {
                 // Check if note was missed (passed playhead + window)
@@ -1978,7 +2108,7 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
                         note.state = 'missed';
                         // Record miss
                         for (const midi of note.midi) {
-                            this.evaluationService.checkPitch(0, midi);
+                            this.evaluationService.checkPitch(0, midi, { skipSound: true });
                         }
                     }
                 } else {
@@ -2000,9 +2130,7 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
                 if (note.isRest) continue;
 
                 // Skip disabled hand notes - they're auto-completed
-                const isDisabledHand = (note.hand === 'left' && !leftEnabled) ||
-                                       (note.hand === 'right' && !rightEnabled);
-                if (isDisabledHand) continue;
+                if (!this.isHandEnabled(note)) continue;
 
                 if (note.state === 'upcoming') {
                     // Check if note should become active (near playhead)
@@ -2093,6 +2221,13 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
 
         // Check for early release on held notes
         this.checkEarlyRelease(releasedNotes);
+
+        // Stop piano sound for released keys (damper effect)
+        if (this.computerSoundEnabled() && releasedNotes.length > 0) {
+            for (const midi of releasedNotes) {
+                this.pianoService.stopNote(midi);
+            }
+        }
 
         // Update previous notes for next frame
         this.previousActiveNotes = [...activeNotes];
@@ -2279,12 +2414,12 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         // Track which MIDI notes are being held for early release detection
         this.heldNotesMap.set(note, new Set(allActiveNotes.filter(n => note.midi.includes(n))));
 
-        // Record success in evaluation service
+        // Record success in evaluation service (skip sound — we handle it below)
         for (const midi of note.midi) {
-            this.evaluationService.checkPitch(midi, midi);
+            this.evaluationService.checkPitch(midi, midi, { skipSound: true });
         }
 
-        // Play sound (if computer sound is enabled)
+        // Play sound (if computer sound is enabled) — sustained until key release
         if (this.computerSoundEnabled()) {
             for (const midi of note.midi) {
                 this.pianoService.playNote(midi);
@@ -2296,6 +2431,10 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
 
     /**
      * Record a wrong note (Feature 2: Ghost Note)
+     *
+     * In wait mode: if any note in a simultaneous group (same beat position)
+     * is played wrong, ALL previously-hit notes in that group are reset to
+     * 'active', forcing the user to replay the entire group correctly.
      */
     private recordWrongNote(wrongPitch: number, expectedNote: ScrollingNote): void {
         const currentBeat = this.currentBeat();
@@ -2317,10 +2456,32 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         const closestExpected = expectedNote.midi.reduce((closest, exp) =>
             Math.abs(exp - wrongPitch) < Math.abs(closest - wrongPitch) ? exp : closest
         );
-        this.evaluationService.checkPitch(wrongPitch, closestExpected);
+        this.evaluationService.checkPitch(wrongPitch, closestExpected, { skipSound: true });
 
         // Flash wrong on keyboard
         this.flashKeys([wrongPitch], 'wrong');
+
+        // Wait mode: reset ALL sibling notes at the same beat position back to 'active'.
+        // This enforces "all-or-nothing" — if any note is wrong, the user must replay
+        // the entire chord/simultaneous group together.
+        if (this.playMode() === 'wait') {
+            const targetBeat = expectedNote.startBeat;
+            for (const note of this.scrollingNotes) {
+                if (note.isRest) continue;
+                if (!this.isHandEnabled(note)) continue;
+                if (Math.abs(note.startBeat - targetBeat) > 0.01) continue;
+
+                if (note.state === 'hit') {
+                    note.state = 'active';
+                    note.hitBeat = undefined;
+                    note.timingFeedback = undefined;
+                    note.pressedAtMs = undefined;
+                    note.expectedDurationMs = undefined;
+                    this.noteTimingMap.delete(note);
+                    this.heldNotesMap.delete(note);
+                }
+            }
+        }
     }
 
     /**
