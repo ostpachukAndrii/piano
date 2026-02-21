@@ -944,13 +944,39 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
                             ? (note as ChordNoteDTO).hand as 'left' | 'right'
                             : 'right';
 
+                    // Extract tie/staccato from DTO
+                    const tieStart = isSingleNote(note)
+                        ? (note as SingleNoteDTO).tie_start
+                        : isChordNote(note)
+                            ? (note as ChordNoteDTO).tie_start
+                            : undefined;
+                    const tieStop = isSingleNote(note)
+                        ? (note as SingleNoteDTO).tie_stop
+                        : isChordNote(note)
+                            ? (note as ChordNoteDTO).tie_stop
+                            : undefined;
+                    const staccatoFlag = isSingleNote(note)
+                        ? (note as SingleNoteDTO).staccato
+                        : isChordNote(note)
+                            ? (note as ChordNoteDTO).staccato
+                            : undefined;
+                    const dotFlag = isSingleNote(note)
+                        ? (note as SingleNoteDTO).dot
+                        : isChordNote(note)
+                            ? (note as ChordNoteDTO).dot
+                            : undefined;
+
                     notes.push({
                         midi: midiValues,
                         startBeat,
                         durationBeats: duration,
                         state: 'upcoming',
                         hand,
-                        isRest: false
+                        isRest: false,
+                        ...(tieStart ? { tieStart } : {}),
+                        ...(tieStop ? { tieStop } : {}),
+                        ...(staccatoFlag ? { staccato: staccatoFlag } : {}),
+                        ...(dotFlag ? { dot: dotFlag } : {}),
                     });
                 }
 
@@ -1911,6 +1937,8 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
             if ((note.state === 'upcoming' || note.state === 'active') && !note.isRest) {
                 // Skip disabled hand notes
                 if (!this.isHandEnabled(note)) continue;
+                // Skip tied notes (tie_stop) — auto-completed by updateNoteStates()
+                if (note.tieStop) continue;
                 return note;
             }
         }
@@ -2072,6 +2100,15 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
                     continue;
                 }
 
+                // Auto-complete tied notes (tie_stop) — continuation of previous note,
+                // player holds the key rather than re-pressing
+                if (note.tieStop) {
+                    note.state = 'hit';
+                    note.timingFeedback = 'perfect';
+                    this.recordAutoCompleteTiming(note);
+                    continue;
+                }
+
                 // Auto-complete notes from disabled hands (or non-enabled progressive patterns)
                 if (!this.isHandEnabled(note)) {
                     note.state = 'hit';
@@ -2184,6 +2221,12 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         // Record timing data for this auto-completed note
         this.recordAutoCompleteTiming(note);
 
+        // Tied notes (tie_stop): don't retrigger sound — the previous note sustains
+        if (note.tieStop) {
+            this.flashKeys(note.midi, 'correct');
+            return;
+        }
+
         // Play sound for each MIDI note (if computer sound is enabled)
         if (this.computerSoundEnabled()) {
             for (const midi of note.midi) {
@@ -2198,7 +2241,9 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         if (this.computerSoundEnabled()) {
             const bpm = (this.lesson?.tempo || 120) * (this.tempoPercent() / 100);
             const msPerBeat = (60 / bpm) * 1000;
-            const durationMs = note.durationBeats * msPerBeat * 0.9; // Release slightly early
+            // Staccato: play at 40% duration for detached sound
+            const durationScale = note.staccato ? 0.4 : 0.9;
+            const durationMs = note.durationBeats * msPerBeat * durationScale;
 
             setTimeout(() => {
                 for (const midi of note.midi) {
@@ -2365,13 +2410,22 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
     ): 'hit' {
         const currentBeat = this.currentBeat();
 
-        // For chords: check if ALL required notes are being played
-        if (note.midi.length > 1) {
-            const allChordNotesPressed = note.midi.every(m => allActiveNotes.includes(m));
-            if (!allChordNotesPressed) {
-                // Not all chord notes pressed yet - wait for complete chord
-                return 'hit'; // Partial hit, don't mark as complete yet
-            }
+        // Simultaneity check: ALL notes at the same beat must be pressed together.
+        // This covers both chord notes (multi-midi in one ScrollingNote) and
+        // separate notes from different hands at the same beat position.
+        // Collect all unhit, enabled notes at this beat (including the note being evaluated).
+        const simultaneousNotes = this.scrollingNotes.filter(n =>
+            !n.isRest &&
+            !n.tieStop &&
+            Math.abs(n.startBeat - note.startBeat) < 0.01 &&
+            (n.state === 'upcoming' || n.state === 'active') &&
+            this.isHandEnabled(n)
+        );
+        const allRequiredMidi = simultaneousNotes.flatMap(n => n.midi);
+        const allSimultaneousPressed = allRequiredMidi.every(m => allActiveNotes.includes(m));
+        if (!allSimultaneousPressed) {
+            // Not all notes at this beat are pressed — wait for complete group
+            return 'hit';
         }
 
         // Check timing: early, late, or perfect
@@ -2391,7 +2445,24 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
         // Track timing - record when note was pressed and expected duration
         const bpm = (this.lesson?.tempo || 120) * (this.tempoPercent() / 100);
         const msPerBeat = (60 / bpm) * 1000;
-        const expectedDurationMs = note.durationBeats * msPerBeat;
+
+        // For tied notes (tie_start): the user must hold through the ENTIRE tie chain.
+        // Walk forward through tie_stop notes with matching pitch to get combined duration.
+        let totalDurationBeats = note.durationBeats;
+        if (note.tieStart) {
+            for (const n of this.scrollingNotes) {
+                if (n.tieStop && n.startBeat > note.startBeat &&
+                    n.midi.some(m => note.midi.includes(m))) {
+                    totalDurationBeats += n.durationBeats;
+                    // If this tie_stop also has tieStart, chain continues
+                    if (!n.tieStart) break;
+                }
+            }
+            // Extend the note's durationBeats so early release detection uses full tie length
+            note.durationBeats = totalDurationBeats;
+        }
+
+        const expectedDurationMs = totalDurationBeats * msPerBeat;
         const pressedAtMs = performance.now();
 
         note.pressedAtMs = pressedAtMs;
@@ -2419,10 +2490,23 @@ export class ScrollingPlayerComponent implements AfterViewInit, OnChanges, OnDes
             this.evaluationService.checkPitch(midi, midi, { skipSound: true });
         }
 
-        // Play sound (if computer sound is enabled) — sustained until key release
-        if (this.computerSoundEnabled()) {
+        // Play sound (if computer sound is enabled)
+        // Tied notes (tie_stop): don't retrigger — the previous note is still sustaining
+        if (this.computerSoundEnabled() && !note.tieStop) {
             for (const midi of note.midi) {
                 this.pianoService.playNote(midi);
+            }
+
+            // Staccato: auto-stop after short duration for detached sound
+            if (note.staccato) {
+                const bpm = (this.lesson?.tempo || 120) * (this.tempoPercent() / 100);
+                const msPerBeat = (60 / bpm) * 1000;
+                const staccatoDurationMs = note.durationBeats * msPerBeat * 0.4;
+                setTimeout(() => {
+                    for (const midi of note.midi) {
+                        this.pianoService.stopNote(midi);
+                    }
+                }, staccatoDurationMs);
             }
         }
 

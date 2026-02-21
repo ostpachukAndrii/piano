@@ -188,6 +188,9 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
         // Draw notes
         this.drawNotes(ctx, height, beamGroups);
 
+        // Draw tie curves (on top of notes)
+        this.drawTies(ctx, height);
+
         // Draw wrong note indicators
         this.drawWrongNotes(ctx, height);
 
@@ -414,9 +417,13 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
             // Draw stem BEFORE noteheads (so noteheads appear on top)
             // Skip if note is beamed (stems are drawn with the beam group)
             if (note.durationBeats < 4 && !isBeamed) {
-                // For chords, stem connects to the extreme notehead
-                const stemY = stemUp ? Math.min(...ys) : Math.max(...ys);
-                this.noteheadRenderer.drawStem(ctx, x, stemY, color, stemUp, note.durationBeats);
+                // For chords, the stem must connect ALL noteheads with a single line.
+                // Start from the notehead FARTHEST from the beam/flag end so the stem
+                // passes through every notehead in the chord stack.
+                const stemY = stemUp ? Math.max(...ys) : Math.min(...ys);
+                // Extra stem length to cover the chord span (0 for single notes)
+                const chordSpan = note.midi.length > 1 ? Math.max(...ys) - Math.min(...ys) : 0;
+                this.noteheadRenderer.drawStem(ctx, x, stemY, color, stemUp, note.durationBeats, 35 + chordSpan);
             }
 
             // Draw accidentals and noteheads on top
@@ -452,6 +459,16 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
             // Draw early release indicator on the duration tail
             if (note.releasedEarly && note.state === 'hit') {
                 this.drawEarlyReleaseIndicator(ctx, note, height);
+            }
+
+            // Draw staccato dot
+            if (note.staccato) {
+                this.drawStaccatoDot(ctx, x, note, height, color);
+            }
+
+            // Draw augmentation dot
+            if (note.dot) {
+                this.drawAugmentationDot(ctx, x, note, height, color);
             }
 
             // Reset alpha after drawing auto-play notes
@@ -892,10 +909,15 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
                     : this.getNoteX(note.startBeat);
                 xPositions.push(x);
 
-                // Calculate Y position (average for chords)
+                // Calculate Y position for beam attachment.
+                // For chords, use the notehead FARTHEST from the beam so the stem
+                // passes through all noteheads in the chord stack.
                 const ys = note.midi.map(m => this.midiToY(m, note.hand, height));
-                const avgY = ys.reduce((a, b) => a + b, 0) / ys.length;
-                yPositions.push(avgY);
+                const stemUp = note.hand === 'right';
+                const beamY = note.midi.length > 1
+                    ? (stemUp ? Math.max(...ys) : Math.min(...ys))  // Farthest from beam
+                    : ys[0];
+                yPositions.push(beamY);
 
                 // Mark note as beamed
                 this.beamedNoteIds.add(this.getNoteId(note));
@@ -986,5 +1008,191 @@ export class NotationStageComponent implements AfterViewInit, OnChanges {
             'rgba(255, 255, 255, 0.9)',
             18
         );
+    }
+
+    /**
+     * Draw tie curves connecting tied notes.
+     * A tie connects a note with tieStart=true to the next note with tieStop=true
+     * that shares the same MIDI pitch and hand.
+     */
+    private drawTies(ctx: CanvasRenderingContext2D, height: number): void {
+        const noteheadRadiusX = 10;
+
+        for (let i = 0; i < this.scrollingNotes.length; i++) {
+            const startNote = this.scrollingNotes[i];
+            if (!startNote.tieStart || startNote.isRest) continue;
+
+            // Find the matching tie-stop note
+            for (let j = i + 1; j < this.scrollingNotes.length; j++) {
+                const endNote = this.scrollingNotes[j];
+                if (!endNote.tieStop || endNote.isRest) continue;
+                if (endNote.hand !== startNote.hand) continue;
+
+                // Check for shared MIDI pitches
+                const sharedMidi = startNote.midi.filter(m => endNote.midi.includes(m));
+                if (sharedMidi.length === 0) continue;
+
+                // Get X positions
+                const x1 = this.getNoteX(startNote.startBeat);
+                const x2 = this.getNoteX(endNote.startBeat);
+
+                // Skip if both off screen
+                if ((x1 > this.stageWidth + 50 && x2 > this.stageWidth + 50) ||
+                    (x1 < -50 && x2 < -50)) {
+                    break;
+                }
+
+                // For chords: determine curve direction per note
+                // - Top note of chord: curve UP (-1)
+                // - Bottom note of chord: curve DOWN (+1)
+                // For single notes: curve opposite the stem
+                const isChord = startNote.midi.length > 1;
+                const sortedMidi = [...startNote.midi].sort((a, b) => a - b);
+                const maxMidi = sortedMidi[sortedMidi.length - 1];
+                const minMidi = sortedMidi[0];
+
+                // Draw a tie curve for each shared pitch
+                for (const midi of sharedMidi) {
+                    const y = this.midiToY(midi, startNote.hand, height);
+
+                    let curveDir: number;
+                    if (isChord) {
+                        // Chord: top note curves up, bottom note curves down
+                        if (midi === maxMidi) {
+                            curveDir = -1; // Up (negative Y)
+                        } else if (midi === minMidi) {
+                            curveDir = 1;  // Down (positive Y)
+                        } else {
+                            // Middle note: curve opposite stem
+                            curveDir = startNote.hand === 'right' ? 1 : -1;
+                        }
+                    } else {
+                        // Single note: curve opposite the stem
+                        // Right hand (stem up) → curve below (+1)
+                        // Left hand (stem down) → curve above (-1)
+                        curveDir = startNote.hand === 'right' ? 1 : -1;
+                    }
+
+                    const tieStartX = x1 + noteheadRadiusX;
+                    const tieEndX = x2 - noteheadRadiusX;
+                    const midX = (tieStartX + tieEndX) / 2;
+                    const controlY = y + (curveDir * 20);
+
+                    const color = this.STATE_COLORS[startNote.state] || '#ffffff';
+
+                    ctx.save();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.globalAlpha = 0.8;
+                    ctx.beginPath();
+                    ctx.moveTo(tieStartX, y + curveDir * 2);
+                    ctx.quadraticCurveTo(midX, controlY, tieEndX, y + curveDir * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                break; // Only connect to the first matching tie-stop
+            }
+        }
+    }
+
+    /**
+     * Draw augmentation dot to the right of the notehead.
+     *
+     * Engraving rules:
+     * - The Space Rule: if the notehead sits in a space, the dot stays in that space.
+     * - The Line Rule: if the notehead sits ON a staff line, the dot is nudged into
+     *   the space immediately ABOVE the line (higher pitch direction = lower Y).
+     * - Horizontal gap: the dot is placed to the right of the notehead (past any flag).
+     * - Chord stacking: dots for adjacent chord notes are distributed into separate spaces.
+     */
+    private drawAugmentationDot(
+        ctx: CanvasRenderingContext2D,
+        x: number,
+        note: ScrollingNote,
+        height: number,
+        color: string
+    ): void {
+        const noteheadRadiusX = 10;
+        const layout = this.staffMath.calculateLayout(height);
+        const staffTop = note.hand === 'right'
+            ? height * StaffMathService.TREBLE_TOP_RATIO
+            : height * StaffMathService.BASS_TOP_RATIO;
+
+        // Horizontal position: to the right of the notehead
+        // For flagged notes (8th, 16th), push further right to avoid flag overlap
+        let dotX = x + noteheadRadiusX + 8;
+        if (note.durationBeats <= 0.5) {
+            dotX += 6; // Extra gap for flagged notes
+        }
+
+        for (const midi of note.midi) {
+            const y = this.midiToY(midi, note.hand, height);
+
+            // Apply the Line Rule: check if notehead is on a staff line
+            let dotY = y;
+            for (let line = 0; line < 5; line++) {
+                const lineY = staffTop + line * layout.lineSpacing;
+                if (Math.abs(y - lineY) < 3) {
+                    // Notehead is on a line — nudge dot into the space ABOVE (lower Y)
+                    dotY = lineY - layout.lineSpacing / 2;
+                    break;
+                }
+            }
+
+            ctx.save();
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, 3, 0, Math.PI * 2); // 3px radius
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    /**
+     * Draw staccato dot near the notehead.
+     * Position: opposite side of the stem.
+     * Stem up (right hand) → dot below notehead.
+     * Stem down (left hand) → dot above notehead.
+     */
+    private drawStaccatoDot(
+        ctx: CanvasRenderingContext2D,
+        x: number,
+        note: ScrollingNote,
+        height: number,
+        color: string
+    ): void {
+        const stemUp = note.hand === 'right';
+        const layout = this.staffMath.calculateLayout(height);
+
+        for (const midi of note.midi) {
+            const y = this.midiToY(midi, note.hand, height);
+
+            // Dot offset: 16px from notehead center, opposite side of stem
+            const dotOffset = stemUp ? 16 : -16;
+            let dotY = y + dotOffset;
+
+            // Staff line avoidance: nudge if dot is too close to a staff line
+            const staffTop = note.hand === 'right'
+                ? height * StaffMathService.TREBLE_TOP_RATIO
+                : height * StaffMathService.BASS_TOP_RATIO;
+
+            for (let line = 0; line < 5; line++) {
+                const lineY = staffTop + line * layout.lineSpacing;
+                if (Math.abs(dotY - lineY) < 4) {
+                    dotY += stemUp ? 5 : -5;
+                    break;
+                }
+            }
+
+            ctx.save();
+            ctx.globalAlpha = 1; // Ensure full opacity for staccato dots
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, dotY, 4, 0, Math.PI * 2); // 4px radius dot
+            ctx.fill();
+            ctx.restore();
+        }
     }
 }

@@ -16,8 +16,8 @@ test.describe('App Navigation', () => {
         await gotoE2E(page, '/');
         await waitForApp(page);
 
-        // MockTauriService has 4 lessons (ode-to-joy, c-major-scale, all-note-types, mad-world-piano)
-        await expect(page.getByText('4 lessons available')).toBeVisible({ timeout: 5000 });
+        // MockTauriService has 6 lessons
+        await expect(page.getByText('6 lessons available')).toBeVisible({ timeout: 5000 });
     });
 
     test('clicking Start Learning navigates to lessons page', async ({ page }) => {
@@ -44,11 +44,13 @@ test.describe('App Navigation', () => {
 
         // Wait for lessons to load from MockTauriService
         await expect(page.locator('.lesson-card').first()).toBeVisible({ timeout: 5000 });
-        await expect(page.locator('.lesson-card')).toHaveCount(4);
+        await expect(page.locator('.lesson-card')).toHaveCount(6);
         await expect(page.getByText('Ode to Joy')).toBeVisible();
         await expect(page.getByText('C Major Scale')).toBeVisible();
         await expect(page.getByText('All Note Types')).toBeVisible();
         await expect(page.getByText('Mad World')).toBeVisible();
+        await expect(page.getByText('Tie & Staccato Test')).toBeVisible();
+        await expect(page.getByText('Viva la Vida')).toBeVisible();
     });
 
     test('clicking a lesson card navigates to the player', async ({ page }) => {

@@ -128,13 +128,13 @@ export class NoteheadRendererService {
 
     const radii = this.getNoteheadRadii();
 
-    // Stem X position: at left or right edge of notehead
-    const stemX = stemUp ? x + radii.x : x - radii.x;
+    // Stem X position: at left or right edge of rotated notehead
+    // Notehead is ellipse (rx=10, ry=7) rotated -0.3 rad (-17°)
+    // Right edge: (x + 9.5, y - 3), Left edge: (x - 9.5, y + 3)
+    const stemX = stemUp ? x + radii.x - 1 : x - radii.x + 1;
 
-    // Stem attaches at top or bottom edge of notehead
-    // Account for notehead rotation (-0.3 radians ≈ -17°)
-    // The rotation shifts the edge position, so we overlap slightly to ensure connection
-    const attachY = stemUp ? y - (radii.y - 2) : y + (radii.y - 2);
+    // Stem attaches at the rotated edge Y position
+    const attachY = stemUp ? y - (radii.y - 4) : y + (radii.y - 4);
     const stemEndY = stemUp ? attachY - stemLength : attachY + stemLength;
 
     // Draw stem line

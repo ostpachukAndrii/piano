@@ -428,14 +428,26 @@ export class SettingsComponent implements OnInit {
 
     // USB MIDI methods
     async refreshDevices(): Promise<void> {
-        await this.midiService.listDevices();
+        try {
+            await this.midiService.listDevices();
+        } catch (err) {
+            console.error('[Settings] Failed to list devices:', err);
+        }
     }
 
     async connectDevice(deviceId: string): Promise<void> {
-        await this.midiService.connect(deviceId);
+        try {
+            await this.midiService.connect(deviceId);
+        } catch (err) {
+            console.error('[Settings] Failed to connect:', err);
+        }
     }
 
     async disconnectDevice(): Promise<void> {
-        await this.midiService.disconnect();
+        try {
+            await this.midiService.disconnect();
+        } catch (err) {
+            console.error('[Settings] Failed to disconnect:', err);
+        }
     }
 }

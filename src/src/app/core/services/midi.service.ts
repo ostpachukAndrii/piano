@@ -187,16 +187,21 @@ export class MidiService implements OnDestroy {
      * Auto-connect to first available MIDI device
      */
     async autoConnect(): Promise<boolean> {
-        await this.listDevices();
-        const devices = this._devices();
+        try {
+            await this.listDevices();
+            const devices = this._devices();
 
-        if (devices.length > 0) {
-            const firstDevice = devices[0];
-            await this.connect(firstDevice.id, true);
-            return true;
+            if (devices.length > 0) {
+                const firstDevice = devices[0];
+                await this.connect(firstDevice.id, true);
+                return true;
+            }
+
+            return false;
+        } catch (err) {
+            console.error('[MidiService] Auto-connect failed:', err);
+            return false;
         }
-
-        return false;
     }
 
     /**

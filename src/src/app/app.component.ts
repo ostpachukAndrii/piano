@@ -110,10 +110,14 @@ export class AppComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     // Auto-connect to MIDI device if in Tauri environment
     if (this.tauriService.isTauri()) {
-      console.log('[App] Attempting auto-connect to MIDI device...');
-      const connected = await this.midiService.autoConnect();
-      if (!connected) {
-        console.log('[App] No MIDI devices found for auto-connect');
+      try {
+        console.log('[App] Attempting auto-connect to MIDI device...');
+        const connected = await this.midiService.autoConnect();
+        if (!connected) {
+          console.log('[App] No MIDI devices found for auto-connect');
+        }
+      } catch (err) {
+        console.error('[App] MIDI auto-connect error (non-fatal):', err);
       }
     }
 

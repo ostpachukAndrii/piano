@@ -43,6 +43,14 @@ export interface ScrollingNote {
     expectedDurationMs?: number;
     /** Timestamp when note was first pressed */
     pressedAtMs?: number;
+    /** Whether this note starts a tie to the next note of same pitch */
+    tieStart?: boolean;
+    /** Whether this note ends a tie from the previous note of same pitch */
+    tieStop?: boolean;
+    /** Whether this note has staccato articulation */
+    staccato?: boolean;
+    /** Whether this note has an augmentation dot (duration × 1.5) */
+    dot?: boolean;
 }
 
 /**

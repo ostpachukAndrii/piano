@@ -208,15 +208,20 @@ export class BluetoothMidiService implements OnDestroy {
    * Auto-connect to first available MIDI device
    */
   async autoConnect(): Promise<boolean> {
-    await this.scanDevices();
-    const midiDevices = this.midiDevices();
+    try {
+      await this.scanDevices();
+      const midiDevices = this.midiDevices();
 
-    if (midiDevices.length > 0) {
-      await this.connect(midiDevices[0].id, true);
-      return true;
+      if (midiDevices.length > 0) {
+        await this.connect(midiDevices[0].id, true);
+        return true;
+      }
+
+      return false;
+    } catch (err) {
+      console.error('[BluetoothMidiService] Auto-connect failed:', err);
+      return false;
     }
-
-    return false;
   }
 
   /**

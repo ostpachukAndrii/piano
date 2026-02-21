@@ -23,6 +23,14 @@ pub enum Note {
         accidental: Option<String>, // "sharp", "flat", "natural"
         #[serde(default)]
         start_beat: Option<f32>, // Beat position within measure
+        #[serde(default)]
+        tie_start: bool,
+        #[serde(default)]
+        tie_stop: bool,
+        #[serde(default)]
+        staccato: bool,
+        #[serde(default)]
+        dot: bool,
     },
     /// Multiple notes sounding together (chord)
     Chord {
@@ -34,6 +42,14 @@ pub enum Note {
         chord_name: Option<String>,
         #[serde(default)]
         start_beat: Option<f32>, // Beat position within measure
+        #[serde(default)]
+        tie_start: bool,
+        #[serde(default)]
+        tie_stop: bool,
+        #[serde(default)]
+        staccato: bool,
+        #[serde(default)]
+        dot: bool,
     },
     /// Silence/rest
     Rest {
@@ -115,6 +131,10 @@ mod tests {
             hand: "right".to_string(),
             accidental: None,
             start_beat: None,
+            tie_start: false,
+            tie_stop: false,
+            staccato: false,
+            dot: false,
         };
         assert_eq!(note.duration_beats(), 1.0);
         assert!(!note.is_rest());
@@ -129,6 +149,10 @@ mod tests {
             hand: "left".to_string(),
             chord_name: Some("C Major".to_string()),
             start_beat: None,
+            tie_start: false,
+            tie_stop: false,
+            staccato: false,
+            dot: false,
         };
         assert_eq!(note.duration_beats(), 2.0);
         assert!(!note.is_rest());

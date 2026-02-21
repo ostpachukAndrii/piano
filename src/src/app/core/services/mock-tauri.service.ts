@@ -56,6 +56,20 @@ export class MockTauriService {
             mode: 'study_two_hands_no_timing',
             duration_seconds: 94,
         },
+        {
+            id: 'tie-staccato-test',
+            title: 'Tie & Staccato Test',
+            description: 'Test lesson with ties and staccato articulations',
+            mode: 'study_right_hand_no_timing',
+            duration_seconds: 8,
+        },
+        {
+            id: 'viva-la-vida-piano-super-easy',
+            title: 'Viva la Vida',
+            description: 'Coldplay — Piano arrangement with beamed LH 8th notes, dotted notes, and ties',
+            mode: 'study_two_hands_no_timing',
+            duration_seconds: 30,
+        },
     ];
 
     private mockLessonData: Record<string, LessonDTO> = {
@@ -189,6 +203,107 @@ export class MockTauriService {
             ],
         },
         'mad-world-piano': MAD_WORLD_LESSON,
+        'tie-staccato-test': {
+            title: 'Tie & Staccato Test',
+            description: 'Test lesson with ties and staccato articulations',
+            mode: 'study_right_hand_no_timing',
+            tempo: 240,
+            time_signature: '4/4',
+            key_signature: 'C major',
+            total_beats: 5,
+            total_seconds: 1.25,
+            measures: [
+                {
+                    number: 1,
+                    notes: [
+                        { midi: 60, duration: 1.0, hand: 'right', tie_start: true },
+                        { midi: 60, duration: 1.0, hand: 'right', tie_stop: true },
+                        { midi: 64, duration: 1.0, hand: 'right', staccato: true },
+                        { midi: 65, duration: 1.0, hand: 'right', staccato: true },
+                    ],
+                },
+                {
+                    number: 2,
+                    notes: [
+                        { midi: 67, duration: 1.0, hand: 'right' },
+                    ],
+                },
+            ],
+        },
+        'viva-la-vida-piano-super-easy': {
+            title: 'Viva la Vida',
+            description: 'Coldplay — Piano arrangement with beamed LH 8th notes, dotted notes, and ties',
+            mode: 'study_two_hands_no_timing',
+            tempo: 138,
+            time_signature: '4/4',
+            key_signature: 'Ab major',
+            total_beats: 16,
+            total_seconds: 30,
+            measures: [
+                {
+                    number: 1,
+                    notes: [
+                        // RH: Ab4 dotted half + Eb5 quarter
+                        { midi: 68, duration: 3.0, hand: 'right', start_beat: 0, dot: true },
+                        { midi: 75, duration: 1.0, hand: 'right', start_beat: 3 },
+                        // LH: Beamed 8th note pattern (Ab2 + Eb3 alternating)
+                        { midi: 44, duration: 0.5, hand: 'left', start_beat: 0 },
+                        { midi: 51, duration: 0.5, hand: 'left', start_beat: 0.5 },
+                        { midi: 44, duration: 0.5, hand: 'left', start_beat: 1 },
+                        { midi: 51, duration: 0.5, hand: 'left', start_beat: 1.5 },
+                        { midi: 44, duration: 0.5, hand: 'left', start_beat: 2 },
+                        { midi: 51, duration: 0.5, hand: 'left', start_beat: 2.5 },
+                        { midi: 44, duration: 0.5, hand: 'left', start_beat: 3 },
+                        { midi: 51, duration: 0.5, hand: 'left', start_beat: 3.5 },
+                    ],
+                },
+                {
+                    number: 2,
+                    notes: [
+                        // RH: Eb5 half tied to next measure + Db5 half
+                        { midi: 75, duration: 2.0, hand: 'right', start_beat: 0, tie_start: true },
+                        { midi: 73, duration: 2.0, hand: 'right', start_beat: 2 },
+                        // LH: Beamed 8th pattern (Bb2 + F3)
+                        { midi: 46, duration: 0.5, hand: 'left', start_beat: 0 },
+                        { midi: 53, duration: 0.5, hand: 'left', start_beat: 0.5 },
+                        { midi: 46, duration: 0.5, hand: 'left', start_beat: 1 },
+                        { midi: 53, duration: 0.5, hand: 'left', start_beat: 1.5 },
+                        { midi: 46, duration: 0.5, hand: 'left', start_beat: 2 },
+                        { midi: 53, duration: 0.5, hand: 'left', start_beat: 2.5 },
+                        { midi: 46, duration: 0.5, hand: 'left', start_beat: 3 },
+                        { midi: 53, duration: 0.5, hand: 'left', start_beat: 3.5 },
+                    ],
+                },
+                {
+                    number: 3,
+                    notes: [
+                        // RH: Eb5 half (tie_stop from prev) + C5 dotted quarter + Bb4 eighth
+                        { midi: 75, duration: 2.0, hand: 'right', start_beat: 0, tie_stop: true },
+                        { midi: 72, duration: 1.5, hand: 'right', start_beat: 2, dot: true },
+                        { midi: 70, duration: 0.5, hand: 'right', start_beat: 3.5 },
+                        // LH: Beamed 8th pattern (Db3 + Ab3)
+                        { midi: 49, duration: 0.5, hand: 'left', start_beat: 0 },
+                        { midi: 56, duration: 0.5, hand: 'left', start_beat: 0.5 },
+                        { midi: 49, duration: 0.5, hand: 'left', start_beat: 1 },
+                        { midi: 56, duration: 0.5, hand: 'left', start_beat: 1.5 },
+                        { midi: 49, duration: 0.5, hand: 'left', start_beat: 2 },
+                        { midi: 56, duration: 0.5, hand: 'left', start_beat: 2.5 },
+                        { midi: 49, duration: 0.5, hand: 'left', start_beat: 3 },
+                        { midi: 56, duration: 0.5, hand: 'left', start_beat: 3.5 },
+                    ],
+                },
+                {
+                    number: 4,
+                    notes: [
+                        // RH: Ab4 whole note
+                        { midi: 68, duration: 4.0, hand: 'right', start_beat: 0 },
+                        // LH: Eb3+Ab3 chord half notes
+                        { midi: [51, 56], duration: 2.0, hand: 'left', start_beat: 0 },
+                        { midi: [51, 56], duration: 2.0, hand: 'left', start_beat: 2 },
+                    ],
+                },
+            ],
+        },
         'c-major-scale': {
             title: 'C Major Scale',
             description: 'Basic scale exercise',

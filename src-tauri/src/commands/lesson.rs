@@ -52,6 +52,11 @@ pub struct MeasureDTO {
     pub notes: Vec<NoteDTO>,
 }
 
+/// Helper for skip_serializing_if on bool fields
+fn is_false(v: &bool) -> bool {
+    !*v
+}
+
 /// Response DTO for a note
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -64,6 +69,14 @@ pub enum NoteDTO {
         accidental: Option<String>,
         #[serde(skip_serializing_if = "Option::is_none")]
         start_beat: Option<f32>,
+        #[serde(default, skip_serializing_if = "is_false")]
+        tie_start: bool,
+        #[serde(default, skip_serializing_if = "is_false")]
+        tie_stop: bool,
+        #[serde(default, skip_serializing_if = "is_false")]
+        staccato: bool,
+        #[serde(default, skip_serializing_if = "is_false")]
+        dot: bool,
     },
     Chord {
         midi: Vec<u8>,
@@ -73,6 +86,14 @@ pub enum NoteDTO {
         chord: Option<String>,
         #[serde(skip_serializing_if = "Option::is_none")]
         start_beat: Option<f32>,
+        #[serde(default, skip_serializing_if = "is_false")]
+        tie_start: bool,
+        #[serde(default, skip_serializing_if = "is_false")]
+        tie_stop: bool,
+        #[serde(default, skip_serializing_if = "is_false")]
+        staccato: bool,
+        #[serde(default, skip_serializing_if = "is_false")]
+        dot: bool,
     },
     Rest {
         duration: f32,
@@ -298,12 +319,20 @@ fn note_to_dto(note: &Note) -> NoteDTO {
             hand,
             accidental,
             start_beat,
+            tie_start,
+            tie_stop,
+            staccato,
+            dot,
         } => NoteDTO::Single {
             midi: *midi,
             duration: *duration_beats,
             hand: hand.clone(),
             accidental: accidental.clone(),
             start_beat: *start_beat,
+            tie_start: *tie_start,
+            tie_stop: *tie_stop,
+            staccato: *staccato,
+            dot: *dot,
         },
         Note::Chord {
             midi_set,
@@ -311,12 +340,20 @@ fn note_to_dto(note: &Note) -> NoteDTO {
             hand,
             chord_name,
             start_beat,
+            tie_start,
+            tie_stop,
+            staccato,
+            dot,
         } => NoteDTO::Chord {
             midi: midi_set.clone(),
             duration: *duration_beats,
             hand: hand.clone(),
             chord: chord_name.clone(),
             start_beat: *start_beat,
+            tie_start: *tie_start,
+            tie_stop: *tie_stop,
+            staccato: *staccato,
+            dot: *dot,
         },
         Note::Rest { duration_beats, hand, start_beat } => NoteDTO::Rest {
             duration: *duration_beats,

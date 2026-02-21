@@ -14,6 +14,10 @@ export interface SingleNoteDTO {
     hand: string;
     accidental?: string;
     start_beat?: number;
+    tie_start?: boolean;
+    tie_stop?: boolean;
+    staccato?: boolean;
+    dot?: boolean;
 }
 
 /**
@@ -25,6 +29,10 @@ export interface ChordNoteDTO {
     hand: string;
     chord?: string;
     start_beat?: number;
+    tie_start?: boolean;
+    tie_stop?: boolean;
+    staccato?: boolean;
+    dot?: boolean;
 }
 
 /**

@@ -170,6 +170,10 @@ fn parse_note(note_value: &serde_yaml::Value) -> Result<Note, String> {
                 hand,
                 chord_name,
                 start_beat: None, // YAML doesn't track beat positions
+                tie_start: false,
+                tie_stop: false,
+                staccato: false,
+                dot: false,
             });
         }
     }
@@ -193,6 +197,10 @@ fn parse_note(note_value: &serde_yaml::Value) -> Result<Note, String> {
         hand,
         accidental,
         start_beat: None, // YAML doesn't track beat positions
+        tie_start: false,
+        tie_stop: false,
+        staccato: false,
+        dot: false,
     })
 }
 

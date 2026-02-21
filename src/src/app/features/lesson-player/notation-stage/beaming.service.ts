@@ -194,18 +194,17 @@ export class BeamingService {
             const x = xPositions[i];
             const noteheadCenterY = yPositions[i];
 
-            // Attach stem at edge of notehead with overlap to account for rotation (-0.3 radians)
-            // The notehead is rotated, so we need different overlaps for up vs down:
-            // - Stems up: right edge is higher, need less overlap
-            // - Stems down: left edge is lower due to rotation, need more overlap
+            // Notehead is an ellipse (rx=10, ry=7) rotated by -0.3 radians (-17°).
+            // The actual edge positions of the rotated ellipse:
+            //   Right edge (stems up):  (x + 9.5, y - 3)
+            //   Left edge (stems down): (x - 9.5, y + 3)
             const attachY = group.stemUp
-                ? noteheadCenterY - (noteheadRadiusY - 3)
-                : noteheadCenterY + (noteheadRadiusY - 5);  // More overlap for stems down
+                ? noteheadCenterY - (noteheadRadiusY - 4)   // ≈ y - 3
+                : noteheadCenterY + (noteheadRadiusY - 4);  // ≈ y + 3
 
-            // Adjust X to account for notehead rotation - move toward center
             const stemX = group.stemUp
-                ? x + noteheadRadiusX - 1  // Stems up: right side, shift left slightly
-                : x - noteheadRadiusX + 5; // Stems down: left side, shift right to touch notehead
+                ? x + noteheadRadiusX - 1  // ≈ x + 9 (right edge of rotated notehead)
+                : x - noteheadRadiusX + 1; // ≈ x - 9 (left edge of rotated notehead)
             const stemEndY = group.stemUp ? attachY - stemLength : attachY + stemLength;
 
             stemEndpoints.push({ x: stemX, y: stemEndY });
@@ -233,15 +232,13 @@ export class BeamingService {
             const x = xPositions[i];
             const noteheadCenterY = yPositions[i];
 
-            // Attach stem with overlap to connect to rotated notehead
             const attachY = group.stemUp
-                ? noteheadCenterY - (noteheadRadiusY - 3)
-                : noteheadCenterY + (noteheadRadiusY - 5);  // More overlap for stems down
+                ? noteheadCenterY - (noteheadRadiusY - 4)   // ≈ y - 3
+                : noteheadCenterY + (noteheadRadiusY - 4);  // ≈ y + 3
 
-            // Adjust X to account for notehead rotation - move toward center
             const stemX = group.stemUp
-                ? x + noteheadRadiusX - 1  // Stems up: right side, shift left slightly
-                : x - noteheadRadiusX + 5; // Stems down: left side, shift right to touch notehead
+                ? x + noteheadRadiusX - 1  // ≈ x + 9 (right edge of rotated notehead)
+                : x - noteheadRadiusX + 1; // ≈ x - 9 (left edge of rotated notehead)
             const beamY = beamYAtX(stemX);
 
             ctx.beginPath();

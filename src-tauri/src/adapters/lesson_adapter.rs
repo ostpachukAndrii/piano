@@ -132,6 +132,10 @@ impl LessonAdapter {
                     hand: "right".to_string(),
                     accidental: None,
                     start_beat: None,
+                    tie_start: false,
+                    tie_stop: false,
+                    staccato: false,
+                    dot: false,
                 })
                 .collect();
 
@@ -164,6 +168,10 @@ impl LessonAdapter {
                 hand: "right".to_string(), // TODO: Could be extracted if available
                 accidental: None,
                 start_beat: None,
+                tie_start: false,
+                tie_stop: false,
+                staccato: false,
+                dot: false,
             }),
             NoteEvent::ChordReference { chord, duration, hand, .. } => {
                 // Look up chord in standard library
@@ -174,6 +182,10 @@ impl LessonAdapter {
                         hand: hand.clone().unwrap_or_else(|| "right".to_string()),
                         chord: Some(chord_def.name.to_string()),
                         start_beat: None,
+                        tie_start: false,
+                        tie_stop: false,
+                        staccato: false,
+                        dot: false,
                     })
                 } else {
                     None // Skip unknown chords
@@ -191,6 +203,10 @@ impl LessonAdapter {
                 hand: hand.clone().unwrap_or_else(|| "right".to_string()),
                 chord: Some(name.clone()),
                 start_beat: None,
+                tie_start: false,
+                tie_stop: false,
+                staccato: false,
+                dot: false,
             }),
             NoteEvent::Rest { duration, .. } => Some(NoteDTO::Rest {
                 duration: *duration,

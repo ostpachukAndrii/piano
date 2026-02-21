@@ -423,6 +423,11 @@ fn extract_notes_with_timing(
     let mut chord_hand = default_hand.to_string();
     let mut chord_start_beat: f32 = 0.0;
     let mut in_chord = false;
+    // Accumulate tie/staccato/dot state for current chord
+    let mut chord_tie_start = false;
+    let mut chord_tie_stop = false;
+    let mut chord_staccato = false;
+    let mut chord_dot = false;
 
     for child in measure.children() {
         match child.tag_name().name() {
@@ -447,15 +452,54 @@ fn extract_notes_with_timing(
                     .unwrap_or(1);
                 let hand = if staff == 2 { "left" } else { default_hand }.to_string();
 
+                // Extract tie, staccato, and dot from this <note> element
+                let mut tie_start = false;
+                let mut tie_stop = false;
+                let mut staccato = false;
+                let mut dot = false;
+
+                for note_child in child.children() {
+                    match note_child.tag_name().name() {
+                        "tie" => {
+                            if let Some(t) = note_child.attribute("type") {
+                                match t {
+                                    "start" => tie_start = true,
+                                    "stop" => tie_stop = true,
+                                    _ => {}
+                                }
+                            }
+                        }
+                        "dot" => {
+                            dot = true;
+                        }
+                        "notations" => {
+                            for nc in note_child.children() {
+                                if nc.tag_name().name() == "articulations" {
+                                    for art in nc.children() {
+                                        if art.tag_name().name() == "staccato" {
+                                            staccato = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+
                 if is_rest {
                     // Flush any pending chord
                     if !chord_notes.is_empty() {
                         notes.push(TimedNote {
                             beat_position: chord_start_beat,
-                            note: create_chord_or_single(&chord_notes, chord_duration, &chord_hand, chord_start_beat),
+                            note: create_chord_or_single(&chord_notes, chord_duration, &chord_hand, chord_start_beat, chord_tie_start, chord_tie_stop, chord_staccato, chord_dot),
                         });
                         chord_notes.clear();
                         in_chord = false;
+                        chord_tie_start = false;
+                        chord_tie_stop = false;
+                        chord_staccato = false;
+                        chord_dot = false;
                     }
 
                     notes.push(TimedNote {
@@ -477,12 +521,17 @@ fn extract_notes_with_timing(
                         if is_chord_member && in_chord {
                             // Add to existing chord (don't advance beat - chord notes are simultaneous)
                             chord_notes.push(midi);
+                            // OR-merge articulations from chord members
+                            chord_tie_start = chord_tie_start || tie_start;
+                            chord_tie_stop = chord_tie_stop || tie_stop;
+                            chord_staccato = chord_staccato || staccato;
+                            chord_dot = chord_dot || dot;
                         } else {
                             // Flush previous chord if any
                             if !chord_notes.is_empty() {
                                 notes.push(TimedNote {
                                     beat_position: chord_start_beat,
-                                    note: create_chord_or_single(&chord_notes, chord_duration, &chord_hand, chord_start_beat),
+                                    note: create_chord_or_single(&chord_notes, chord_duration, &chord_hand, chord_start_beat, chord_tie_start, chord_tie_stop, chord_staccato, chord_dot),
                                 });
                                 chord_notes.clear();
                             }
@@ -493,6 +542,10 @@ fn extract_notes_with_timing(
                             chord_hand = hand;
                             chord_start_beat = current_beat;
                             in_chord = true;
+                            chord_tie_start = tie_start;
+                            chord_tie_stop = tie_stop;
+                            chord_staccato = staccato;
+                            chord_dot = dot;
 
                             // Advance beat position
                             current_beat += duration_beats;
@@ -505,10 +558,13 @@ fn extract_notes_with_timing(
                 if !chord_notes.is_empty() {
                     notes.push(TimedNote {
                         beat_position: chord_start_beat,
-                        note: create_chord_or_single(&chord_notes, chord_duration, &chord_hand, chord_start_beat),
+                        note: create_chord_or_single(&chord_notes, chord_duration, &chord_hand, chord_start_beat, chord_tie_start, chord_tie_stop, chord_staccato, chord_dot),
                     });
                     chord_notes.clear();
                     in_chord = false;
+                    chord_tie_start = false;
+                    chord_tie_stop = false;
+                    chord_staccato = false;
                 }
 
                 // Forward moves time forward (no sound)
@@ -527,10 +583,13 @@ fn extract_notes_with_timing(
                 if !chord_notes.is_empty() {
                     notes.push(TimedNote {
                         beat_position: chord_start_beat,
-                        note: create_chord_or_single(&chord_notes, chord_duration, &chord_hand, chord_start_beat),
+                        note: create_chord_or_single(&chord_notes, chord_duration, &chord_hand, chord_start_beat, chord_tie_start, chord_tie_stop, chord_staccato, chord_dot),
                     });
                     chord_notes.clear();
                     in_chord = false;
+                    chord_tie_start = false;
+                    chord_tie_stop = false;
+                    chord_staccato = false;
                 }
 
                 // Backup moves time backwards (for multi-voice notation)
@@ -551,7 +610,7 @@ fn extract_notes_with_timing(
     if !chord_notes.is_empty() {
         notes.push(TimedNote {
             beat_position: chord_start_beat,
-            note: create_chord_or_single(&chord_notes, chord_duration, &chord_hand, chord_start_beat),
+            note: create_chord_or_single(&chord_notes, chord_duration, &chord_hand, chord_start_beat, chord_tie_start, chord_tie_stop, chord_staccato, chord_dot),
         });
     }
 
@@ -559,7 +618,16 @@ fn extract_notes_with_timing(
 }
 
 /// Create a chord or single note based on the number of notes
-fn create_chord_or_single(midi_notes: &[u8], duration_beats: f32, hand: &str, start_beat: f32) -> Note {
+fn create_chord_or_single(
+    midi_notes: &[u8],
+    duration_beats: f32,
+    hand: &str,
+    start_beat: f32,
+    tie_start: bool,
+    tie_stop: bool,
+    staccato: bool,
+    dot: bool,
+) -> Note {
     if midi_notes.len() == 1 {
         Note::Single {
             midi: midi_notes[0],
@@ -567,6 +635,10 @@ fn create_chord_or_single(midi_notes: &[u8], duration_beats: f32, hand: &str, st
             hand: hand.to_string(),
             accidental: None,
             start_beat: Some(start_beat),
+            tie_start,
+            tie_stop,
+            staccato,
+            dot,
         }
     } else {
         Note::Chord {
@@ -575,6 +647,10 @@ fn create_chord_or_single(midi_notes: &[u8], duration_beats: f32, hand: &str, st
             hand: hand.to_string(),
             chord_name: None,
             start_beat: Some(start_beat),
+            tie_start,
+            tie_stop,
+            staccato,
+            dot,
         }
     }
 }
@@ -713,7 +789,7 @@ mod tests {
 
             for (i, note) in measure.notes.iter().enumerate() {
                 match note {
-                    Note::Single { midi, duration_beats, hand, start_beat, accidental } => {
+                    Note::Single { midi, duration_beats, hand, start_beat, accidental, .. } => {
                         println!(
                             "[{}] Single: MIDI {} ({}) | dur={:.2} | hand={} | beat={:?} | acc={:?}",
                             i, midi, midi_to_note_name(*midi), duration_beats, hand, start_beat, accidental
@@ -803,6 +879,10 @@ mod tests {
                     hand: "right".to_string(),
                     accidental: None,
                     start_beat: Some(0.0),
+                    tie_start: false,
+                    tie_stop: false,
+                    staccato: false,
+                    dot: false,
                 },
             },
             TimedNote {
@@ -854,6 +934,10 @@ mod tests {
                     hand: "right".to_string(),
                     accidental: None,
                     start_beat: Some(0.0),
+                    tie_start: false,
+                    tie_stop: false,
+                    staccato: false,
+                    dot: false,
                 },
             },
         ];
@@ -876,6 +960,10 @@ mod tests {
                     hand: "right".to_string(),
                     chord_name: None,
                     start_beat: Some(0.0),
+                    tie_start: false,
+                    tie_stop: false,
+                    staccato: false,
+                    dot: false,
                 },
             },
             TimedNote {
