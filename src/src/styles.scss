@@ -45,72 +45,11 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
 /* Ensure completion dialog appears above fullscreen content and is clickable */
 .completion-dialog-backdrop {
-    z-index: 2147483646 !important; /* Maximum safe z-index */
-    pointer-events: auto !important; /* Allow clicks on backdrop */
+    z-index: 2147483646 !important;
+    pointer-events: none !important; /* Don't intercept clicks — disableClose handles backdrop */
 }
 
 .completion-dialog-fullscreen {
-    z-index: 2147483647 !important; /* Above backdrop */
-    pointer-events: auto !important; /* Ensure dialog is clickable */
-}
-
-/* Force clickable class for extra assurance */
-.force-clickable {
+    z-index: 2147483647 !important;
     pointer-events: auto !important;
-    display: block !important;
-    visibility: visible !important;
-}
-
-.force-clickable * {
-    pointer-events: auto !important; /* All children are clickable */
-}
-
-/* Ensure Material Dialog components are clickable */
-.cdk-overlay-container {
-    pointer-events: none !important; /* Container doesn't block clicks */
-    z-index: 1000 !important;
-}
-
-.cdk-overlay-pane {
-    pointer-events: auto !important; /* But panes (dialogs) are clickable */
-    position: relative !important;
-}
-
-.cdk-overlay-backdrop {
-    pointer-events: auto !important; /* Backdrop allows clicks through */
-}
-
-/* Ensure dialog container and all its contents are clickable */
-.mat-mdc-dialog-container {
-    pointer-events: auto !important;
-    position: relative !important;
-    z-index: 10 !important;
-}
-
-.mat-mdc-dialog-surface {
-    pointer-events: auto !important;
-}
-
-/* Buttons must be clickable */
-.mat-mdc-dialog-container button,
-.mat-mdc-dialog-actions button,
-button[mat-raised-button],
-button[mat-stroked-button],
-button[mat-button] {
-    pointer-events: auto !important;
-    cursor: pointer !important;
-    position: relative !important;
-    z-index: 1 !important;
-}
-
-/* Specific targeting for completion dialog buttons */
-.completion-dialog button {
-    pointer-events: auto !important;
-    cursor: pointer !important;
-    user-select: none !important;
-}
-
-.completion-dialog .actions button {
-    pointer-events: auto !important;
-    cursor: pointer !important;
 }

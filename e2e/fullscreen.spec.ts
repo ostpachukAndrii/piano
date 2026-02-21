@@ -151,7 +151,45 @@ test.describe('Fullscreen Mode — Completion', () => {
         // Dialog should close
         await expect(dialog).not.toBeVisible({ timeout: 5000 });
 
-        // Scrolling player should still be visible and ready
+        // Should stay on lesson page (NOT navigate to /lessons)
+        await expect(page).toHaveURL(/\/lesson\//);
         await expect(page.locator('app-scrolling-player')).toBeVisible();
+    });
+
+    // ---------------------------------------------------------------
+    // Test: Fullscreen Back to Lessons button works
+    // ---------------------------------------------------------------
+    test('fullscreen mode: Back to Lessons navigates away', async ({ page }) => {
+        test.setTimeout(60000);
+
+        await switchToFlowMode(page);
+
+        const fullscreenBtn = page.locator('.fullscreen-btn');
+        await fullscreenBtn.click();
+        await page.waitForTimeout(500);
+
+        const isFullscreen = await page.evaluate(() => !!document.fullscreenElement);
+        if (!isFullscreen) {
+            await page.evaluate(() => {
+                const comp = document.querySelector('app-scrolling-player');
+                const ngComp = (window as any).ng.getComponent(comp);
+                ngComp.isFullscreen.set(true);
+            });
+        }
+
+        await scheduleAllNotes(page);
+        await clickPlay(page);
+
+        const dialog = page.locator('mat-dialog-container');
+        await expect(dialog).toBeVisible({ timeout: 45000 });
+
+        // Click Back to Lessons
+        await dialog.getByRole('button', { name: /Back to Lessons/i }).evaluate(
+            (el) => (el as HTMLElement).click()
+        );
+
+        // Dialog should close and navigate to /lessons
+        await expect(dialog).not.toBeVisible({ timeout: 5000 });
+        await expect(page).toHaveURL(/\/lessons$/);
     });
 });

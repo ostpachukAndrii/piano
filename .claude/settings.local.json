@@ -60,7 +60,8 @@
       "Bash(bash -c:*)",
       "Bash(git show:*)",
       "Bash(timeout 30 npx ng serve:*)",
-      "Bash(npm run e2e:*)"
+      "Bash(npm run e2e:*)",
+      "Bash(tee:*)"
     ]
   }
 }

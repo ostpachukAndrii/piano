@@ -83,20 +83,46 @@ test.describe('Full Ode to Joy Playthrough', () => {
         await expect(page.getByRole('button', { name: /Back to Lessons/i })).toBeVisible();
     });
 
-    test('play again closes the completion dialog', async ({ page }) => {
+    test('Play Again closes dialog and stays on lesson page', async ({ page }) => {
+        test.setTimeout(45000);
+
         await playSequence(page, ODE_TO_JOY_NOTES, 'right', 300);
 
         const dialog = page.locator('mat-dialog-container');
         await expect(dialog).toBeVisible({ timeout: 15000 });
 
-        // Click Play Again button via JS (backdrop overlay intercepts pointer events)
+        // Click Play Again
         await dialog.getByRole('button', { name: /Play Again/i }).evaluate(
             (el) => (el as HTMLElement).click()
         );
 
-        // Dialog should close — lesson resets (stays on lesson page)
+        // Dialog should close
         await expect(dialog).not.toBeVisible({ timeout: 5000 });
+
+        // Should stay on the lesson page (NOT navigate to /lessons)
         await expect(page).toHaveURL(/\/lesson\//);
+        await expect(page.locator('app-lesson-player')).toBeVisible();
+        await expect(page.locator('.staff-card')).toBeVisible();
+    });
+
+    test('Back to Lessons navigates away from lesson page', async ({ page }) => {
+        test.setTimeout(45000);
+
+        await playSequence(page, ODE_TO_JOY_NOTES, 'right', 300);
+
+        const dialog = page.locator('mat-dialog-container');
+        await expect(dialog).toBeVisible({ timeout: 15000 });
+
+        // Click Back to Lessons
+        await dialog.getByRole('button', { name: /Back to Lessons/i }).evaluate(
+            (el) => (el as HTMLElement).click()
+        );
+
+        // Dialog should close
+        await expect(dialog).not.toBeVisible({ timeout: 5000 });
+
+        // Should navigate to /lessons (lesson selector)
+        await expect(page).toHaveURL(/\/lessons$/);
     });
 
     test('wrong notes mid-lesson do not break the flow', async ({ page }) => {
